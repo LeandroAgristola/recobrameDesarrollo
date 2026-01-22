@@ -211,3 +211,35 @@ label { font-weight: 500; color: #3c4750; }
     color: #3c4750;
     margin-bottom: 0;
 }
+
+/* Estilos para listados y formularios de EMPRESAS */
+#formEmpresa {
+    background-color: #e3e5d7;
+    width: 100%; /* Ojo: width 100% es mejor que fijo 800px para responsive */
+    max-width: 900px;
+    border-radius: 10px;
+    padding: 30px;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#listaEmpresas {  
+    background-color: #e3e5d7;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Tarjeta Detalle Empresa */
+#tarjetaEmpresa {
+    background-color: #e3e5d7;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.resaltado-rojo td {
+    background-color: rgb(255, 240, 240) !important;
+}

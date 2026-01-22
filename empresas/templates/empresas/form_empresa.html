@@ -1,0 +1,125 @@
+{% extends 'management/layout_management.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div id="formEmpresa">
+        <h3 class="mb-4 border-bottom pb-2">{{ titulo }}</h3>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row g-3">
+                <div class="col-12"><h5 class="text-primary mt-3">Datos Identificativos</h5></div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Nombre Comercial</label>
+                    {{ form.nombre }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Razón Social</label>
+                    {{ form.razon_social }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">CIF/NIF</label>
+                    {{ form.cif_nif }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha Alta</label>
+                    {{ form.fecha_alta }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Dirección Fiscal</label>
+                    {{ form.direccion }}
+                </div>
+
+                <div class="col-12"><h5 class="text-primary mt-3">Operativa y Contacto</h5></div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Persona de Contacto (Incidencias)</label>
+                    {{ form.contacto_incidencias }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email Incidencias</label>
+                    {{ form.email_incidencias }}
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Datos Bancarios (IBAN/SWIFT)</label>
+                    {{ form.datos_bancarios }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipos de Impagos (Descripción)</label>
+                    {{ form.tipos_impagos }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Cursos / Productos</label>
+                    {{ form.cursos }}
+                </div>
+
+                <div class="col-12"><h5 class="text-primary mt-3">Configuración Económica</h5></div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Esquema de Comisiones</label>
+                    {{ form.tipo_comision }}
+                </div>
+                <div class="col-md-6" id="div_porcentaje_unico">
+                    <label class="form-label">% Comisión Fija</label>
+                    <div class="input-group">
+                        {{ form.porcentaje_unico }}
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <small class="text-muted">Solo si aplica comisión fija única.</small>
+                </div>
+                
+                <div class="alert alert-warning mt-2 d-none" id="alert_tramos">
+                    <i class="fa-solid fa-info-circle"></i> Has seleccionado <strong>Por Tramos</strong>. Podrás configurar los rangos (Ej: 15% hasta 5k) una vez guardes la empresa, en la pantalla de detalle.
+                </div>
+
+                <div class="col-12"><h5 class="text-primary mt-3">Documentación Legal</h5></div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Contrato de Colaboración</label>
+                    {{ form.contrato_colaboracion }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Contrato Cesión (Opcional)</label>
+                    {{ form.contrato_cesion }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Notas Internas</label>
+                    {{ form.notas }}
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                <a href="{% url 'empresas:lista_empresas' %}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-success px-4">Guardar Empresa</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Script simple para mostrar/ocultar campos según tipo de comisión
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectTipo = document.getElementById('id_tipo_comision');
+        const divFijo = document.getElementById('div_porcentaje_unico');
+        const alertTramos = document.getElementById('alert_tramos');
+
+        function toggleComision() {
+            if (selectTipo.value === 'TRAMOS') {
+                divFijo.style.display = 'none';
+                alertTramos.classList.remove('d-none');
+            } else {
+                divFijo.style.display = 'block';
+                alertTramos.classList.add('d-none');
+            }
+        }
+
+        selectTipo.addEventListener('change', toggleComision);
+        toggleComision(); // Ejecutar al inicio
+    });
+</script>
+{% endblock %}
