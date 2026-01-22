@@ -1,8 +1,15 @@
-from django.contrib import admin
 from django.urls import path
-from management.views import dashboard_view # <--- Importar
+from .views import dashboard_view, CustomLoginView, CustomLogoutView
+
+app_name = 'management' # Namespace para usar 'management:home'
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', dashboard_view, name='home'), # <--- Ruta raíz apunta al management
+    # Ruta Login
+    path('login/', CustomLoginView.as_view(), name='login'),
+    
+    # Ruta Logout
+    path('logout/', CustomLogoutView.as_view(), name='logout'),
+    
+    # Ruta Home / Dashboard
+    path('', dashboard_view, name='home'),
 ]

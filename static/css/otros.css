@@ -1,0 +1,103 @@
+/*Estilos para listados y formularios*/
+
+#formsEmplados,
+#formsEventos,
+#formPlanes,
+#formscliente,
+#formConfig {
+    background-color: #e3e5d7;
+    width: 800px;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#listaEmpleados,
+#listaEventos,
+#listaPlanes,
+#listaClientes,
+#listaDatos {  
+    background-color: #e3e5d7;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+
+}
+
+#development-form {
+    background-color: #e3e5d7;
+    width: 350px;
+    max-height: 450px;
+    width: 400px;
+    padding: 20px;
+    border-radius: 10px;
+    margin: auto;
+}
+
+/*Estilo para emplados y clientes*/
+
+#tarjetaEmpleado,
+#tarjetaCliente{
+    background-color: #e3e5d7;
+    width: 600px;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#tarjetaEmpleado .btn,
+#tarjetaCliente .btn{
+    border: none;
+    width: 100%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+#tarjetaEmpleado img {
+    border-color: #e3e5d7;;
+    border-radius: 50%;
+    border-style: solid;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+#tarjetaEmpleado .TextoEmpleado,
+#tarjetaCliente .TextoCliente {
+    font-size: 1rem;
+    color: #3c4750;
+    margin-bottom: 10px;
+    background-color: #e3e5d7;
+    border-radius: 20px;
+    padding: 10px;
+    border-radius: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/*Estilo para eventos*/
+
+#detalleEvento{
+    background-color: #e3e5d7;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#detalleEvento .col-md-6{
+    width: 50%;
+}
+
+#detalleEvento .col-md-6 img{
+    width: 400px;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/*Estilo para el calendario*/
+
+#calendar {
+    background-color: #f6eddc;
+    padding: 20px;
+}

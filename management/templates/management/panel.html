@@ -1,0 +1,48 @@
+{% extends "management/layout_management.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid" id="#">
+
+  <div class="row g-4">
+    <!-- Clientes -->
+    <div class="col-md-6">
+      <div class="bg-white p-4 rounded shadow-sm">
+        <h5 class="mb-3">Grafico 01</h5>
+        <canvas id="chartClientes"></canvas>
+        <p class="mt-3 text-muted text-center">mensaje</p>
+      </div>
+    </div>
+
+    <!-- Para el gráfico de disponibilidad diaria (Turnos por Día) -->
+    <div class="col-md-6">
+      <div class="bg-white p-4 rounded shadow-sm">
+        <h5 class="mb-3">Grafico 02</h5>
+        <canvas id="chartClientes"></canvas>
+        <p class="mt-3 text-muted text-center">mensaje</p>
+      </div>
+    </div>
+
+  <!-- Para el gráfico de planes (Gente por Plan) -->
+  <div class="col-md-6">
+      <div class="bg-white p-4 rounded shadow-sm">
+        <h5 class="mb-3">Grafico 03</h5>
+        <canvas id="chartClientes"></canvas>
+        <p class="mt-3 text-muted text-center">mensaje</p>
+      </div>
+  </div>
+
+  <!-- Participación en Eventos -->
+  <div class="col-md-6">
+      <div class="bg-white p-4 rounded shadow-sm">
+        <h5 class="mb-3">Grafico 04</h5>
+        <canvas id="chartClientes"></canvas>
+        <p class="mt-3 text-muted text-center">mensaje</p>
+      </div>
+  </div>
+
+</div>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="{% static 'management/js/panel_estadisticas.js' %}"></script>
+{% endblock %}
