@@ -5,121 +5,278 @@
     <div id="formEmpresa">
         <h3 class="mb-4 border-bottom pb-2">{{ titulo }}</h3>
         
-        <form method="post" enctype="multipart/form-data">
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    {{ error }}<br>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if formset.non_form_errors %}
+            <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" id="empresaFormMain">
             {% csrf_token %}
             
+            <h5 class="text-primary mt-2 mb-3"><i class="fa-solid fa-id-card me-2"></i>Datos Identificativos</h5>
             <div class="row g-3">
-                <div class="col-12"><h5 class="text-primary mt-3">Datos Identificativos</h5></div>
                 
                 <div class="col-md-6">
-                    <label class="form-label">Nombre Comercial</label>
+                    <label class="form-label">Nombre Comercial <span class="text-danger">*</span></label>
                     {{ form.nombre }}
+                    {% if form.nombre.errors %}<div class="text-danger small">{{ form.nombre.errors }}</div>{% endif %}
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Razón Social</label>
+                    <label class="form-label">Razón Social <span class="text-danger">*</span></label>
                     {{ form.razon_social }}
+                    {% if form.razon_social.errors %}<div class="text-danger small">{{ form.razon_social.errors }}</div>{% endif %}
                 </div>
+
                 <div class="col-md-4">
                     <label class="form-label">CIF/NIF</label>
                     {{ form.cif_nif }}
                 </div>
                 <div class="col-md-4">
+                    <label class="form-label">Persona Contacto (General)</label>
+                    {{ form.persona_contacto }}
+                    {% if form.persona_contacto.errors %}<div class="text-danger small">{{ form.persona_contacto.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Teléfono Contacto</label>
+                    {{ form.telefono_contacto }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Email General</label>
+                    {{ form.email_contacto }}
+                </div>
+                <div class="col-md-6">
                     <label class="form-label">Fecha Alta</label>
                     {{ form.fecha_alta }}
                 </div>
-                <div class="col-md-12">
+
+                <div class="col-12">
                     <label class="form-label">Dirección Fiscal</label>
                     {{ form.direccion }}
                 </div>
+            </div>
 
-                <div class="col-12"><h5 class="text-primary mt-3">Operativa y Contacto</h5></div>
+            <h5 class="text-primary mt-4 mb-3"><i class="fa-solid fa-headset me-2"></i>Operativa e Incidencias</h5>
+            <div class="row g-3">
                 
                 <div class="col-md-6">
-                    <label class="form-label">Persona de Contacto (Incidencias)</label>
+                    <label class="form-label">Contacto de Incidencias <span class="text-danger">*</span></label>
                     {{ form.contacto_incidencias }}
+                    {% if form.contacto_incidencias.errors %}<div class="text-danger small">{{ form.contacto_incidencias.errors }}</div>{% endif %}
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Email Incidencias</label>
+                    <label class="form-label">Email Incidencias <span class="text-danger">*</span></label>
                     {{ form.email_incidencias }}
+                    {% if form.email_incidencias.errors %}<div class="text-danger small">{{ form.email_incidencias.errors }}</div>{% endif %}
                 </div>
-                <div class="col-md-12">
-                    <label class="form-label">Datos Bancarios (IBAN/SWIFT)</label>
-                    {{ form.datos_bancarios }}
-                </div>
+
                 <div class="col-md-6">
-                    <label class="form-label">Tipos de Impagos (Descripción)</label>
-                    {{ form.tipos_impagos }}
+                    <label class="form-label d-block">Tipos de Impagos <span class="text-danger">*</span></label>
+                    <div class="bg-white p-3 border rounded" style="height: 150px; overflow-y: auto;">
+                        {% for checkbox in form.tipos_impagos %}
+                            <div class="form-check">
+                                {{ checkbox.tag }}
+                                <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                    {{ checkbox.choice_label }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.tipos_impagos.errors %}
+                        <div class="text-danger small mt-1">{{ form.tipos_impagos.errors }}</div>
+                    {% endif %}
                 </div>
+
                 <div class="col-md-6">
                     <label class="form-label">Cursos / Productos</label>
                     {{ form.cursos }}
                 </div>
 
-                <div class="col-12"><h5 class="text-primary mt-3">Configuración Económica</h5></div>
-                
+                <div class="col-md-12">
+                    <label class="form-label">Datos Bancarios</label>
+                    {{ form.datos_bancarios }}
+                </div>
+            </div>
+
+            <h5 class="text-primary mt-4 mb-3"><i class="fa-solid fa-euro-sign me-2"></i>Configuración Económica</h5>
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Esquema de Comisiones</label>
+                    <label class="form-label">Esquema de Comisiones <span class="text-danger">*</span></label>
                     {{ form.tipo_comision }}
                 </div>
+
                 <div class="col-md-6" id="div_porcentaje_unico">
-                    <label class="form-label">% Comisión Fija</label>
+                    <label class="form-label">% Comisión Fija <span class="text-danger">*</span></label>
                     <div class="input-group">
                         {{ form.porcentaje_unico }}
                         <span class="input-group-text">%</span>
                     </div>
-                    <small class="text-muted">Solo si aplica comisión fija única.</small>
-                </div>
-                
-                <div class="alert alert-warning mt-2 d-none" id="alert_tramos">
-                    <i class="fa-solid fa-info-circle"></i> Has seleccionado <strong>Por Tramos</strong>. Podrás configurar los rangos (Ej: 15% hasta 5k) una vez guardes la empresa, en la pantalla de detalle.
+                    {% if form.porcentaje_unico.errors %}
+                        <div class="text-danger small">{{ form.porcentaje_unico.errors }}</div>
+                    {% endif %}
                 </div>
 
-                <div class="col-12"><h5 class="text-primary mt-3">Documentación Legal</h5></div>
-                
+                <div class="col-12 mt-3" id="div_tramos">
+                    <div class="card border bg-light">
+                        <div class="card-body p-3">
+                            <label class="form-label fw-bold">Escala de Comisiones <span class="text-danger">*</span></label>
+                            
+                            {{ formset.management_form }}
+                            
+                            <table class="table table-sm table-hover align-middle mb-0" id="tablaTramos">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th style="width: 30%;">Desde (€)</th>
+                                        <th style="width: 30%;">Hasta (€)</th>
+                                        <th style="width: 25%;">% Comisión</th>
+                                        <th style="width: 15%;" class="text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tramosBody">
+                                    {% for tramo_form in formset %}
+                                        <tr class="tramo-row">
+                                            {{ tramo_form.id }} <td>{{ tramo_form.monto_minimo }}</td>
+                                            <td>{{ tramo_form.monto_maximo }}</td>
+                                            <td>{{ tramo_form.porcentaje }}</td>
+                                            <td class="text-center">
+                                                <span class="d-none">{{ tramo_form.DELETE }}</span>
+                                                
+                                                {% if formset.can_delete %}
+                                                    <button type="button" class="btn btn-outline-danger btn-sm btn-delete-row" title="Eliminar Fila">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% if tramo_form.errors %}
+                                        <tr>
+                                            <td colspan="4">
+                                                <div class="alert alert-danger p-1 mb-0 small">
+                                                    {{ tramo_form.errors }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="add-tramo">
+                                    <i class="fa-solid fa-plus"></i> Agregar Escalón
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="text-primary mt-4 mb-3"><i class="fa-solid fa-file-contract me-2"></i>Legal y Notas</h5>
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Contrato de Colaboración</label>
+                    <label class="form-label">Contrato Colaboración <span class="text-danger">*</span></label>
                     {{ form.contrato_colaboracion }}
+                    {% if form.contrato_colaboracion.errors %}
+                        <div class="text-danger small">{{ form.contrato_colaboracion.errors }}</div>
+                    {% endif %}
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Contrato Cesión (Opcional)</label>
                     {{ form.contrato_cesion }}
                 </div>
-
                 <div class="col-12">
                     <label class="form-label">Notas Internas</label>
                     {{ form.notas }}
                 </div>
             </div>
 
-            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
-                <a href="{% url 'empresas:lista_empresas' %}" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-success px-4">Guardar Empresa</button>
+            <div class="mt-5 pt-3 border-top d-flex justify-content-center gap-3">
+                <a href="{% url 'empresas:lista_empresas' %}" class="btn btn-secondary px-5 py-2 fw-bold" style="width: 200px;">Cancelar</a>
+                <button type="submit" class="btn btn-success px-5 py-2 fw-bold" style="width: 200px;">Guardar</button>
             </div>
         </form>
+        
+        <table style="display:none;">
+            <tbody id="empty-form">
+                <tr class="tramo-row">
+                    {{ formset.empty_form.id }}
+                    <td>{{ formset.empty_form.monto_minimo }}</td>
+                    <td>{{ formset.empty_form.monto_maximo }}</td>
+                    <td>{{ formset.empty_form.porcentaje }}</td>
+                    <td class="text-center">
+                        <span class="d-none">{{ formset.empty_form.DELETE }}</span>
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-delete-row">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Script simple para mostrar/ocultar campos según tipo de comisión
     document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. Lógica Toggle Fijo/Variable ---
         const selectTipo = document.getElementById('id_tipo_comision');
         const divFijo = document.getElementById('div_porcentaje_unico');
-        const alertTramos = document.getElementById('alert_tramos');
+        const divTramos = document.getElementById('div_tramos');
 
         function toggleComision() {
             if (selectTipo.value === 'TRAMOS') {
                 divFijo.style.display = 'none';
-                alertTramos.classList.remove('d-none');
+                divTramos.style.display = 'block';
             } else {
                 divFijo.style.display = 'block';
-                alertTramos.classList.add('d-none');
+                divTramos.style.display = 'none';
             }
         }
-
         selectTipo.addEventListener('change', toggleComision);
-        toggleComision(); // Ejecutar al inicio
+        toggleComision(); // Ejecutar al cargar la página
+
+        // --- 2. Lógica Agregar filas (Formset Dinámico) ---
+        const addBtn = document.getElementById('add-tramo');
+        const tableBody = document.getElementById('tramosBody');
+        const totalFormsInput = document.getElementById('id_tramos-TOTAL_FORMS');
+        const emptyFormTemplate = document.getElementById('empty-form').innerHTML;
+
+        addBtn.addEventListener('click', function() {
+            let formIdx = parseInt(totalFormsInput.value);
+            // Reemplazar __prefix__ por el índice numérico actual
+            let newRowHtml = emptyFormTemplate.replace(/__prefix__/g, formIdx);
+            tableBody.insertAdjacentHTML('beforeend', newRowHtml);
+            // Incrementar contador total
+            totalFormsInput.value = formIdx + 1;
+        });
+
+        // --- 3. Lógica Eliminar filas (Delegación de Eventos) ---
+        tableBody.addEventListener('click', function(e) {
+            // Detectar click en el botón rojo o su ícono
+            const btn = e.target.closest('.btn-delete-row');
+            if (btn) {
+                const row = btn.closest('tr');
+                const deleteCheckbox = row.querySelector('input[type="checkbox"]');
+                
+                if (deleteCheckbox) {
+                    // Si el checkbox existe (fila guardada en DB), marcarlo y ocultar fila
+                    deleteCheckbox.checked = true;
+                    row.style.display = 'none';
+                } else {
+                    // Si es una fila nueva dinámica (sin ID en DB), removerla del DOM
+                    row.remove();
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

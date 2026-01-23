@@ -155,6 +155,36 @@ label { font-weight: 500; color: #3c4750; }
     transition: margin-left 0.3s, width 0.3s;
 }
 
+/* === BUSCADOR GLOBAL CON ICONO === */
+.search-box {
+    position: relative;
+    flex-grow: 1; /* Esto obliga a la caja a ocupar todo el espacio disponible */
+}
+
+.search-box .search-icon {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: #6c757d;
+    pointer-events: none;
+    z-index: 4; /* Encima del input */
+}
+
+.search-box .form-control {
+    padding-left: 40px; /* Espacio para la lupa */
+    border-top-right-radius: 0 !important;    /* Esquinas cuadradas a la derecha */
+    border-bottom-right-radius: 0 !important; /* para unirse con el botón */
+    border-color: #dee2e6;
+    height: 100%; /* Asegura que tenga la misma altura que el botón */
+}
+
+.search-box .form-control:focus {
+    box-shadow: 0 0 0 .2rem rgba(13, 110, 253, 0.15);
+    border-color: #86b7fe;
+    z-index: 3;
+}
+
 /* =========================================
    ESTILOS ESPECÍFICOS DE LOGIN
    ========================================= */

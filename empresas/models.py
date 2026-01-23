@@ -9,57 +9,49 @@ class Empresa(TimeStampedModel):
         POR_TRAMOS = 'TRAMOS', _('Por Tramos (Escalonada)')
 
     # --- DATOS IDENTIFICATIVOS ---
-    nombre = models.CharField(_('Nombre Comercial'), max_length=100, unique=True)
+    # Quitamos unique=True de nombre para permitir duplicados si la razón social es distinta
+    nombre = models.CharField(_('Nombre Comercial'), max_length=100) 
     razon_social = models.CharField(_('Razón Social'), max_length=150, blank=True)
+    
+    # Grid Fila 2
     cif_nif = models.CharField(_('CIF/NIF'), max_length=20, blank=True)
-    direccion = models.CharField(_('Dirección'), max_length=250, blank=True)
+    persona_contacto = models.CharField(_('Persona de Contacto (General)'), max_length=100, blank=True)
+    telefono_contacto = models.CharField(_('Teléfono General'), max_length=20, blank=True) # <--- NUEVO
+    
+    # Grid Fila 3
+    email_contacto = models.EmailField(_('Email General'), blank=True)
     fecha_alta = models.DateField(_('Fecha de Alta'), default=timezone.now)
+    
+    # Grid Fila 4
+    direccion = models.CharField(_('Dirección'), max_length=250, blank=True)
     
     # --- DATOS OPERATIVOS ---
     contacto_incidencias = models.CharField(_('Contacto Incidencias'), max_length=100, blank=True)
     email_incidencias = models.EmailField(_('Email Incidencias'), blank=True)
     datos_bancarios = models.TextField(_('Datos Bancarios'), blank=True)
     
-    # Campos de texto libre para información variada
-    tipos_impagos = models.TextField(_('Tipos de Impagos'), blank=True, help_text="Ej: Tarjeta, Transferencia, Recibo...") 
-    cursos = models.TextField(_('Cursos / Productos'), blank=True, help_text="Listado de cursos o productos que vende") 
-    notas = models.TextField(_('Notas Internas'), blank=True) 
+    tipos_impagos = models.TextField(_('Tipos de Impagos'), blank=True)
+    cursos = models.TextField(_('Cursos / Productos'), blank=True)
+    notas = models.TextField(_('Notas Internas'), blank=True)
 
     # --- DOCUMENTACIÓN ---
-    contrato_colaboracion = models.FileField(
-        _('Contrato de Colaboración'),
-        upload_to='contratos/colaboracion/',
-        blank=True, null=True
-    )
-    contrato_cesion = models.FileField(
-        _('Contrato de Cesión de Crédito'),
-        upload_to='contratos/cesion/',
-        blank=True, null=True,
-        help_text="Opcional. Requerido para ASNEF/Buró"
-    )
+    # Colaboración NO tiene blank=True (es obligatorio)
+    contrato_colaboracion = models.FileField(upload_to='contratos/colaboracion/') 
+    contrato_cesion = models.FileField(upload_to='contratos/cesion/', blank=True, null=True)
 
     # --- CONFIGURACIÓN ECONOMICA ---
-    tipo_comision = models.CharField(
-        _('Esquema de Comisiones'),
-        max_length=6,
-        choices=TipoComision.choices,
-        default=TipoComision.PORCENTAJE_FIJO
-    )
-    
-    porcentaje_unico = models.DecimalField(
-        _('% Único'),
-        max_digits=5, decimal_places=2,
-        default=0.00,
-        blank=True, null=True
-    )
-    
-    # Soft Delete (Desactivación lógica)
+    tipo_comision = models.CharField(max_length=6, choices=TipoComision.choices, default=TipoComision.PORCENTAJE_FIJO)
+    porcentaje_unico = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, blank=True, null=True)
     fecha_baja = models.DateField(_('Fecha de Baja'), null=True, blank=True)
 
     class Meta:
         verbose_name = "Empresa"
         verbose_name_plural = "Empresas"
         ordering = ['nombre']
+        # REGLA: No puede existir una empresa con el MISMO nombre Y la MISMA razón social
+        constraints = [
+            models.UniqueConstraint(fields=['nombre', 'razon_social'], name='unique_empresa_nombre_razon')
+        ]
 
     def __str__(self):
         return self.nombre

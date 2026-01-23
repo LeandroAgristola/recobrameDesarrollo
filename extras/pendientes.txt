@@ -1,0 +1,9 @@
+Empreas 
+
+Reactivar empresa agregar modal nueva fecha de alta
+
+agregar vista "eliminar empresas"
+
+los errores no se van quedan ahi en la pantalla
+
+la barra de busqueda debe queda "limpia" cuando apretamos en buscar (sigue el contenido)
