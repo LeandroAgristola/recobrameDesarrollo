@@ -55,6 +55,30 @@ class Empresa(TimeStampedModel):
 
     def __str__(self):
         return self.nombre
+    
+    @property
+    def cantidad_recuperados(self):
+        """Número de expedientes cobrados al 100%"""
+        # Futuro: self.recobros.filter(estado='PAGADO').count()
+        return 0
+
+    @property
+    def monto_recuperado(self):
+        """Dinero total ingresado"""
+        # Futuro: Suma de cobros
+        return 0.00
+
+    @property
+    def deuda_total(self):
+        """Dinero total pendiente de cobro"""
+        # Futuro: Suma de deudas activas
+        return 0.00
+
+    @property
+    def cantidad_activos(self):
+        """Número de expedientes en gestión"""
+        # Futuro: self.recobros.filter(estado='ACTIVO').count()
+        return 0
 
 class TramoComision(models.Model):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='tramos')

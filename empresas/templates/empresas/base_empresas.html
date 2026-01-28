@@ -1,0 +1,31 @@
+{% extends 'management/layout_management.html' %}
+
+{% block content %}
+<div class="container-fluid">
+  
+  <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="mb-0 text-dark">Cartera de <strong>Empresas</strong></h2>
+  </div>
+
+  <ul class="nav nav-tabs">
+      <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'activas' %}active{% endif %}" 
+             href="{% url 'empresas:lista_empresas' %}">
+             <i class="fa-solid fa-building-circle-check me-2"></i>Activas
+          </a>
+      </li>
+      <li class="nav-item">
+          <a class="nav-link {% if active_tab == 'papelera' %}active{% endif %}" 
+             href="{% url 'empresas:papelera_empresas' %}">
+             <i class="fa-solid fa-trash-can me-2"></i>Papelera
+          </a>
+      </li>
+  </ul>
+
+  <div class="contenedor-listado">
+      {% block empresa_content %}
+      {% endblock %}
+  </div>
+
+</div>
+{% endblock %}

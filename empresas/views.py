@@ -7,31 +7,36 @@ from .models import Empresa
 from .forms import EmpresaForm, TramoComisionFormSet
 from django.core.paginator import Paginator
 
+# === HELPER PARA BÚSQUEDA (Para no repetir código en ambas vistas) ===
+def aplicar_busqueda(queryset, busqueda):
+    if busqueda:
+        return queryset.filter(
+            Q(nombre__icontains=busqueda) | 
+            Q(razon_social__icontains=busqueda) | 
+            Q(cif_nif__icontains=busqueda)
+        )
+    return queryset
+
 @login_required
 def lista_empresas(request):
+    """
+    PESTAÑA 1: Empresas Activas
+    """
     busqueda = request.GET.get('busqueda', '')
     
-    # Base QuerySets (Solo paginamos las activas, las inactivas suelen ser pocas)
+    # Solo Activas
     empresas_list = Empresa.objects.filter(is_active=True).order_by('-fecha_alta')
-    empresas_inactivas = Empresa.objects.filter(is_active=False)
+    empresas_list = aplicar_busqueda(empresas_list, busqueda)
 
-    # Filtro Buscador
-    if busqueda:
-        criterio = Q(nombre__icontains=busqueda) | \
-                   Q(razon_social__icontains=busqueda) | \
-                   Q(cif_nif__icontains=busqueda)
-        empresas_list = empresas_list.filter(criterio)
-        empresas_inactivas = empresas_inactivas.filter(criterio)
-
-    # --- PAGINACIÓN (20 por página) ---
+    # Paginación
     paginator = Paginator(empresas_list, 20) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'empresas/lista_empresas.html', {
-        'page_obj': page_obj, # Enviamos el objeto paginado, no la lista completa
-        'empresas_inactivas': empresas_inactivas,
-        'filtros': {'busqueda': busqueda}
+        'page_obj': page_obj,
+        'filtros': {'busqueda': busqueda},
+        'active_tab': 'activas' # Variable clave para la pestaña
     })
 
 @login_required
@@ -114,26 +119,58 @@ def editar_empresa(request, empresa_id):
     })
 
 @login_required
+def papelera_empresas(request):
+    """
+    PESTAÑA 2: Papelera (Empresas desactivadas)
+    """
+    busqueda = request.GET.get('busqueda', '')
+    
+    empresas_list = Empresa.objects.filter(is_active=False).order_by('-fecha_baja')
+    empresas_list = aplicar_busqueda(empresas_list, busqueda)
+
+    paginator = Paginator(empresas_list, 20) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'empresas/papelera_empresas.html', {
+        'page_obj': page_obj,
+        'filtros': {'busqueda': busqueda},
+        'active_tab': 'papelera'
+    })
+
+@login_required
 def desactivar_empresa(request, empresa_id):
-    """Baja lógica (Soft Delete)"""
+    """Baja lógica (Mover a Papelera)"""
     empresa = get_object_or_404(Empresa, id=empresa_id)
     if request.method == 'POST':
         empresa.is_active = False
         empresa.fecha_baja = timezone.now().date()
         empresa.save()
-        messages.warning(request, f"Empresa {empresa.nombre} desactivada.")
+        messages.warning(request, f"Empresa '{empresa.nombre}' movida a la papelera.")
     return redirect('empresas:lista_empresas')
 
 @login_required
 def reactivar_empresa(request, empresa_id):
+    """Recuperar de Papelera"""
     empresa = get_object_or_404(Empresa, id=empresa_id)
     if request.method == 'POST':
         empresa.is_active = True
-        empresa.fecha_baja = None
+        empresa.fecha_baja = None # Limpiamos fecha baja, MANTENEMOS fecha alta original
         empresa.save()
-        messages.success(request, f"Empresa {empresa.nombre} reactivada.")
-    return redirect('empresas:lista_empresas')
+        messages.success(request, f"Empresa '{empresa.nombre}' reactivada correctamente.")
+    
+    return redirect('empresas:papelera_empresas')
 
+@login_required
+def eliminar_empresa(request, empresa_id):
+    """Eliminación Física (Definitiva)"""
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    nombre = empresa.nombre
+    
+    empresa.delete()
+    
+    messages.error(request, f"La empresa '{nombre}' ha sido eliminada definitivamente.")
+    return redirect('empresas:papelera_empresas')
 @login_required
 def detalle_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
