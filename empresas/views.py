@@ -171,7 +171,26 @@ def eliminar_empresa(request, empresa_id):
     
     messages.error(request, f"La empresa '{nombre}' ha sido eliminada definitivamente.")
     return redirect('empresas:papelera_empresas')
+
 @login_required
 def detalle_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    return render(request, 'empresas/detalle_empresa.html', {'empresa': empresa})
+    
+    # Obtener tramos ordenados por monto
+    tramos = empresa.tramos.all().order_by('monto_minimo')
+    
+    # Convertir el string de impagos en lista limpia
+    # Ej: "SEQURA_HOTMART, AUTO_STRIPE" -> ['SEQURA_HOTMART', 'AUTO_STRIPE']
+    lista_impagos = []
+    if empresa.tipos_impagos:
+        raw_list = empresa.tipos_impagos.split(',')
+        # Diccionario para traducir códigos a nombres bonitos si quieres, 
+        # o usamos el string directo. Por ahora limpiamos espacios.
+        lista_impagos = [item.strip() for item in raw_list]
+
+    return render(request, 'empresas/detalle_empresa.html', {
+        'empresa': empresa,
+        'tramos': tramos,
+        'lista_impagos': lista_impagos,
+        'active_tab': 'general' # Para controlar la pestaña activa por defecto
+    })

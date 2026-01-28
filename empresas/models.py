@@ -79,6 +79,12 @@ class Empresa(TimeStampedModel):
         """Número de expedientes en gestión"""
         # Futuro: self.recobros.filter(estado='ACTIVO').count()
         return 0
+    
+    @property
+    def total_comisionado(self):
+        """Total facturado a la empresa por nuestros servicios"""
+        # Futuro: Suma de facturas emitidas/cobradas
+        return 0.00
 
 class TramoComision(models.Model):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='tramos')

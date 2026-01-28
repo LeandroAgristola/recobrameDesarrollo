@@ -15,8 +15,8 @@ Paleta de colores principal {
 a { text-decoration: none; }
 
 .form-control:focus { 
-    border-color: #4acffc80 !important;
-    box-shadow: 0 0 0 .2rem #4acffc80!important;
+    border-color: #49505780 !important;
+    box-shadow: 0 0 0 .2rem #49505780 !important;
 }
 
 label { font-weight: 500; color: #0a2c46; }
