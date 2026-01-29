@@ -4,8 +4,11 @@ from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
 from .models import Empresa
-from .forms import EmpresaForm, TramoComisionFormSet
+from .forms import EmpresaForm, EsquemaComisionForm, TramoFormSet
 from django.core.paginator import Paginator
+from .models import Empresa, EsquemaComision, TramoComision
+from .forms import EmpresaForm, EsquemaComisionForm, TramoFormSet
+from .models import OPCIONES_IMPAGOS
 
 # === HELPER PARA BÚSQUEDA (Para no repetir código en ambas vistas) ===
 def aplicar_busqueda(queryset, busqueda):
@@ -39,83 +42,39 @@ def lista_empresas(request):
         'active_tab': 'activas' # Variable clave para la pestaña
     })
 
-@login_required
 def crear_empresa(request):
     if request.method == 'POST':
         form = EmpresaForm(request.POST, request.FILES)
-        formset = TramoComisionFormSet(request.POST)
-        
         if form.is_valid():
-            # VALIDACIÓN EXTRA: Si eligió Tramos, verificar que el formset tenga datos válidos
-            tipo_comision = form.cleaned_data.get('tipo_comision')
-            tramos_validos = 0
-            
-            # Contamos cuántos formularios del formset tienen datos y no están marcados para borrar
-            if formset.is_valid():
-                for f in formset:
-                    if f.cleaned_data and not f.cleaned_data.get('DELETE'):
-                        tramos_validos += 1
-            
-            if tipo_comision == 'TRAMOS' and tramos_validos == 0:
-                messages.error(request, "Si selecciona Comisión por Tramos, debe agregar al menos una fila en la tabla.")
-            elif formset.is_valid():
-                # Si pasa todas las validaciones
-                empresa = form.save()
-                formset.instance = empresa
-                formset.save()
-                messages.success(request, f"Empresa {empresa.nombre} creada correctamente.")
-                return redirect('empresas:lista_empresas')
-            else:
-                 messages.error(request, "Error en la tabla de tramos.")
-        else:
-            messages.error(request, "Error en el formulario principal. Revise los campos obligatorios.")
+            empresa = form.save()
+            messages.success(request, f"Empresa creada. Configuremos las comisiones.")
+            # REDIRECCIÓN CLAVE: Al paso 2 (Configuración)
+            return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
     else:
         form = EmpresaForm()
-        formset = TramoComisionFormSet()
+    
+    return render(request, 'empresas/form_empresa.html', {'form': form})
 
-    return render(request, 'empresas/form_empresa.html', {
-        'form': form,
-        'formset': formset,
-        'titulo': 'Nueva Empresa'
-    })
-
+        
 @login_required
 def editar_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     
     if request.method == 'POST':
+        # Ya no usamos formsets aquí, solo el formulario principal
         form = EmpresaForm(request.POST, request.FILES, instance=empresa)
-        formset = TramoComisionFormSet(request.POST, instance=empresa)
         
         if form.is_valid():
-            # MISMA VALIDACIÓN EXTRA
-            tipo_comision = form.cleaned_data.get('tipo_comision')
-            tramos_validos = 0
-            if formset.is_valid():
-                for f in formset:
-                    if f.cleaned_data and not f.cleaned_data.get('DELETE'):
-                        tramos_validos += 1
-            
-            if tipo_comision == 'TRAMOS' and tramos_validos == 0:
-                messages.error(request, "Debe configurar al menos un tramo o cambiar a Comisión Fija.")
-            elif formset.is_valid():
-                form.save()
-                formset.save()
-                messages.success(request, "Datos actualizados correctamente.")
-                return redirect('empresas:lista_empresas')
-            else:
-                messages.error(request, "Error en los tramos.")
-        else:
-             messages.error(request, "Verifique los errores en el formulario.")
+            form.save()
+            messages.success(request, "Datos de la empresa actualizados correctamente.")
+            return redirect('empresas:detalle_empresa', empresa_id=empresa.id)
     else:
         form = EmpresaForm(instance=empresa)
-        formset = TramoComisionFormSet(instance=empresa)
-
+    
+    # Reutilizamos el template form_empresa.html que ya arreglamos
     return render(request, 'empresas/form_empresa.html', {
-        'form': form,
-        'formset': formset,
-        'titulo': f'Editar {empresa.nombre}',
-        'editando': True
+        'form': form, 
+        'titulo': f'Editar {empresa.nombre}'
     })
 
 @login_required
@@ -176,21 +135,122 @@ def eliminar_empresa(request, empresa_id):
 def detalle_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     
-    # Obtener tramos ordenados por monto
-    tramos = empresa.tramos.all().order_by('monto_minimo')
+    # --- CORRECCIÓN: Usamos 'esquemas' en lugar de 'tramos' ---
+    esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
     
-    # Convertir el string de impagos en lista limpia
-    # Ej: "SEQURA_HOTMART, AUTO_STRIPE" -> ['SEQURA_HOTMART', 'AUTO_STRIPE']
+    # Procesamos la lista de impagos para mostrar las etiquetas (Badges)
     lista_impagos = []
     if empresa.tipos_impagos:
+        # Convertimos "SEQURA, STRIPE" -> ['SEQURA', 'STRIPE']
         raw_list = empresa.tipos_impagos.split(',')
-        # Diccionario para traducir códigos a nombres bonitos si quieres, 
-        # o usamos el string directo. Por ahora limpiamos espacios.
-        lista_impagos = [item.strip() for item in raw_list]
+        lista_impagos = [item.strip() for item in raw_list if item.strip()]
 
     return render(request, 'empresas/detalle_empresa.html', {
         'empresa': empresa,
-        'tramos': tramos,
+        'esquemas': esquemas,      # Pasamos los esquemas al template
         'lista_impagos': lista_impagos,
-        'active_tab': 'general' # Para controlar la pestaña activa por defecto
+        'active_tab': 'general'
     })
+
+@login_required
+def configurar_comisiones(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
+    
+    # --- LÓGICA DE VALIDACIÓN ---
+    # 1. ¿Qué productos seleccionó el usuario en el paso anterior?
+    # Convertimos "A, B" -> ['A', 'B']
+    seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
+    
+    # 2. ¿Qué productos YA tienen regla configurada?
+    # Filtramos solo los de IMPAGO (ya que Cedidos no usan producto)
+    configurados = empresa.esquemas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
+    
+    # 3. ¿Cuáles faltan?
+    faltantes = []
+    # Convertimos OPCIONES_IMPAGOS a diccionario para obtener el nombre bonito
+    nombres_dict = dict(OPCIONES_IMPAGOS)
+    
+    for codigo in seleccionados:
+        if codigo not in configurados:
+            # Agregamos el nombre legible (ej: "SeQura Copecart") a la lista
+            nombre_real = nombres_dict.get(codigo, codigo)
+            faltantes.append(nombre_real)
+    # ----------------------------
+
+    if request.method == 'POST':
+        form = EsquemaComisionForm(request.POST, empresa=empresa)
+        tramo_formset = TramoFormSet(request.POST)
+        
+        if form.is_valid():
+            esquema = form.save(commit=False)
+            esquema.empresa = empresa
+            
+            if esquema.modalidad == 'TRAMOS':
+                if tramo_formset.is_valid():
+                    esquema.save()
+                    tramo_formset.instance = esquema
+                    tramo_formset.save()
+                    messages.success(request, "Regla escalonada agregada.")
+                    return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
+                else:
+                    messages.error(request, "Error en los tramos.")
+            else:
+                esquema.save()
+                messages.success(request, "Regla fija agregada.")
+                return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
+        else:
+            messages.error(request, "Error al guardar la regla.")
+    else:
+        form = EsquemaComisionForm(empresa=empresa)
+        tramo_formset = TramoFormSet()
+
+    return render(request, 'empresas/configurar_comisiones.html', {
+        'empresa': empresa,
+        'esquemas': esquemas,
+        'form': form,
+        'tramo_formset': tramo_formset,
+        'faltantes': faltantes, # <--- PASAMOS LA LISTA AL TEMPLATE
+    })
+
+@login_required
+def editar_esquema(request, esquema_id):
+    esquema = get_object_or_404(EsquemaComision, id=esquema_id)
+    
+    if request.method == 'POST':
+        form = EsquemaComisionForm(request.POST, instance=esquema, empresa=esquema.empresa)
+        tramo_formset = TramoFormSet(request.POST, instance=esquema)
+        
+        if form.is_valid():
+            # Guardamos el esquema
+            obj = form.save()
+            
+            # Si cambió a TRAMOS, validamos y guardamos el formset
+            if obj.modalidad == 'TRAMOS':
+                if tramo_formset.is_valid():
+                    tramo_formset.save()
+                    messages.success(request, "Esquema actualizado correctamente.")
+                    return redirect('empresas:configurar_comisiones', empresa_id=esquema.empresa.id)
+            else:
+                # Si cambió a FIJO, podríamos querer borrar los tramos viejos
+                esquema.tramos.all().delete()
+                messages.success(request, "Esquema actualizado a Fijo.")
+                return redirect('empresas:configurar_comisiones', empresa_id=esquema.empresa.id)
+    else:
+        form = EsquemaComisionForm(instance=esquema, empresa=esquema.empresa)
+        tramo_formset = TramoFormSet(instance=esquema)
+    
+    return render(request, 'empresas/form_esquema.html', {
+        'form': form,
+        'tramo_formset': tramo_formset,
+        'esquema': esquema,
+        'titulo': f"Editar Regla: {esquema}"
+    })
+
+@login_required
+def eliminar_esquema(request, esquema_id):
+    esquema = get_object_or_404(EsquemaComision, id=esquema_id)
+    empresa_id = esquema.empresa.id
+    esquema.delete()
+    messages.warning(request, "Esquema de comisión eliminado.")
+    return redirect('empresas:configurar_comisiones', empresa_id=empresa_id)

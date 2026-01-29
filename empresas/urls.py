@@ -17,4 +17,9 @@ urlpatterns = [
     path('desactivar/<int:empresa_id>/', views.desactivar_empresa, name='desactivar_empresa'), # Mover a papelera
     path('reactivar/<int:empresa_id>/', views.reactivar_empresa, name='reactivar_empresa'),    # Sacar de papelera
     path('eliminar/<int:empresa_id>/', views.eliminar_empresa, name='eliminar_empresa'),       # Eliminar DB (Físico)
+
+    # Configuración de Comisiones
+    path('configurar_comisiones/<int:empresa_id>/', views.configurar_comisiones, name='configurar_comisiones'),
+    path('editar_esquema/<int:esquema_id>/', views.editar_esquema, name='editar_esquema'),
+    path('eliminar_esquema/<int:esquema_id>/', views.eliminar_esquema, name='eliminar_esquema'),
 ]

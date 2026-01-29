@@ -1,0 +1,80 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // VARIABLES
+    const selectCaso = document.getElementById('id_tipo_caso');
+    const divProducto = document.getElementById('div_producto');
+    const selectModalidad = document.getElementById('id_modalidad');
+    const divFijo = document.getElementById('div_fijo');
+    const divTramos = document.getElementById('div_tramos');
+
+    // 1. LÓGICA CEDIDOS vs PRODUCTOS
+    function toggleCaso() {
+        if (selectCaso.value === 'CEDIDO') {
+            divProducto.style.display = 'none';
+            // Opcional: limpiar valor del select producto
+            const selectProd = divProducto.querySelector('select');
+            if(selectProd) selectProd.value = '';
+        } else {
+            divProducto.style.display = 'block';
+        }
+    }
+
+    // 2. LÓGICA FIJO vs TRAMOS
+    function toggleModalidad() {
+        if (selectModalidad.value === 'TRAMOS') {
+            divFijo.style.display = 'none';
+            divTramos.style.display = 'block';
+        } else {
+            divFijo.style.display = 'block';
+            divTramos.style.display = 'none';
+        }
+    }
+
+    // EVENT LISTENERS
+    if(selectCaso) selectCaso.addEventListener('change', toggleCaso);
+    if(selectModalidad) selectModalidad.addEventListener('change', toggleModalidad);
+
+    // EJECUCIÓN INICIAL
+    toggleCaso();
+    toggleModalidad();
+
+    // 3. LOGICA FORMSET DINÁMICO (Agregar/Quitar Tramos)
+    const addBtn = document.getElementById('add-tramo');
+    const tableBody = document.getElementById('tramosBody');
+    const totalFormsInput = document.getElementById('id_tramos-TOTAL_FORMS'); // Ojo con el prefijo, Django usa 'tramos' si el related_name es tramos
+    
+    // Verificamos si existe el input de total forms (el nombre puede variar según formset)
+    // Buscamos inputs que terminen en TOTAL_FORMS
+    const allInputs = document.querySelectorAll('input[type="hidden"]');
+    let realTotalInput = null;
+    allInputs.forEach(inp => {
+        if(inp.name.endsWith('TOTAL_FORMS')) realTotalInput = inp;
+    });
+
+    if (addBtn && tableBody && realTotalInput) {
+        const emptyFormTemplate = document.getElementById('empty-form').innerHTML;
+
+        addBtn.addEventListener('click', function() {
+            let formIdx = parseInt(realTotalInput.value);
+            let newRowHtml = emptyFormTemplate.replace(/__prefix__/g, formIdx);
+            tableBody.insertAdjacentHTML('beforeend', newRowHtml);
+            realTotalInput.value = formIdx + 1;
+        });
+
+        tableBody.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-delete-row');
+            if (btn) {
+                const row = btn.closest('tr');
+                const deleteCheckbox = row.querySelector('input[type="checkbox"]');
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    row.style.display = 'none';
+                } else {
+                    row.remove();
+                }
+            }
+        });
+    }
+});
+</script>

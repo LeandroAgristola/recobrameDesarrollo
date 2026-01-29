@@ -1,0 +1,84 @@
+<div class="mb-3">
+    <label class="form-label small fw-bold text-muted text-uppercase">Tipo de Caso</label>
+    {{ form.tipo_caso }}
+</div>
+
+<div class="mb-3" id="div_producto">
+    <label class="form-label small fw-bold text-muted text-uppercase">Producto</label>
+    {{ form.tipo_producto }}
+    <div class="form-text small fst-italic">Dejar vacío para "Todos".</div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label small fw-bold text-muted text-uppercase">Modalidad</label>
+        {{ form.modalidad }}
+    </div>
+    <div class="col-md-6 mb-3" id="div_fijo">
+        <label class="form-label small fw-bold text-muted text-uppercase">% Fijo</label>
+        <div class="input-group">
+            {{ form.porcentaje_fijo }}
+            <span class="input-group-text">%</span>
+        </div>
+    </div>
+</div>
+
+<div class="col-12 mt-2" id="div_tramos" style="display: none;">
+    <div class="card border bg-white">
+        <div class="card-header py-1 px-2 bg-light small fw-bold">Definir Tramos</div>
+        <div class="card-body p-2">
+            
+            {{ tramo_formset.management_form }}
+            
+            <table class="table table-sm table-borderless mb-0 small" id="tablaTramos">
+                <thead class="text-muted">
+                    <tr>
+                        <th>Desde</th>
+                        <th>Hasta</th>
+                        <th>%</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tramosBody">
+                    {% for t_form in tramo_formset %}
+                        <tr class="tramo-row">
+                            {{ t_form.id }}
+                            <td>{{ t_form.monto_minimo }}</td>
+                            <td>{{ t_form.monto_maximo }}</td>
+                            <td>{{ t_form.porcentaje }}</td>
+                            <td class="text-center">
+                                {% if tramo_formset.can_delete %}
+                                    <span class="d-none">{{ t_form.DELETE }}</span>
+                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 btn-delete-row">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 mt-2" id="add-tramo">
+                <i class="fa-solid fa-plus-circle me-1"></i>Agregar tramo
+            </button>
+        </div>
+    </div>
+</div>
+
+<table style="display:none;">
+    <tbody id="empty-form">
+        <tr class="tramo-row">
+            {{ tramo_formset.empty_form.id }}
+            <td>{{ tramo_formset.empty_form.monto_minimo }}</td>
+            <td>{{ tramo_formset.empty_form.monto_maximo }}</td>
+            <td>{{ tramo_formset.empty_form.porcentaje }}</td>
+            <td class="text-center">
+                <span class="d-none">{{ tramo_formset.empty_form.DELETE }}</span>
+                <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 btn-delete-row">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>

@@ -1,3 +1,121 @@
-Empreas 
-los errores no se van quedan ahi en la pantalla
+ 
 
+Ajustar comisiones segun tipos de financiacion
+    Tenemos comisiones escalonadas
+    Comisiones por tipo (segun financiera)
+    Comisiones para Cedidos
+los errores no se van quedan ahi en la pantalla
+configurar archivos de media
+
+
+
+
+CRM
+
+Cargar pago directamente al lado del registro
+Formulario de carga de pago dentro de un modal para mejorar el UX/UI
+El formulario muestra el nombre y apellido y autocomplete la fecha de hoy con opcion de cambiarla
+El detalle del cliente permite editar los pagos ya cargados
+Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
+Cargar de reporte:
+    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
+    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
+
+    Detalles de las apss
+
+
+1. CRM:
+
+Pestaña Listados CRM: 
+
+Agentes solo se muestran los que tiene casos asignados
+En el caso de ser Admin tenemo las opciones de crear, editar o desacartivar un CRM
+
+Una vez que hacemos click en el CRM nos abre el listado de clientes en impago
+
+Pestaña con la información de la empresa (traemos los datos de clientes)
+Cursos, contacto de incidencias, datos bancarios
+Vamos a tener dos pestañas (impagos y cedidos) Cedido a mano solo con los Squra manual (agregar en tipo)
+
+Pestaña REG_Recobros:
+Muestra solo el listado de recobros
+
+Pestaña REG_Impagos:
+Muestra el listado de las personas en impago
+
+Pestaña TODOS LOS REGISTROS
+Listado total de todos los impagos (pagados o no)
+
+Funcionalidades
+
+Listados CRM:
+
+Admin: nos va a mostrar el listado completo con los agentes asignados a cada caso 
+Agente: solo va a mostrar el listado de personas que tiene asignados
+
+Vamos a tener los campos: 
+		
+ID del deudor
+Nombre y Apellido
+Teléfono (ver la opción de al apretar el numero directamente abrir netelip o mercateli)
+Mail (opcional)
+DNI (opcional)
+Tipo (vamos a tener un listado de los modos de financiación) 
+Coste total 
+Cuotas
+Fecha de compra
+Fecha de impago
+Estado (listado de todos los estados)
+Causa de impago (listado con causas básicas)
+Tiempo en impago (va a calcular la cantidad de tiempo en impago)
+Deuda (va calcular la deuda actual) (Si esta pago por completo se coloca el estado (HA PAGADO) y se coloca en verde 
+Cobrado (colola el total pagado según lo registro de cobros) 
+Comentarios (ver la mejor forma de agregar comentarios)
+
+Tics para llamadas y msj:
+w1/ll1 hasta w5/ll5
+BE - Buro enviado (Trae la información desde Asnef)
+BR - Buro Recibido  (Trae la información desde Asnef)
+ASNEF  (Trae la información desde Asnef)
+LLS (llamada de seguimiento para salir de ASNEF)
+Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
+Fecha de ultimo msj nos va a mostrar la ultima interaccion con ese agente
+
+¿Cuándo pagará? (si el estado es pagara no nos va a dejar guardar los cambios si no establecemos la fecha de pago
+
+Botón de Nuevo pago nos va a abrir un pequeño formulario con los siguientes campos:
+Nombre y apellido (listado completo de los nombres del CRM con un buscador arriba de todo podremos seleccionarlo de la lista o buscandolo)
+Auto completa el teléfono de la persona
+Establecer fecha
+Establecer monto
+Cargar comprobante opcional (solo para transferencias) 
+Cuando registramos el pago se agrega a REG_RECOBROS
+
+
+Al apretar sobre el cliente nos va a abrir una nueva vista del cliente
+
+Datos de contacto y fechas de impago
+Listado de pagos realizados con sus comprobantes
+Veces que ingreso a impago:
+cada vez que un cliente entra en impago guardamos la fecha y contamos la cantidad de veces que estuvo en impago
+listado de comentarios
+Listado de documentación asociada (contratos de cesión, contratos firmados, Buros, Etc)
+ 
+Pestaña REG_Recobros:
+
+Listado total de pagos listado por fechas.
+Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
+Filtros en la parte superior para filtrar por todo tipo.
+Buscador por nombre/ id/ teléfono
+
+Pestaña REG_Impagos:
+
+Listado total de pagos listado por fechas.
+Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
+Filtros en la parte superior para filtrar por todo tipo.
+Buscador por nombre/ id/ teléfono
+
+Pestaña TODOS LOS REGISTROS:
+
+Listado de todos los registros con todos los campos del CRM pero agregando la empresa 
+Buscador por nombre/ id /teléfono

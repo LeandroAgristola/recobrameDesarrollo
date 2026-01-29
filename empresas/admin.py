@@ -1,34 +1,39 @@
 from django.contrib import admin
-from .models import Empresa, TramoComision
+from .models import Empresa, EsquemaComision, TramoComision
 
-# Esto permite agregar tramos de comisión dentro de la misma pantalla de la Empresa
+# 1. Configuración de Tramos (Se verán dentro del Esquema)
 class TramoInline(admin.TabularInline):
     model = TramoComision
     extra = 1
 
+# 2. Configuración de Esquemas (Se verán dentro de la Empresa)
+class EsquemaComisionInline(admin.StackedInline):
+    model = EsquemaComision
+    extra = 0
+    show_change_link = True
+    inlines = [TramoInline] # Nota: Django nativo no soporta inlines anidados fácilmente, 
+                            # pero dejamos el link para editarlo aparte.
+
+# 3. Admin Principal de EMPRESA
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'tipo_comision', 'porcentaje_unico', 'cif_nif', 'is_active')
-    list_filter = ('tipo_comision', 'is_active')
-    search_fields = ('nombre', 'razon_social')
+    # Quitamos 'tipo_comision' y 'porcentaje_unico' que ya no existen
+    list_display = ('nombre', 'razon_social', 'cif_nif', 'fecha_alta', 'is_active')
     
-    # Aquí definimos que los Tramos aparezcan dentro de la ficha
+    # Quitamos el filtro viejo
+    list_filter = ('is_active',)
+    
+    search_fields = ('nombre', 'razon_social', 'cif_nif', 'email_contacto')
+    
+    # Agregamos los esquemas como inline para verlos aquí
+    inlines = [EsquemaComisionInline]
+
+# 4. Admin de ESQUEMAS (Para poder editarlos con sus tramos)
+@admin.register(EsquemaComision)
+class EsquemaComisionAdmin(admin.ModelAdmin):
+    list_display = ('empresa', 'tipo_caso', 'tipo_producto', 'modalidad')
+    list_filter = ('tipo_caso', 'modalidad')
+    search_fields = ('empresa__nombre',)
+    
+    # Aquí sí podemos meter los tramos
     inlines = [TramoInline]
-    
-    # Organizar los campos visualmente en el admin para que se vea ordenado
-    fieldsets = (
-        ('Datos Identificativos', {
-            'fields': ('nombre', 'razon_social', 'cif_nif')
-        }),
-        ('Datos Operativos', {
-            'fields': ('contacto_incidencias', 'email_incidencias', 'datos_bancarios')
-        }),
-        ('Documentación Legal', {
-            'fields': ('contrato_colaboracion', 'contrato_cesion'),
-            'description': 'Subir aquí los contratos firmados.'
-        }),
-        ('Configuración Económica', {
-            'fields': ('tipo_comision', 'porcentaje_unico'),
-            'description': 'Si seleccionas "Por Tramos", configura la tabla inferior. Si es "Fijo", usa el campo % Único.'
-        }),
-    )
