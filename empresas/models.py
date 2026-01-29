@@ -8,7 +8,7 @@ OPCIONES_IMPAGOS = [
     ('SEQURA_HOTMART', 'SeQura Hotmart'),
     ('SEQURA_MANUAL', 'SeQura Manual'),
     ('SEQURA_COPECART', 'SeQura Copecart'),
-    ('SEQURA_PASS', 'SeQura Pass'), # Nuevo
+    ('SEQURA_PASS', 'SeQura Pass'),
     ('AUTO_STRIPE', 'Auto Stripe'),
     ('AUTOFINANCIACION', 'Autofinanciación'),
 ]

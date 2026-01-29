@@ -1,11 +1,7 @@
  
 
-Ajustar comisiones segun tipos de financiacion
-    Tenemos comisiones escalonadas
-    Comisiones por tipo (segun financiera)
-    Comisiones para Cedidos
-los errores no se van quedan ahi en la pantalla
 configurar archivos de media
+mover todos los js a la carpeta js y referenciarlos
 
 
 

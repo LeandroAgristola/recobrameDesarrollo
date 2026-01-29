@@ -54,41 +54,26 @@
     </div>
 
     <div class="toast-container">
-        {% if messages %}
-            {% for message in messages %}
-            <div class="toast align-items-center border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body d-flex align-items-center">
-                        {% if message.tags == 'success' %}
-                            <i class="fa-solid fa-circle-check text-success fs-5 me-2"></i>
-                        {% elif message.tags == 'error' %}
-                            <i class="fa-solid fa-circle-xmark text-danger fs-5 me-2"></i>
-                        {% elif message.tags == 'warning' %}
-                            <i class="fa-solid fa-triangle-exclamation text-warning fs-5 me-2"></i>
-                        {% else %}
-                            <i class="fa-solid fa-circle-info text-primary fs-5 me-2"></i>
-                        {% endif %}
-                        <span class="fw-medium">{{ message }}</span>
-                    </div>
-                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
+        {% for message in messages %}
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="2000">
+            <div class="toast-header border-0 bg-white">
+                <i class="fa-solid 
+                    {% if message.tags == 'success' %}fa-circle-check text-success
+                    {% elif message.tags == 'error' %}fa-circle-xmark text-danger
+                    {% else %}fa-circle-info text-info{% endif %} me-2"></i>
+                <strong class="me-auto text-dark">Sistema</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-            {% endfor %}
-        {% endif %}
+            <div class="toast-body pt-0">
+                {{ message }}
+            </div>
+            <div class="toast-progress"></div>
+        </div>
+        {% endfor %}
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-            var toastList = toastElList.map(function(toastEl) {
-                // Se muestran y desaparecen solos a los 4 segundos
-                return new bootstrap.Toast(toastEl, { autohide: true, delay: 4000 }).show();
-            });
-        });
-    </script>
+    <script src="{% static 'js/notificaciones-toast.js' %}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

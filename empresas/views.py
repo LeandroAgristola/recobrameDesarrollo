@@ -135,8 +135,8 @@ def eliminar_empresa(request, empresa_id):
 def detalle_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     
-    # --- CORRECCIÓN: Usamos 'esquemas' en lugar de 'tramos' ---
-    esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
+    
+    esquemas = empresa.esquemas.all().prefetch_related('tramos').order_by('tipo_caso', 'tipo_producto')
     
     # Procesamos la lista de impagos para mostrar las etiquetas (Badges)
     lista_impagos = []
@@ -147,9 +147,8 @@ def detalle_empresa(request, empresa_id):
 
     return render(request, 'empresas/detalle_empresa.html', {
         'empresa': empresa,
-        'esquemas': esquemas,      # Pasamos los esquemas al template
+        'esquemas': esquemas,
         'lista_impagos': lista_impagos,
-        'active_tab': 'general'
     })
 
 @login_required

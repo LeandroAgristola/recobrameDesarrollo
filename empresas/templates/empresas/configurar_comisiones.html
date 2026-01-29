@@ -2,12 +2,12 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="app-card p-4 mx-auto" style="max-width: 1400px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <div id="formEmpresa" style="max-width: 1400px; padding: 40px;">
         
-        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 border-secondary">
             <div>
-                <h3 class="mb-1 text-primary">Configuración de Comisiones</h3>
-                <p class="text-muted mb-0">Empresa: <strong>{{ empresa.nombre }}</strong></p>
+                <h3 class="mb-1" style="color: var(--color-primary);">Configuración de Comisiones</h3>
+                <p class="text-muted mb-0 fst-italic">Empresa: <strong>{{ empresa.nombre }}</strong></p>
             </div>
             
             <div class="d-flex gap-2">
@@ -16,7 +16,7 @@
                         <i class="fa-solid fa-triangle-exclamation me-2"></i>Finalizar (Pendiente)
                     </button>
                 {% else %}
-                    <a href="{% url 'empresas:detalle_empresa' empresa.id %}" class="btn btn-success fw-bold px-4 shadow-sm">
+                    <a href="{% url 'empresas:detalle_empresa' empresa.id %}" class="btn btn-success px-5 py-2 fw-bold" >
                         <i class="fa-solid fa-check me-2"></i>Finalizar Configuración
                     </a>
                 {% endif %}
@@ -24,9 +24,9 @@
         </div>
 
         {% if faltantes %}
-        <div class="alert alert-danger shadow-sm mb-4 border-start border-4 border-danger">
-            <h6 class="fw-bold mb-2"><i class="fa-solid fa-circle-exclamation me-2"></i>Configuración Requerida</h6>
-            <p class="mb-1 small">Has activado los siguientes productos pero aún no tienen una regla de comisión definida:</p>
+        <div class="alert alert-danger shadow-sm mb-4 border-start border-4 border-danger bg-white">
+            <h6 class="fw-bold mb-2 text-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>Configuración Requerida</h6>
+            <p class="mb-1 small text-dark">Has activado los siguientes productos pero aún no tienen una regla definida:</p>
             <div class="d-flex flex-wrap gap-2 mt-2">
                 {% for item in faltantes %}
                     <span class="badge bg-danger px-3 py-2">{{ item }}</span>
@@ -37,8 +37,8 @@
 
         <div class="row g-4">
             <div class="col-lg-5">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-primary text-white py-3">
+                <div class="card border-0 shadow-sm bg-white" style="border-radius: 10px;">
+                    <div class="card-header text-white py-3" style="background-color: var(--color-primary); border-radius: 10px 10px 0 0;">
                         <h5 class="mb-0 fs-6 fw-bold"><i class="fa-solid fa-plus-circle me-2"></i>Nueva Regla de Comisión</h5>
                     </div>
                     <div class="card-body p-4">
@@ -47,7 +47,7 @@
                             
                             {% include 'empresas/includes/campos_esquema.html' %}
 
-                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 mt-4 shadow-sm">
+                            <button type="submit" class="btn w-100 fw-bold py-2 mt-4 shadow-sm text-white" style="background-color: var(--color-primary);">
                                 <i class="fa-solid fa-save me-2"></i>Guardar Regla de Comisión
                             </button>
                         </form>
@@ -56,12 +56,12 @@
             </div>
 
             <div class="col-lg-7">
-                <h5 class="mb-3 text-secondary border-bottom pb-2">Reglas Configuradas</h5>
+                <h5 class="mb-3 border-bottom pb-2" style="color: var(--color-primary);">Reglas Configuradas</h5>
                 
                 {% if esquemas %}
-                    <div class="table-responsive border rounded bg-white shadow-sm">
+                    <div class="table-responsive border-0 rounded bg-white shadow-sm">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light text-secondary small text-uppercase">
+                            <thead class="text-secondary small text-uppercase" style="background-color: #f8f9fa;">
                                 <tr>
                                     <th class="ps-3 py-3">Aplicación</th>
                                     <th class="py-3">Detalle / Tipo</th>
@@ -80,7 +80,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="fw-bold text-dark small">
+                                        <div class="fw-bold small" style="color: var(--color-primary);">
                                             {% if esquema.tipo_producto %}
                                                 {{ esquema.get_tipo_producto_display }}
                                             {% else %}
@@ -91,17 +91,17 @@
                                             Modalidad: {{ esquema.get_modalidad_display }}
                                         </div>
                                     </td>
-                                    <td class="text-end fw-bold text-primary fs-5">
+                                    <td class="text-end fw-bold fs-5" style="color: var(--color-primary);">
                                         {% if esquema.modalidad == 'FIJO' %}
                                             {{ esquema.porcentaje_fijo }}%
                                         {% else %}
-                                            <span class="badge bg-info bg-opacity-10 text-info border border-info fw-normal fs-6">Escalonada</span>
+                                            <span class="badge border fw-normal fs-6" style="background-color: var(--color-formularios); color: var(--color-primary); border-color: var(--color-primary) !important;">Escalonada</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-end pe-3">
                                         <div class="btn-group shadow-sm">
                                             <a href="{% url 'empresas:editar_esquema' esquema.id %}" class="btn btn-sm btn-light border" title="Editar regla y tramos">
-                                                <i class="fa-solid fa-pen text-primary"></i>
+                                                <i class="fa-solid fa-pen" style="color: var(--color-primary);"></i>
                                             </a>
                                             <a href="{% url 'empresas:eliminar_esquema' esquema.id %}" class="btn btn-sm btn-light border" title="Eliminar" onclick="return confirm('¿Seguro que deseas eliminar esta regla?');">
                                                 <i class="fa-solid fa-trash text-danger"></i>
@@ -114,8 +114,8 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="text-center py-5 border border-2 border-dashed rounded bg-light">
-                        <i class="fa-solid fa-file-invoice-dollar fa-3x text-muted mb-3 opacity-25"></i>
+                    <div class="text-center py-5 border border-2 border-dashed rounded bg-white opacity-75">
+                        <i class="fa-solid fa-file-invoice-dollar fa-3x mb-3 opacity-25" style="color: var(--color-primary);"></i>
                         <h6 class="text-muted">Aún no has definido reglas económicas</h6>
                     </div>
                 {% endif %}
@@ -127,17 +127,17 @@
 <div class="modal fade" id="modalIncompleto" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-warning text-dark border-0">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Faltan Productos</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header text-white border-0" style="background-color: var(--color-primary);">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2" style="color: var(--color-accent);"></i>Faltan Productos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body p-4 bg-light">
                 <p>Hay productos seleccionados que aún no tienen una comisión asignada.</p>
                 <p class="mb-0 fw-bold">¿Deseas finalizar de todos modos?</p>
             </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Seguir Editando</button>
-                <a href="{% url 'empresas:detalle_empresa' empresa.id %}" class="btn btn-warning fw-bold">Finalizar igualmente</a>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Seguir Editando</button>
+                <a href="{% url 'empresas:detalle_empresa' empresa.id %}" class="btn fw-bold" style="background-color: var(--color-accent); color: var(--color-primary);">Finalizar igualmente</a>
             </div>
         </div>
     </div>

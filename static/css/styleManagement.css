@@ -14,12 +14,40 @@ Paleta de colores principal {
 
 a { text-decoration: none; }
 
-.form-control:focus { 
+.form-control:focus,
+.form-select:focus {
     border-color: #49505780 !important;
     box-shadow: 0 0 0 .2rem #49505780 !important;
 }
 
 label { font-weight: 500; color: #0a2c46; }
+
+
+/* === NOTIFICACIONES TOAST (Versión Final Sincronizada) === */
+
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1060;
+}
+
+.toast {
+    position: relative;
+    overflow: hidden; /* Necesario para que la barra no se escape de las esquinas redondeadas */
+    border: none;
+    background-color: #ffffff !important;
+    min-width: 320px;
+    /* Usamos una sombra similar a la de tus formularios */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+
+/* Estilo para los iconos dentro del Toast */
+.toast-header i {
+    font-size: 1.1rem;
+}
 
 /* === SIDEBAR (Tu código original) === */
 .sidebar {
@@ -143,7 +171,7 @@ label { font-weight: 500; color: #0a2c46; }
 
 /* === TUS ESTILOS DE LISTADOS Y FORMS (Restaurados) === */
 #formEmpresa {
-    background-color: #0a2c461c;
+    background-color: #00000002;
     width: 100%;
     max-width: 900px;
     border-radius: 10px;
@@ -160,6 +188,8 @@ label { font-weight: 500; color: #0a2c46; }
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   
 }
+
+
 
 /* === BUSCADOR (Corregido para tabs) === */
 .search-box {
