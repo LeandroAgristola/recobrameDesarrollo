@@ -7,16 +7,8 @@ mover todos los js a la carpeta js y referenciarlos
 
 CRM
 
-Cargar pago directamente al lado del registro
-Formulario de carga de pago dentro de un modal para mejorar el UX/UI
-El formulario muestra el nombre y apellido y autocomplete la fecha de hoy con opcion de cambiarla
-El detalle del cliente permite editar los pagos ya cargados
-Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
-Cargar de reporte:
-    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
-    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
 
-    Detalles de las apss
+
 
 
 1. CRM:
@@ -52,7 +44,7 @@ Vamos a tener los campos:
 		
 ID del deudor
 Nombre y Apellido
-Teléfono (ver la opción de al apretar el numero directamente abrir netelip o mercateli)
+Teléfono 
 Mail (opcional)
 DNI (opcional)
 Tipo (vamos a tener un listado de los modos de financiación) 
@@ -63,7 +55,7 @@ Fecha de impago
 Estado (listado de todos los estados)
 Causa de impago (listado con causas básicas)
 Tiempo en impago (va a calcular la cantidad de tiempo en impago)
-Deuda (va calcular la deuda actual) (Si esta pago por completo se coloca el estado (HA PAGADO) y se coloca en verde 
+Deuda (va calcular la deuda actual)
 Cobrado (colola el total pagado según lo registro de cobros) 
 Comentarios (ver la mejor forma de agregar comentarios)
 
@@ -73,6 +65,7 @@ BE - Buro enviado (Trae la información desde Asnef)
 BR - Buro Recibido  (Trae la información desde Asnef)
 ASNEF  (Trae la información desde Asnef)
 LLS (llamada de seguimiento para salir de ASNEF)
+
 Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
 Fecha de ultimo msj nos va a mostrar la ultima interaccion con ese agente
 
@@ -85,6 +78,16 @@ Establecer fecha
 Establecer monto
 Cargar comprobante opcional (solo para transferencias) 
 Cuando registramos el pago se agrega a REG_RECOBROS
+
+Cargar pago directamente al lado del registro
+Formulario de carga de pago dentro de un modal para mejorar el UX/UI
+El formulario muestra el nombre y apellido y autocomplete la fecha de hoy con opcion de cambiarla
+El detalle del cliente permite editar los pagos ya cargados
+Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
+Cargar de reporte:
+    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
+    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
+
 
 
 Al apretar sobre el cliente nos va a abrir una nueva vista del cliente
@@ -103,14 +106,8 @@ Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
 Filtros en la parte superior para filtrar por todo tipo.
 Buscador por nombre/ id/ teléfono
 
-Pestaña REG_Impagos:
-
-Listado total de pagos listado por fechas.
-Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
-Filtros en la parte superior para filtrar por todo tipo.
-Buscador por nombre/ id/ teléfono
-
-Pestaña TODOS LOS REGISTROS:
-
-Listado de todos los registros con todos los campos del CRM pero agregando la empresa 
-Buscador por nombre/ id /teléfono
+Al eliminar un registro un modal nos va a pedir un comentario de porque lo eliminamos, que se agrega a los comentarios base 
+Detalles en las tarjetas: 
+cantidad de acuerdos en Fecha
+cantidad de acuerdos vencidos
+En un circulo rojo arriba secuencias desactualizadas 

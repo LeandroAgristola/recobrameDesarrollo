@@ -29,11 +29,15 @@
                 <a href="{% url 'empresas:lista_empresas' %}" class="nav-link">
                     <i class="fa-solid fa-building"></i> <span>Empresas</span>
                 </a>
-                <a href="#" class="nav-link">
-                    <i class="fa-solid fa-folder-open"></i> <span>Cartera Deuda</span>
+                <a class="nav-link {% if 'crm' in request.path %}active{% endif %}" href="{% url 'crm:lista_crm' %}">
+                    <i class="fa-solid fa-headset me-2"></i>
+                    <span>Gestión CRM</span>
                 </a>
                 <a href="#" class="nav-link">
-                    <i class="fa-solid fa-money-bill-wave"></i> <span>Recobros</span>
+                    <i class="fa-solid fa-folder-open"></i> <span>ASNEF/BURO</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="fa-solid fa-money-bill-wave"></i> <span>Contable</span>
                 </a>
                 <a href="#" class="nav-link">
                     <i class="fa-solid fa-user-tie"></i> <span>Staff</span>
