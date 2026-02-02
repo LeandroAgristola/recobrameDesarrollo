@@ -59,19 +59,44 @@ def crear_empresa(request):
 @login_required
 def editar_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
+    # Guardamos los métodos antes de editar para comparar
+    metodos_antes = set(empresa.tipos_impagos.split(', ')) if empresa.tipos_impagos else set()
     
     if request.method == 'POST':
-        # Ya no usamos formsets aquí, solo el formulario principal
         form = EmpresaForm(request.POST, request.FILES, instance=empresa)
         
         if form.is_valid():
-            form.save()
-            messages.success(request, "Datos de la empresa actualizados correctamente.")
-            return redirect('empresas:detalle_empresa', empresa_id=empresa.id)
+            # 1. Guardamos la empresa
+            empresa_editada = form.save()
+            
+            # 2. LÓGICA DE SINCRONIZACIÓN (Punto 2)
+            metodos_ahora = set(empresa_editada.tipos_impagos.split(', ')) if empresa_editada.tipos_impagos else set()
+            
+            # Identificamos qué métodos se quitaron
+            metodos_eliminados = metodos_antes - metodos_ahora
+            
+            if metodos_eliminados:
+                # Borramos los esquemas de comisión de los productos que ya no están
+                EsquemaComision.objects.filter(
+                    empresa=empresa_editada,
+                    tipo_caso='IMPAGO',
+                    tipo_producto__in=metodos_eliminados
+                ).delete()
+                messages.warning(request, f"Se han eliminado las reglas de: {', '.join(metodos_eliminados)}")
+
+            # 3. LÓGICA DE REDIRECCIÓN (Punto 1)
+            # Si hay métodos nuevos, vamos a configurar. Si no, al detalle.
+            metodos_nuevos = metodos_ahora - metodos_antes
+            
+            if metodos_nuevos:
+                messages.info(request, "Has añadido nuevos métodos. Por favor, configura sus comisiones.")
+                return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
+            else:
+                messages.success(request, "Datos de la empresa actualizados.")
+                return redirect('empresas:detalle_empresa', empresa_id=empresa.id)
     else:
         form = EmpresaForm(instance=empresa)
     
-    # Reutilizamos el template form_empresa.html que ya arreglamos
     return render(request, 'empresas/form_empresa.html', {
         'form': form, 
         'titulo': f'Editar {empresa.nombre}'
@@ -156,14 +181,25 @@ def configurar_comisiones(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
     
+    # 1. Analizamos qué seleccionó la empresa
     seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
-    configurados = empresa.esquemas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
+
+    # 2. Obtenemos lo que ya está configurado
+    configurados_impago = empresa.esquemas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
+    tiene_cedido = empresa.esquemas.filter(tipo_caso='CEDIDO').exists()
+
     faltantes = []
     nombres_dict = dict(OPCIONES_IMPAGOS)
-    
+
+    # Check de Impagos (Aplica a todos los seleccionados)
     for codigo in seleccionados:
-        if codigo not in configurados:
+        if codigo not in configurados_impago:
             faltantes.append(nombres_dict.get(codigo, codigo))
+
+    # Check de Cedidos: SOLO si existe SeQura Manual y falta la regla
+    # (Ajusta 'SEQURA_MANUAL' por el código exacto que uses en tus constantes)
+    if 'SEQURA_MANUAL' in seleccionados and not tiene_cedido:
+        faltantes.append("Comisión por Cesión (Requerido para SeQura Manual)")
 
     if request.method == 'POST':
         form = EsquemaComisionForm(request.POST, empresa=empresa)
