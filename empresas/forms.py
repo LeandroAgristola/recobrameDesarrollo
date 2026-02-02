@@ -56,6 +56,7 @@ class EsquemaComisionForm(forms.ModelForm):
             'tipo_caso': forms.Select(attrs={'class': 'form-select'}),
             'tipo_producto': forms.Select(attrs={'class': 'form-select'}),
             'modalidad': forms.Select(attrs={'class': 'form-select', 'id': 'id_modalidad'}),
+            # QUITAR EL REQUIRED AQUÍ
             'porcentaje_fijo': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '%'}),
         }
 
@@ -89,6 +90,7 @@ TramoFormSet = inlineformset_factory(
     fields=['monto_minimo', 'monto_maximo', 'porcentaje'],
     extra=1, can_delete=True,
     widgets={
+        # QUITAR EL REQUIRED AQUÍ TAMBIÉN
         'monto_minimo': forms.NumberInput(attrs={'class': 'form-control form-control-sm'}),
         'monto_maximo': forms.NumberInput(attrs={'class': 'form-control form-control-sm'}),
         'porcentaje': forms.NumberInput(attrs={'class': 'form-control form-control-sm'}),

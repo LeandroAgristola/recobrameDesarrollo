@@ -44,10 +44,8 @@
                     <div class="card-body p-4">
                         <form method="post" id="formRegla">
                             {% csrf_token %}
-                            
                             {% include 'empresas/includes/campos_esquema.html' %}
-
-                            <button type="submit" class="btn w-100 fw-bold py-2 mt-4 shadow-sm text-white" style="background-color: var(--color-primary);">
+                            <button type="submit" class="btn btn-success w-100 fw-bold py-2 mt-4 shadow-sm text-white">
                                 <i class="fa-solid fa-save me-2"></i>Guardar Regla de Comisión
                             </button>
                         </form>
@@ -57,7 +55,6 @@
 
             <div class="col-lg-7">
                 <h5 class="mb-3 border-bottom pb-2" style="color: var(--color-primary);">Reglas Configuradas</h5>
-                
                 {% if esquemas %}
                     <div class="table-responsive border-0 rounded bg-white shadow-sm">
                         <table class="table table-hover align-middle mb-0">
@@ -100,12 +97,18 @@
                                     </td>
                                     <td class="text-end pe-3">
                                         <div class="btn-group shadow-sm">
-                                            <a href="{% url 'empresas:editar_esquema' esquema.id %}" class="btn btn-sm btn-light border" title="Editar regla y tramos">
+                                            <a href="{% url 'empresas:editar_esquema' esquema.id %}" class="btn btn-sm btn-light border" title="Editar">
                                                 <i class="fa-solid fa-pen" style="color: var(--color-primary);"></i>
                                             </a>
-                                            <a href="{% url 'empresas:eliminar_esquema' esquema.id %}" class="btn btn-sm btn-light border" title="Eliminar" onclick="return confirm('¿Seguro que deseas eliminar esta regla?');">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-light border btn-pre-eliminar" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalEliminarRegla"
+                                                    data-url="{% url 'empresas:eliminar_esquema' esquema.id %}"
+                                                    data-nombre="{% if esquema.tipo_producto %}{{ esquema.get_tipo_producto_display }}{% else %}General{% endif %}"
+                                                    title="Eliminar">
                                                 <i class="fa-solid fa-trash text-danger"></i>
-                                            </a>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -143,6 +146,25 @@
     </div>
 </div>
 
-{% include 'empresas/includes/scripts_esquema.html' %}
+<div class="modal fade" id="modalEliminarRegla" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-trash-can me-2"></i>¿Eliminar Regla?</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="mb-1">Estás a punto de eliminar la regla para:</p>
+                <h5 id="nombreReglaEliminar" class="fw-bold text-danger mb-3"></h5>
+                <p class="text-muted small">Esta acción no se puede deshacer y afectará a los cálculos de comisiones futuros.</p>
+            </div>
+            <div class="modal-footer border-0 bg-light justify-content-center">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                <a id="btnConfirmarEliminar" href="#" class="btn btn-danger px-4 fw-bold">Eliminar</a>
+            </div>
+        </div>
+    </div>
+</div>
 
+{% include 'empresas/includes/scripts_esquema.html' %}
 {% endblock %}

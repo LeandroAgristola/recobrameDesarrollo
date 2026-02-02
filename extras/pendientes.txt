@@ -1,5 +1,6 @@
  
-
+Al agregar un nuevo metodo de pago redirigir a la vista de configuracion de comisiones
+Advertencia de requerir comision siempre para los cedidos
 configurar archivos de media
 mover todos los js a la carpeta js y referenciarlos
 

@@ -156,26 +156,14 @@ def configurar_comisiones(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
     
-    # --- LÓGICA DE VALIDACIÓN ---
-    # 1. ¿Qué productos seleccionó el usuario en el paso anterior?
-    # Convertimos "A, B" -> ['A', 'B']
     seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
-    
-    # 2. ¿Qué productos YA tienen regla configurada?
-    # Filtramos solo los de IMPAGO (ya que Cedidos no usan producto)
     configurados = empresa.esquemas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
-    
-    # 3. ¿Cuáles faltan?
     faltantes = []
-    # Convertimos OPCIONES_IMPAGOS a diccionario para obtener el nombre bonito
     nombres_dict = dict(OPCIONES_IMPAGOS)
     
     for codigo in seleccionados:
         if codigo not in configurados:
-            # Agregamos el nombre legible (ej: "SeQura Copecart") a la lista
-            nombre_real = nombres_dict.get(codigo, codigo)
-            faltantes.append(nombre_real)
-    # ----------------------------
+            faltantes.append(nombres_dict.get(codigo, codigo))
 
     if request.method == 'POST':
         form = EsquemaComisionForm(request.POST, empresa=empresa)
@@ -184,22 +172,15 @@ def configurar_comisiones(request, empresa_id):
         if form.is_valid():
             esquema = form.save(commit=False)
             esquema.empresa = empresa
-            
+            esquema.save()
+
             if esquema.modalidad == 'TRAMOS':
+                tramo_formset = TramoFormSet(request.POST, instance=esquema)
                 if tramo_formset.is_valid():
-                    esquema.save()
-                    tramo_formset.instance = esquema
                     tramo_formset.save()
-                    messages.success(request, "Regla escalonada agregada.")
-                    return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
-                else:
-                    messages.error(request, "Error en los tramos.")
-            else:
-                esquema.save()
-                messages.success(request, "Regla fija agregada.")
-                return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
-        else:
-            messages.error(request, "Error al guardar la regla.")
+            
+            messages.success(request, "Regla guardada correctamente.")
+            return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
     else:
         form = EsquemaComisionForm(empresa=empresa)
         tramo_formset = TramoFormSet()
@@ -209,7 +190,7 @@ def configurar_comisiones(request, empresa_id):
         'esquemas': esquemas,
         'form': form,
         'tramo_formset': tramo_formset,
-        'faltantes': faltantes, # <--- PASAMOS LA LISTA AL TEMPLATE
+        'faltantes': faltantes,
     })
 
 @login_required
