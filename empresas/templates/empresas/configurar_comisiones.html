@@ -1,5 +1,7 @@
 {% extends 'management/layout_management.html' %}
 
+{% load static %} 
+
 {% block content %}
 <div class="container-fluid">
     <div id="formEmpresa" style="max-width: 1400px; padding: 40px;">
@@ -166,5 +168,7 @@
     </div>
 </div>
 
-{% include 'empresas/includes/scripts_esquema.html' %}
+    {% block extra_js %}
+        <script src="{% static 'js/empresas/scripts_esquema.js' %}"></script>
+    {% endblock %}
 {% endblock %}

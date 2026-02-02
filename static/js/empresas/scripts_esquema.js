@@ -1,4 +1,3 @@
-<script>
 document.addEventListener('DOMContentLoaded', function() {
     
     // 1. VARIABLES
@@ -118,4 +117,3 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-</script>

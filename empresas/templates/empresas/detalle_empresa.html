@@ -2,289 +2,272 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid">
+    <div class="container-fluid">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center">
-            <div class="bg-white p-3 rounded-circle shadow-sm border me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <i class="fa-solid fa-building text-primary fs-3"></i>
-            </div>
-            <div>
-                <h2 class="mb-0 fw-bold text-dark">{{ empresa.nombre }}</h2>
-                <div class="text-muted small">
-                    <i class="fa-solid fa-file-invoice me-1"></i> {{ empresa.razon_social }}
-                    <span class="mx-2">|</span>
-                    <i class="fa-solid fa-id-card me-1"></i> {{ empresa.cif_nif }}
-                    <span class="mx-2">|</span>
-                    {% if empresa.is_active %}
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success">Activa</span>
-                    {% else %}
-                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Inactiva</span>
-                    {% endif %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <div class="bg-white p-3 rounded-circle shadow-sm border me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <i class="fa-solid fa-building text-primary fs-3"></i>
                 </div>
-            </div>
-        </div>
-
-        <div class="d-flex gap-2">
-            <a href="{% url 'empresas:lista_empresas' %}" class="btn btn-outline-secondary">
-                <i class="fa-solid fa-arrow-left me-2"></i>Volver
-            </a>
-            <a href="{% url 'empresas:editar_empresa' empresa.id %}" class="btn btn-primary">
-                <i class="fa-solid fa-pen me-2"></i>Editar
-            </a>
-        </div>
-    </div>
-
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="app-card h-100 p-3 border-start border-4 border-success shadow-sm">
-                <div class="d-flex justify-content-between align-items-center h-100">
-                    <div>
-                        <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Total Recuperado</small>
-                        <h3 class="mb-0 text-success fw-bold mt-1">{{ empresa.monto_recuperado }} €</h3>
-                        <small class="text-muted">{{ empresa.cantidad_recuperados }} casos cerrados</small>
-                    </div>
-                    <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success ms-2">
-                        <i class="fa-solid fa-sack-dollar fs-3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="app-card h-100 p-3 border-start border-4 border-danger shadow-sm">
-                <div class="d-flex justify-content-between align-items-center h-100">
-                    <div>
-                        <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Deuda en Gestión</small>
-                        <h3 class="mb-0 text-danger fw-bold mt-1">{{ empresa.deuda_actual }} €</h3>
-                        <small class="text-muted">{{ empresa.cantidad_activos }} casos activos</small>
-                    </div>
-                    <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger ms-2">
-                        <i class="fa-solid fa-scale-unbalanced fs-3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="app-card h-100 p-3 border-start border-4 border-primary shadow-sm">
-                <div class="d-flex justify-content-between align-items-center h-100">
-                    <div>
-                        <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Comisiones Cobradas</small>
-                        <h3 class="mb-0 text-primary fw-bold mt-1">{{ empresa.total_comisionado }} €</h3>
-                        <small class="text-muted">Ingresos generados</small>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary ms-2">
-                        <i class="fa-solid fa-file-invoice-dollar fs-3"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <ul class="nav nav-tabs nav-tabs-custom" id="detalleTabs" role="tablist">
-        <li class="nav-item">
-            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">
-                <i class="fa-solid fa-circle-info me-2"></i>Visión General
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="expedientes-tab" data-bs-toggle="tab" data-bs-target="#expedientes" type="button">
-                <i class="fa-solid fa-folder-open me-2"></i>Expedientes
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="facturacion-tab" data-bs-toggle="tab" data-bs-target="#facturacion" type="button">
-                <i class="fa-solid fa-file-invoice-dollar me-2"></i>Facturación
-            </button>
-        </li>
-    </ul>
-
-    <div class="tab-content tab-content-box mt-4" id="detalleTabsContent">
-        
-        <div class="tab-pane fade show active" id="general">
-            
-            <div class="row g-4 mb-4 border-bottom pb-4"> 
-                <div class="col-lg-6">
-                    <h5 class="text-primary mb-3">Información de Contacto</h5>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="small text-muted text-uppercase">Persona de Contacto</label>
-                            <div class="fw-medium text-dark">
-                                <i class="fa-solid fa-user me-2 text-secondary"></i>{{ empresa.persona_contacto|default:"--" }}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small text-muted text-uppercase">Teléfono</label>
-                            <div class="fw-medium text-dark">
-                                <i class="fa-solid fa-phone me-2 text-secondary"></i>{{ empresa.telefono_contacto|default:"--" }}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="small text-muted text-uppercase">Email General</label>
-                            <div class="fw-medium text-dark text-break">
-                                <i class="fa-solid fa-envelope me-2 text-secondary"></i>{{ empresa.email_contacto|default:"--" }}
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="small text-muted text-uppercase">Dirección Fiscal</label>
-                            <div class="fw-medium text-dark">
-                                <i class="fa-solid fa-location-dot me-2 text-secondary"></i>{{ empresa.direccion|default:"--" }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="text-primary mb-0">Configuración de Comisiones</h5>
-                        <a href="{% url 'empresas:configurar_comisiones' empresa.id %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fa-solid fa-gear me-1"></i>Gestionar
-                        </a>
-                    </div>
-
-                    <div class="bg-light border p-3 rounded mb-4">
-                        {% if esquemas %}
-                            <div class="table-responsive">
-                                <table class="table table-sm table-borderless mb-0 small">
-                                    <thead>
-                                        <tr class="text-muted border-bottom">
-                                            <th>Caso</th>
-                                            <th>Producto</th>
-                                            <th class="text-end">Comisión</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for esquema in esquemas %}
-                                        <tr>
-                                            <td>
-                                                {% if esquema.tipo_caso == 'IMPAGO' %}
-                                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2">Impago</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning px-2">Cedido</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <div class="fw-bold">
-                                                {% if esquema.tipo_producto %}
-                                                    {{ esquema.get_tipo_producto_display }}
-                                                {% else %}
-                                                    Todos
-                                                {% endif %}
-                                                </div>
-                                            </td>
-                                            <td class="text-end fw-bold">
-                                                {% if esquema.modalidad == 'FIJO' %}
-                                                    {{ esquema.porcentaje_fijo }}%
-                                                {% else %}
-                                                    <span class="badge border fw-normal tramos-popover" 
-                                                          style="background-color: var(--color-formularios); color: var(--color-primary); cursor: help;"
-                                                          data-bs-toggle="popover" 
-                                                          data-bs-trigger="hover focus"
-                                                          data-bs-html="true"
-                                                          title="Escala de Tramos"
-                                                          data-bs-content="<table class='table table-sm table-borderless mb-0' style='font-size: 0.75rem;'><tbody>{% for tramo in esquema.tramos.all %}<tr><td>{{ tramo.monto_minimo }}€ a {% if tramo.monto_maximo %}{{ tramo.monto_maximo }}€{% else %}∞{% endif %}</td><td class='fw-bold text-primary'>{{ tramo.porcentaje }}%</td></tr>{% endfor %}</tbody></table>">
-                                                        Escalonada <i class="fa-solid fa-circle-info ms-1" style="font-size: 0.7rem;"></i>
-                                                    </span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
+                <div>
+                    <h2 class="mb-0 fw-bold text-dark">{{ empresa.nombre }}</h2>
+                    <div class="text-muted small">
+                        <i class="fa-solid fa-file-invoice me-1"></i> {{ empresa.razon_social }}
+                        <span class="mx-2">|</span>
+                        <i class="fa-solid fa-id-card me-1"></i> {{ empresa.cif_nif }}
+                        <span class="mx-2">|</span>
+                        {% if empresa.is_active %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success">Activa</span>
                         {% else %}
-                            <div class="text-center text-muted py-2">
-                                <i class="fa-solid fa-circle-exclamation me-2"></i>Sin esquemas definidos.
-                            </div>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Inactiva</span>
                         {% endif %}
-                    </div>
-
-                    <h5 class="text-primary border-bottom pb-2 mb-3 mt-4">Tipos de Impagos Gestionados</h5>
-                    <div class="d-flex flex-wrap gap-2">
-                        {% for tag in lista_impagos %}
-                            <span class="badge bg-secondary bg-opacity-75 rounded-pill px-3 py-2 fw-normal">
-                                <i class="fa-solid fa-tag me-1 text-light"></i>
-                                {{ tag }}
-                            </span>
-                        {% empty %}
-                            <span class="text-muted fst-italic">No seleccionado</span>
-                        {% endfor %}
                     </div>
                 </div>
             </div>
 
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <h5 class="text-primary mb-3">Soporte e Incidencias</h5>
-                    <div class="bg-light border p-3 rounded mb-4">
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label class="small text-muted">Contacto Incidencias</label>
-                                <div class="fw-medium">{{ empresa.contacto_incidencias|default:"--" }}</div>
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="small text-muted">Email Incidencias</label>
-                                <div class="text-break"><a href="mailto:{{ empresa.email_incidencias }}">{{ empresa.email_incidencias|default:"--" }}</a></div>
-                            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'empresas:lista_empresas' %}" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Volver
+                </a>
+                <a href="{% url 'empresas:editar_empresa' empresa.id %}" class="btn btn-primary">
+                    <i class="fa-solid fa-pen me-2"></i>Editar
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="app-card h-100 p-3 border-start border-4 border-success shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center h-100">
+                        <div>
+                            <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Total Recuperado</small>
+                            <h3 class="mb-0 text-success fw-bold mt-1">{{ empresa.monto_recuperado }} €</h3>
+                            <small class="text-muted">{{ empresa.cantidad_recuperados }} casos cerrados</small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success ms-2">
+                            <i class="fa-solid fa-sack-dollar fs-3"></i>
                         </div>
                     </div>
-
-                    <h5 class="text-primary mb-3">Documentación Legal</h5>
-                    <div class="d-flex gap-2">
-                        {% if empresa.contrato_colaboracion %}
-                            <a href="{{ empresa.contrato_colaboracion.url }}" target="_blank" class="btn btn-outline-secondary btn-sm w-100">
-                                <i class="fa-solid fa-file-pdf me-2"></i>Contrato Colaboración
-                            </a>
-                        {% endif %}
-                        {% if empresa.contrato_cesion %}
-                            <a href="{{ empresa.contrato_cesion.url }}" target="_blank" class="btn btn-outline-danger btn-sm w-100">
-                                <i class="fa-solid fa-file-pdf me-2"></i>Contrato Cesión
-                            </a>
-                        {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="app-card h-100 p-3 border-start border-4 border-danger shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center h-100">
+                        <div>
+                            <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Deuda en Gestión</small>
+                            <h3 class="mb-0 text-danger fw-bold mt-1">{{ empresa.deuda_actual }} €</h3>
+                            <small class="text-muted">{{ empresa.cantidad_activos }} casos activos</small>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger ms-2">
+                            <i class="fa-solid fa-scale-unbalanced fs-3"></i>
+                        </div>
                     </div>
                 </div>
-
-                <div class="col-lg-6">
-                    <h5 class="text-primary mb-3">Productos / Cursos</h5>
-                    <div class="bg-light p-3 rounded border mb-4" style="min-height: 100px;">
-                        <p class="mb-0 text-break small" style="white-space: pre-line;">{{ empresa.cursos|default:"No hay información de cursos cargada." }}</p>
+            </div>
+            <div class="col-md-4">
+                <div class="app-card h-100 p-3 border-start border-4 border-primary shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center h-100">
+                        <div>
+                            <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">Comisiones Cobradas</small>
+                            <h3 class="mb-0 text-primary fw-bold mt-1">{{ empresa.total_comisionado }} €</h3>
+                            <small class="text-muted">Ingresos generados</small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary ms-2">
+                            <i class="fa-solid fa-file-invoice-dollar fs-3"></i>
+                        </div>
                     </div>
-
-                    {% if empresa.notas %}
-                    <h5 class="text-primary mb-3">Notas Internas</h5>
-                    <div class="alert alert-warning border-0 d-flex">
-                        <i class="fa-solid fa-note-sticky me-3 mt-1"></i>
-                        <div class="small fst-italic">{{ empresa.notas }}</div>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <div class="tab-pane fade" id="expedientes">
-             </div>
-        <div class="tab-pane fade" id="facturacion">
-             </div>
+        <ul class="nav nav-tabs nav-tabs-custom" id="detalleTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button">
+                    <i class="fa-solid fa-circle-info me-2"></i>Visión General
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="expedientes-tab" data-bs-toggle="tab" data-bs-target="#expedientes" type="button">
+                    <i class="fa-solid fa-folder-open me-2"></i>Expedientes
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="facturacion-tab" data-bs-toggle="tab" data-bs-target="#facturacion" type="button">
+                    <i class="fa-solid fa-file-invoice-dollar me-2"></i>Facturación
+                </button>
+            </li>
+        </ul>
 
+        <div class="tab-content tab-content-box mt-4" id="detalleTabsContent">
+            
+            <div class="tab-pane fade show active" id="general">
+                
+                <div class="row g-4 mb-4 border-bottom pb-4"> 
+                    <div class="col-lg-6">
+                        <h5 class="text-primary mb-3">Información de Contacto</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="small text-muted text-uppercase">Persona de Contacto</label>
+                                <div class="fw-medium text-dark">
+                                    <i class="fa-solid fa-user me-2 text-secondary"></i>{{ empresa.persona_contacto|default:"--" }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small text-muted text-uppercase">Teléfono</label>
+                                <div class="fw-medium text-dark">
+                                    <i class="fa-solid fa-phone me-2 text-secondary"></i>{{ empresa.telefono_contacto|default:"--" }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small text-muted text-uppercase">Email General</label>
+                                <div class="fw-medium text-dark text-break">
+                                    <i class="fa-solid fa-envelope me-2 text-secondary"></i>{{ empresa.email_contacto|default:"--" }}
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="small text-muted text-uppercase">Dirección Fiscal</label>
+                                <div class="fw-medium text-dark">
+                                    <i class="fa-solid fa-location-dot me-2 text-secondary"></i>{{ empresa.direccion|default:"--" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-primary mb-0">Configuración de Comisiones</h5>
+                            <a href="{% url 'empresas:configurar_comisiones' empresa.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-gear me-1"></i>Gestionar
+                            </a>
+                        </div>
+
+                        <div class="bg-light border p-3 rounded mb-4">
+                            {% if esquemas %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless mb-0 small">
+                                        <thead>
+                                            <tr class="text-muted border-bottom">
+                                                <th>Caso</th>
+                                                <th>Producto</th>
+                                                <th class="text-end">Comisión</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for esquema in esquemas %}
+                                            <tr>
+                                                <td>
+                                                    {% if esquema.tipo_caso == 'IMPAGO' %}
+                                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2">Impago</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning bg-opacity-10 text-dark border border-warning px-2">Cedido</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold">
+                                                    {% if esquema.tipo_producto %}
+                                                        {{ esquema.get_tipo_producto_display }}
+                                                    {% else %}
+                                                        Todos
+                                                    {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td class="text-end fw-bold">
+                                                    {% if esquema.modalidad == 'FIJO' %}
+                                                        {{ esquema.porcentaje_fijo }}%
+                                                    {% else %}
+                                                        <span class="badge border fw-normal tramos-popover" 
+                                                            style="background-color: var(--color-formularios); color: var(--color-primary); cursor: help;"
+                                                            data-bs-toggle="popover" 
+                                                            data-bs-trigger="hover focus"
+                                                            data-bs-html="true"
+                                                            title="Escala de Tramos"
+                                                            data-bs-content="<table class='table table-sm table-borderless mb-0' style='font-size: 0.75rem;'><tbody>{% for tramo in esquema.tramos.all %}<tr><td>{{ tramo.monto_minimo }}€ a {% if tramo.monto_maximo %}{{ tramo.monto_maximo }}€{% else %}∞{% endif %}</td><td class='fw-bold text-primary'>{{ tramo.porcentaje }}%</td></tr>{% endfor %}</tbody></table>">
+                                                            Escalonada <i class="fa-solid fa-circle-info ms-1" style="font-size: 0.7rem;"></i>
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-2">
+                                    <i class="fa-solid fa-circle-exclamation me-2"></i>Sin esquemas definidos.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <h5 class="text-primary border-bottom pb-2 mb-3 mt-4">Tipos de Impagos Gestionados</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for tag in lista_impagos %}
+                                <span class="badge bg-secondary bg-opacity-75 rounded-pill px-3 py-2 fw-normal">
+                                    <i class="fa-solid fa-tag me-1 text-light"></i>
+                                    {{ tag }}
+                                </span>
+                            {% empty %}
+                                <span class="text-muted fst-italic">No seleccionado</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <h5 class="text-primary mb-3">Soporte e Incidencias</h5>
+                        <div class="bg-light border p-3 rounded mb-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Contacto Incidencias</label>
+                                    <div class="fw-medium">{{ empresa.contacto_incidencias|default:"--" }}</div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Email Incidencias</label>
+                                    <div class="text-break"><a href="mailto:{{ empresa.email_incidencias }}">{{ empresa.email_incidencias|default:"--" }}</a></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="text-primary mb-3">Documentación Legal</h5>
+                        <div class="d-flex gap-2">
+                            {% if empresa.contrato_colaboracion %}
+                                <a href="{{ empresa.contrato_colaboracion.url }}" target="_blank" class="btn btn-outline-secondary btn-sm w-100">
+                                    <i class="fa-solid fa-file-pdf me-2"></i>Contrato Colaboración
+                                </a>
+                            {% endif %}
+                            {% if empresa.contrato_cesion %}
+                                <a href="{{ empresa.contrato_cesion.url }}" target="_blank" class="btn btn-outline-danger btn-sm w-100">
+                                    <i class="fa-solid fa-file-pdf me-2"></i>Contrato Cesión
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <h5 class="text-primary mb-3">Productos / Cursos</h5>
+                        <div class="bg-light p-3 rounded border mb-4" style="min-height: 100px;">
+                            <p class="mb-0 text-break small" style="white-space: pre-line;">{{ empresa.cursos|default:"No hay información de cursos cargada." }}</p>
+                        </div>
+
+                        {% if empresa.notas %}
+                        <h5 class="text-primary mb-3">Notas Internas</h5>
+                        <div class="alert alert-warning border-0 d-flex">
+                            <i class="fa-solid fa-note-sticky me-3 mt-1"></i>
+                            <div class="small fst-italic">{{ empresa.notas }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="expedientes">
+                </div>
+            <div class="tab-pane fade" id="facturacion">
+                </div>
+
+        </div>
     </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // 1. Ampliar la lista permitida de etiquetas para el Popover
-    var myDefaultAllowList = bootstrap.Tooltip.Default.allowList;
-    myDefaultAllowList.table = [];
-    myDefaultAllowList.thead = [];
-    myDefaultAllowList.tbody = [];
-    myDefaultAllowList.tr = [];
-    myDefaultAllowList.td = [];
-
-    // 2. Inicializar Popovers
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl, {
-            sanitize: false // Importante para que renderice la tabla
-        })
-    })
-});
-</script>
+    {% block extra_js %}
+    <script src="{% static 'js/empresas/pop-over.js' %}"></script>
+    {% endblock %}
 {% endblock %}
