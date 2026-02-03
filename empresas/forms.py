@@ -64,24 +64,19 @@ class EsquemaComisionForm(forms.ModelForm):
         # Extraemos el argumento 'empresa' si viene
         empresa = kwargs.pop('empresa', None)
         super().__init__(*args, **kwargs)
-        
-        # Lógica de filtrado
+
+        # Inyectamos la opción 'TODOS' y construimos las opciones desde lo contratado por la empresa
         if empresa and empresa.tipos_impagos:
-            # Convertimos el string "A, B, C" en lista ['A', 'B', 'C']
-            codigos_seleccionados = [codigo.strip() for codigo in empresa.tipos_impagos.split(',')]
-            
-            # Filtramos las opciones originales de OPCIONES_IMPAGOS
-            # Solo dejamos las que estén en la lista de seleccionados
-            opciones_filtradas = [
-                (codigo, nombre) 
-                for codigo, nombre in OPCIONES_IMPAGOS 
-                if codigo in codigos_seleccionados
-            ]
-            
-            # Asignamos las nuevas opciones al campo
-            self.fields['tipo_producto'].choices = [('', '---------')] + opciones_filtradas
-        elif empresa:
-            # Si la empresa no tiene tipos seleccionados, vaciamos el select (o dejamos solo vacío)
+            seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
+            nombres_dict = dict(OPCIONES_IMPAGOS)
+
+            opciones = [('TODOS', '--- TODOS LOS PRODUCTOS ---')]
+            for cod in seleccionados:
+                opciones.append((cod, nombres_dict.get(cod, cod)))
+
+            self.fields['tipo_producto'].choices = opciones
+        else:
+            # Si no hay configuración, dejamos el select vacío por defecto
             self.fields['tipo_producto'].choices = [('', '---------')]
             
 # 3. FORMSET TRAMOS

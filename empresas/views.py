@@ -184,22 +184,31 @@ def configurar_comisiones(request, empresa_id):
     # 1. Analizamos qué seleccionó la empresa
     seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
 
-    # 2. Obtenemos lo que ya está configurado
-    configurados_impago = empresa.esquemas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
-    tiene_cedido = empresa.esquemas.filter(tipo_caso='CEDIDO').exists()
+    # 1. Verificamos qué tenemos configurado
+    reglas = empresa.esquemas.all()
 
+    # ¿Hay una regla general para IMPAGOS?
+    tiene_todos_impago = reglas.filter(tipo_caso='IMPAGO', tipo_producto='TODOS').exists()
+    # ¿Hay una regla general para CEDIDOS?
+    tiene_todos_cedido = reglas.filter(tipo_caso='CEDIDO', tipo_producto='TODOS').exists()
+
+    configurados_impago = reglas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
+    configurados_cedido = reglas.filter(tipo_caso='CEDIDO').values_list('tipo_producto', flat=True)
+
+    PRODUCTOS_CON_CESION = ['SEQURA_MANUAL', 'AUTOFINANCIADO']
     faltantes = []
-    nombres_dict = dict(OPCIONES_IMPAGOS)
 
-    # Check de Impagos (Aplica a todos los seleccionados)
-    for codigo in seleccionados:
-        if codigo not in configurados_impago:
-            faltantes.append(nombres_dict.get(codigo, codigo))
+    # Validar Impagos: si existe regla 'TODOS' no es necesario comprobar por producto
+    if not tiene_todos_impago:
+        for prod in seleccionados:
+            if prod not in configurados_impago:
+                faltantes.append(f"Impago: {prod}")
 
-    # Check de Cedidos: SOLO si existe SeQura Manual y falta la regla
-    # (Ajusta 'SEQURA_MANUAL' por el código exacto que uses en tus constantes)
-    if 'SEQURA_MANUAL' in seleccionados and not tiene_cedido:
-        faltantes.append("Comisión por Cesión (Requerido para SeQura Manual)")
+    # Validar Cedidos (Solo para los que lo requieren)
+    if not tiene_todos_cedido:
+        for prod in PRODUCTOS_CON_CESION:
+            if prod in seleccionados and prod not in configurados_cedido:
+                faltantes.append(f"Cesión: {prod}")
 
     if request.method == 'POST':
         form = EsquemaComisionForm(request.POST, empresa=empresa)

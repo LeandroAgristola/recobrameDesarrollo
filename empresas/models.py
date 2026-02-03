@@ -1,10 +1,9 @@
-# empresas/models.py (Reemplaza o actualiza tu archivo)
-
 from django.db import models
 from django.utils import timezone
 
 # Mantenemos tus opciones (Agregamos SEQURA_PASS si no estaba)
 OPCIONES_IMPAGOS = [
+    ('TODOS', '--- TODOS LOS PRODUCTOS ---'),
     ('SEQURA_HOTMART', 'SeQura Hotmart'),
     ('SEQURA_MANUAL', 'SeQura Manual'),
     ('SEQURA_COPECART', 'SeQura Copecart'),
@@ -67,18 +66,15 @@ class Empresa(models.Model):
 
 # === NUEVO MODELO PARA REGLAS DE COMISIÓN ===
 class EsquemaComision(models.Model):
+    CASOS = [('IMPAGO', 'Impago'), ('CEDIDO', 'Cedido')]
+    
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='esquemas')
     
     # 1. ¿A qué aplica esta regla?
-    TIPO_CASO_CHOICES = [('IMPAGO', 'Gestión de Impago'), ('CEDIDO', 'Cartera Cedida')]
-    tipo_caso = models.CharField(max_length=20, choices=TIPO_CASO_CHOICES, default='IMPAGO')
+    tipo_caso = models.CharField(max_length=20, choices=CASOS, default='IMPAGO')
 
-    # Si es NULL, aplica a "Todos los productos". Si tiene valor, solo a ese.
-    tipo_producto = models.CharField(
-        max_length=50, 
-        choices=OPCIONES_IMPAGOS, 
-        blank=True, null=True
-    )
+    # Puede ser 'TODOS' para aplicar a todos, o un código específico
+    tipo_producto = models.CharField(max_length=50, choices=OPCIONES_IMPAGOS, blank=True)
 
     # 2. ¿Cómo se cobra?
     MODALIDAD_CHOICES = [('FIJO', 'Porcentaje Fijo'), ('TRAMOS', 'Escala por Tramos')]

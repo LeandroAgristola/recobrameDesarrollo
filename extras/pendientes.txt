@@ -1,7 +1,9 @@
- 
-configurar archivos de media
-mover todos los js a la carpeta js y referenciarlos
-
+Mover archivos de JS a static
+Mover estilos de CRM al CSS
+Detalles en las tarjetas: 
+cantidad de acuerdos en Fecha
+cantidad de acuerdos vencidos
+En un circulo rojo arriba secuencias desactualizadas 
 
 
 
@@ -107,7 +109,3 @@ Filtros en la parte superior para filtrar por todo tipo.
 Buscador por nombre/ id/ teléfono
 
 Al eliminar un registro un modal nos va a pedir un comentario de porque lo eliminamos, que se agrega a los comentarios base 
-Detalles en las tarjetas: 
-cantidad de acuerdos en Fecha
-cantidad de acuerdos vencidos
-En un circulo rojo arriba secuencias desactualizadas 

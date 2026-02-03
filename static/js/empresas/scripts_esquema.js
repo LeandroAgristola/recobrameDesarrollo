@@ -30,10 +30,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 2. LÓGICA VISIBILIDAD
     function toggleCaso() {
-        if (selectCaso && selectCaso.value === 'CEDIDO') {
-            divProducto.style.display = 'none';
-        } else if (divProducto) {
-            divProducto.style.display = 'block';
+        // Ya no ocultamos el divProducto, porque ahora Cedidos 
+        // también puede ser por producto específico o "TODOS"
+        if (divProducto) {
+            divProducto.style.display = 'block'; 
         }
     }
 
