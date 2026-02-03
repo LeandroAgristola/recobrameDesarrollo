@@ -181,33 +181,34 @@ def configurar_comisiones(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
     
-    # 1. Analizamos qué seleccionó la empresa
     seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
-
-    # 1. Verificamos qué tenemos configurado
     reglas = empresa.esquemas.all()
 
-    # ¿Hay una regla general para IMPAGOS?
+    # 1. Reglas generales
     tiene_todos_impago = reglas.filter(tipo_caso='IMPAGO', tipo_producto='TODOS').exists()
-    # ¿Hay una regla general para CEDIDOS?
     tiene_todos_cedido = reglas.filter(tipo_caso='CEDIDO', tipo_producto='TODOS').exists()
 
+    # 2. Diccionarios de búsqueda rápida para lo ya configurado
     configurados_impago = reglas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
     configurados_cedido = reglas.filter(tipo_caso='CEDIDO').values_list('tipo_producto', flat=True)
 
-    PRODUCTOS_CON_CESION = ['SEQURA_MANUAL', 'AUTOFINANCIADO']
+    # Nota: Asegúrate de que el string sea 'AUTOFINANCIACION' como en tu models.py
+    PRODUCTOS_CON_CESION = ['SEQURA_MANUAL', 'AUTOFINANCIACION']
     faltantes = []
 
-    # Validar Impagos: si existe regla 'TODOS' no es necesario comprobar por producto
+    # --- Validar Impagos ---
     if not tiene_todos_impago:
         for prod in seleccionados:
             if prod not in configurados_impago:
                 faltantes.append(f"Impago: {prod}")
 
-    # Validar Cedidos (Solo para los que lo requieren)
+    # --- Validar Cedidos (CORRECCIÓN AQUÍ) ---
+    # Si NO existe una regla general 'TODOS' para Cedidos, 
+    # comprobamos cada producto individualmente
     if not tiene_todos_cedido:
         for prod in PRODUCTOS_CON_CESION:
             if prod in seleccionados and prod not in configurados_cedido:
+                # Ahora agregará AMBOS a la lista de faltantes si no existen
                 faltantes.append(f"Cesión: {prod}")
 
     if request.method == 'POST':
