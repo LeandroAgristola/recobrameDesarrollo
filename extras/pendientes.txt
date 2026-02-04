@@ -1,17 +1,5 @@
-Mover archivos de JS a static
-Mover estilos de CRM al CSS
-Detalles en las tarjetas: 
-cantidad de acuerdos en Fecha
-cantidad de acuerdos vencidos
-En un circulo rojo arriba secuencias desactualizadas 
-
-
 
 CRM
-
-
-
-
 
 1. CRM:
 
@@ -20,30 +8,27 @@ Pestaña Listados CRM:
 Agentes solo se muestran los que tiene casos asignados
 En el caso de ser Admin tenemo las opciones de crear, editar o desacartivar un CRM
 
-Una vez que hacemos click en el CRM nos abre el listado de clientes en impago
+*Una vez que hacemos click en el CRM nos abre el listado de clientes en impago
 
-Pestaña con la información de la empresa (traemos los datos de clientes)
+*Pestaña con la información de la empresa (traemos los datos de clientes)
 Cursos, contacto de incidencias, datos bancarios
-Vamos a tener dos pestañas (impagos y cedidos) Cedido a mano solo con los Squra manual (agregar en tipo)
 
-Pestaña REG_Recobros:
+*Vamos a tener dos pestañas (impagos y cedidos) Cedido a mano solo con los Squra manual (agregar en tipo)
+
+*Pestaña REG_Recobros:
 Muestra solo el listado de recobros
 
-Pestaña REG_Impagos:
-Muestra el listado de las personas en impago
 
-Pestaña TODOS LOS REGISTROS
-Listado total de todos los impagos (pagados o no)
 
 Funcionalidades
 
 Listados CRM:
 
-Admin: nos va a mostrar el listado completo con los agentes asignados a cada caso 
-Agente: solo va a mostrar el listado de personas que tiene asignados
+
 
 Vamos a tener los campos: 
-		
+
+Agente (asignado)		
 ID del deudor
 Nombre y Apellido
 Teléfono 

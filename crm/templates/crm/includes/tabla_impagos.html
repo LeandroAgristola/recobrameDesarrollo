@@ -1,0 +1,59 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle border" id="tabla-impagos-data">
+        <thead class="bg-light shadow-sm">
+            <tr>
+                <th class="text-center"><i class="fa-solid fa-user-tie"></i></th> <th>ID Deudor</th>
+                <th>Nombre y Apellido</th>
+                <th>Teléfono</th>
+                <th>Tipo</th>
+                <th>Deuda Actual</th>
+                <th>Días Impago</th>
+                <th class="text-center">Seguimiento</th>
+                <th class="text-center">ASNEF</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in impagos %}
+            <tr>
+                <td class="text-center">
+                    <span class="badge bg-secondary opacity-75" title="Agente: {{ exp.agente|default:'Sin asignar' }}">
+                        {{ exp.agente.username|slice:":2"|upper|default:"??" }}
+                    </span>
+                </td>
+                <td class="small fw-bold text-primary">{{ exp.numero_expediente }}</td>
+                <td>{{ exp.deudor_nombre }}</td>
+                <td>{{ exp.deudor_telefono }}</td>
+                <td><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
+                <td class="fw-bold">{{ exp.monto_actual }}€</td>
+                <td>
+                    <span class="badge {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                        {{ exp.tiempo_en_impago }} d
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-1">
+                        <i class="fa-brands fa-whatsapp {% if exp.w1 %}text-success{% else %}text-muted opacity-25{% endif %}" title="W1"></i>
+                        <i class="fa-solid fa-phone {% if exp.ll1 %}text-primary{% else %}text-muted opacity-25{% endif %}" title="LL1"></i>
+                        <i class="fa-solid fa-ellipsis text-muted opacity-50"></i>
+                    </div>
+                </td>
+                <td class="text-center">
+                    {% if exp.buro_enviado %}<span class="badge bg-dark" title="Buro Enviado">BE</span>{% endif %}
+                    {% if exp.asnef_inscrito %}<span class="badge bg-danger" title="Inscrito ASNEF">A</span>{% endif %}
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-outline-success"><i class="fa-solid fa-euro-sign"></i></button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10" class="text-center py-4 text-muted">No hay expedientes en impago.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

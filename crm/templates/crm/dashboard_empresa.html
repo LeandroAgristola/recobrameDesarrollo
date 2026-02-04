@@ -3,68 +3,94 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center">
-            <div class="bg-white p-3 rounded-circle shadow-sm border me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                <i class="fa-solid fa-briefcase text-primary fs-3"></i>
-            </div>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
             <div>
-                <h2 class="mb-0 fw-bold text-dark">CRM: {{ empresa.nombre }}</h2>
-                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">Panel de Gestión</span>
+                <h3 class="fw-bold mb-0">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM Operativo</span></h3>
             </div>
-        </div>
-        <div>
-            <button class="btn btn-primary fw-bold shadow-sm px-4">
-                <i class="fa-solid fa-plus me-2"></i>Nuevo Expediente
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary btn-sm"><i class="fa-solid fa-file-import me-1"></i> Importar Excel</button>
+                <button class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Nuevo Registro</button>
+            </div>
         </div>
     </div>
 
-    <ul class="nav nav-pills mb-4 bg-white p-2 rounded shadow-sm border" id="crmTabs" role="tablist">
+    <ul class="nav nav-tabs border-0 mb-3" id="crmTab" role="tablist">
         <li class="nav-item">
-            <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#tab-impagos">
-                <i class="fa-solid fa-file-invoice-dollar me-2"></i>Impagos ({{ impagos.count }})
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-pagados">
-                <i class="fa-solid fa-circle-check text-success me-2"></i>Ha Pagado
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-recobro">
-                <i class="fa-solid fa-receipt me-2"></i>REG_recobro
-            </button>
+            <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#impagos">Impagos</button>
         </li>
         {% if empresa.crm_config.tiene_cedidos %}
         <li class="nav-item">
-            <button class="nav-link fw-bold text-danger" data-bs-toggle="pill" data-bs-target="#tab-cedidos">
-                <i class="fa-solid fa-handshake-angle me-2"></i>Cedidos
-            </button>
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#cedidos">Cedidos</button>
         </li>
         {% endif %}
-        <li class="nav-item ms-auto">
-            <button class="nav-link fw-bold text-muted" data-bs-toggle="pill" data-bs-target="#tab-papelera">
-                <i class="fa-solid fa-trash-can me-2"></i>Papelera
-            </button>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#recobros">REG_Recobros</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#ha-pagado">Ha Pagado</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#info-empresa">Info Empresa</button>
         </li>
     </ul>
 
-    <div class="tab-content bg-white p-4 rounded shadow-sm border">
-        <div class="tab-pane fade show active" id="tab-impagos">
-            {% include 'crm/includes/tabla_impagos.html' %}
+    <div class="tab-content bg-white p-3 rounded shadow-sm border">
+        <div class="tab-pane fade show active" id="impagos">
+            {% include 'crm/includes/tabla_impagos.html' with registros=impagos %}
         </div>
-        
-        <div class="tab-pane fade" id="tab-pagados">
-            <h5 class="text-muted">Expedientes con deuda 0,00€</h5>
+
+        <div class="tab-pane fade" id="recobros">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Deudor</th>
+                            <th>Monto</th>
+                            <th>Fecha Pago</th>
+                            <th>Comprobante</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pago in recobros %}
+                        <tr>
+                            <td>{{ pago.expediente.deudor_nombre }}</td>
+                            <td class="fw-bold text-success">{{ pago.monto }}€</td>
+                            <td>{{ pago.fecha_pago }}</td>
+                            <td>
+                                {% if pago.comprobante %}
+                                <a href="{{ pago.comprobante.url }}" target="_blank" class="btn btn-sm btn-outline-info">Ver</a>
+                                {% else %} - {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-
-        <div class="tab-pane fade" id="tab-recobro">
-            {% include 'crm/includes/tabla_pagos.html' %}
         </div>
 
-        <div class="tab-pane fade" id="tab-papelera">
-            {% include 'crm/includes/tabla_papelera.html' %}
+    <div class="tab-pane fade" id="info-empresa">
+        <div class="row g-4 p-2">
+            <div class="col-md-6">
+                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Datos de Operativa</h6>
+                <div class="mb-3">
+                    <label class="text-muted d-block small">Cursos / Formaciones:</label>
+                    <div class="p-2 bg-light border rounded" style="min-height: 100px; white-space: pre-wrap;">{{ empresa.cursos|default:"No especificado" }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted d-block small">Contacto de Incidencias:</label>
+                    <p class="fw-bold">{{ empresa.contacto_incidencias|default:"No definido" }} ({{ empresa.email_incidencias }})</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Información de Pago</h6>
+                <div class="mb-3">
+                    <label class="text-muted d-block small">Datos Bancarios:</label>
+                    <div class="p-3 border rounded bg-light font-monospace" style="font-size: 0.9rem;">
+                        {{ empresa.datos_bancarios|linebreaks }}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -1,0 +1,24 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle border">
+        <thead class="bg-light">
+            <tr>
+                <th>ID Deudor</th>
+                <th>Nombre</th>
+                <th>Monto Cedido</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in cedidos %}
+            <tr>
+                <td>{{ exp.numero_expediente }}</td>
+                <td>{{ exp.deudor_nombre }}</td>
+                <td>{{ exp.monto_actual }}€</td>
+                <td><span class="badge bg-info">CEDIDO</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-3 text-muted">Sin registros cedidos.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
