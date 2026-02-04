@@ -16,8 +16,8 @@ a { text-decoration: none; }
 
 .form-control:focus,
 .form-select:focus {
-    border-color: #49505780 !important;
-    box-shadow: 0 0 0 .1rem #49505780 !important;
+    border-color: #4950573b !important;
+    box-shadow: 0 0 0 .1rem #4950573f !important;
 }
 
 label { font-weight: 500; color: #0a2c46; }
