@@ -1,0 +1,76 @@
+<div class="modal fade" id="modalNuevoRegistro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="post" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">Registrar Nuevo Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Agente Asignado</label>
+                        {{ form.agente }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">ID Deudor / Expediente</label>
+                        {{ form.numero_expediente }}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold small">Nombre y Apellido</label>
+                        {{ form.deudor_nombre }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small">DNI</label>
+                        {{ form.deudor_dni }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Teléfono</label>
+                        {{ form.deudor_telefono }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Email</label>
+                        {{ form.deudor_email }}
+                    </div>
+                    <hr class="my-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small">Tipo de Producto</label>
+                        {{ form.tipo_producto }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small">Coste Total (€)</label>
+                        {{ form.monto_original }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small">Cuotas</label>
+                        {{ form.cuotas_totales }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Fecha de Compra</label>
+                        {{ form.fecha_compra }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Fecha de Impago</label>
+                        {{ form.fecha_impago }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Estado Inicial</label>
+                        {{ form.estado }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small">Causa de Impago</label>
+                        {{ form.causa_impago }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">Comentarios</label>
+                        {{ form.comentarios }}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">Guardar Registro</button>
+            </div>
+        </form>
+    </div>
+</div>

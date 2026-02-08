@@ -1,0 +1,24 @@
+<div class="crm-table-container border shadow-sm">
+    <table class="table table-hover align-middle mb-0 table-crm">
+        <thead class="bg-light">
+            <tr>
+                <th style="width: 250px;">Nombre y Apellido</th>
+                <th style="width: 150px;">ID Deudor</th>
+                <th style="width: 150px;">Monto Original</th>
+                <th style="width: 150px;">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in pagados %}
+            <tr class="table-success opacity-75">
+                <td class="fw-bold">{{ exp.deudor_nombre }}</td>
+                <td class="small fw-bold">{{ exp.numero_expediente }}</td>
+                <td>{{ exp.monto_original }}€</td>
+                <td><span class="badge bg-success">PAGADO TOTAL</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-4 text-muted">No hay registros con deuda cero.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

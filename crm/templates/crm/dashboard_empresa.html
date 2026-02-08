@@ -6,131 +6,85 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body d-flex justify-content-between align-items-center">
             <div>
-                <h3 class="fw-bold mb-0">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM Operativo</span></h3>
+                <h3 class="fw-bold mb-0 text-dark">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM Operativo</span></h3>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-sm"><i class="fa-solid fa-file-import me-1"></i> Importar Excel</button>
-                <button class="btn btn-success btn-sm"><i class="fa-solid fa-plus me-1"></i> Nuevo Registro</button>
+                <button class="btn btn-primary btn-sm px-3 shadow-sm"><i class="fa-solid fa-file-import me-1"></i> Importar Excel</button>
+                <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
+                    <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
+                </button>
             </div>
         </div>
     </div>
 
     <ul class="nav nav-tabs border-0 mb-3" id="crmTab" role="tablist">
         <li class="nav-item">
-            <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#impagos">Impagos</button>
+            <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-impagos">Impagos</button>
         </li>
         {% if empresa.crm_config.tiene_cedidos %}
         <li class="nav-item">
-            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#cedidos">Cedidos</button>
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-cedidos">Cedidos</button>
         </li>
         {% endif %}
         <li class="nav-item">
-            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#recobros">REG_Recobros</button>
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-recobros">REG_Recobros</button>
         </li>
         <li class="nav-item">
-            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#ha-pagado">Ha Pagado</button>
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-ha-pagado">Ha Pagado</button>
         </li>
         <li class="nav-item">
-            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#info-empresa">Info Empresa</button>
+            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-info-empresa">Info Empresa</button>
+        </li>
+        <li class="nav-item ms-auto">
+            <button class="nav-link fw-bold text-danger border-0" data-bs-toggle="tab" data-bs-target="#tab-papelera">
+                <i class="fa-solid fa-trash-can me-1"></i> Papelera
+            </button>
         </li>
     </ul>
 
     <div class="tab-content bg-white p-3 rounded shadow-sm border">
-        <div class="tab-pane fade show active" id="impagos">
-            {% include 'crm/includes/tabla_impagos.html' with registros=impagos %}
+        <div class="tab-pane fade show active" id="tab-impagos" role="tabpanel">
+            {% include 'crm/includes/tabla_impagos.html' %}
         </div>
 
-        <div class="tab-pane fade" id="recobros">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle border">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Deudor</th>
-                            <th>Monto</th>
-                            <th>Fecha Pago</th>
-                            <th>Comprobante</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pago in recobros %}
-                        <tr>
-                            <td>{{ pago.expediente.deudor_nombre }}</td>
-                            <td class="fw-bold text-success">{{ pago.monto }}€</td>
-                            <td>{{ pago.fecha_pago }}</td>
-                            <td>
-                                {% if pago.comprobante %}
-                                <a href="{{ pago.comprobante.url }}" target="_blank" class="btn btn-sm btn-outline-info">Ver</a>
-                                {% else %} - {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="tab-pane fade" id="tab-cedidos" role="tabpanel">
+            {% include 'crm/includes/tabla_cedidos.html' %}
         </div>
 
-    <div class="tab-pane fade" id="info-empresa">
-        <div class="row g-4 p-2">
-            <div class="col-md-6">
-                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Datos de Operativa</h6>
-                <div class="mb-3">
-                    <label class="text-muted d-block small">Cursos / Formaciones:</label>
-                    <div class="p-2 bg-light border rounded" style="min-height: 100px; white-space: pre-wrap;">{{ empresa.cursos|default:"No especificado" }}</div>
+        <div class="tab-pane fade" id="tab-recobros" role="tabpanel">
+            {% include 'crm/includes/tabla_recobros.html' %}
+        </div>
+
+        <div class="tab-pane fade" id="tab-ha-pagado" role="tabpanel">
+            {% include 'crm/includes/tabla_pagados.html' %}
+        </div>
+
+        <div class="tab-pane fade" id="tab-info-empresa" role="tabpanel">
+             <div class="row g-4 p-2">
+                <div class="col-md-6">
+                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Datos de Operativa</h6>
+                    <div class="mb-3">
+                        <label class="text-muted d-block small">Cursos / Formaciones:</label>
+                        <div class="p-2 bg-light border rounded" style="min-height: 100px; white-space: pre-wrap;">{{ empresa.cursos|default:"No especificado" }}</div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="text-muted d-block small">Contacto de Incidencias:</label>
-                    <p class="fw-bold">{{ empresa.contacto_incidencias|default:"No definido" }} ({{ empresa.email_incidencias }})</p>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Información de Pago</h6>
-                <div class="mb-3">
-                    <label class="text-muted d-block small">Datos Bancarios:</label>
-                    <div class="p-3 border rounded bg-light font-monospace" style="font-size: 0.9rem;">
-                        {{ empresa.datos_bancarios|linebreaks }}
+                <div class="col-md-6">
+                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Información de Pago</h6>
+                    <div class="mb-3">
+                        <label class="text-muted d-block small">Datos Bancarios:</label>
+                        <div class="p-3 border rounded bg-light font-monospace" style="font-size: 0.9rem;">
+                            {{ empresa.datos_bancarios|linebreaks }}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="tab-pane fade" id="tab-papelera" role="tabpanel">
+            {% include 'crm/includes/tabla_papelera.html' %}
+        </div>
     </div>
 </div>
 
-<button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
-    <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
-</button>
-
-<div class="modal fade" id="modalNuevoRegistro" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form method="post" class="modal-content">
-            {% csrf_token %}
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold">Registrar Nuevo Cliente</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3">
-                    <div class="col-md-6">{{ form.agente.label_tag }}{{ form.agente }}</div>
-                    <div class="col-md-6">{{ form.numero_expediente.label_tag }}{{ form.numero_expediente }}</div>
-                    <div class="col-md-8">{{ form.deudor_nombre.label_tag }}{{ form.deudor_nombre }}</div>
-                    <div class="col-md-4">{{ form.deudor_dni.label_tag }}{{ form.deudor_dni }}</div>
-                    <div class="col-md-6">{{ form.deudor_telefono.label_tag }}{{ form.deudor_telefono }}</div>
-                    <div class="col-md-6">{{ form.deudor_email.label_tag }}{{ form.deudor_email }}</div>
-                    <hr>
-                    <div class="col-md-4">{{ form.tipo_producto.label_tag }}{{ form.tipo_producto }}</div>
-                    <div class="col-md-4">{{ form.monto_original.label_tag }}{{ form.monto_original }}</div>
-                    <div class="col-md-4">{{ form.cuotas_totales.label_tag }}{{ form.cuotas_totales }}</div>
-                    <div class="col-md-6">{{ form.fecha_compra.label_tag }}{{ form.fecha_compra }}</div>
-                    <div class="col-md-6">{{ form.fecha_impago.label_tag }}{{ form.fecha_impago }}</div>
-                    <div class="col-md-6">{{ form.estado.label_tag }}{{ form.estado }}</div>
-                    <div class="col-md-6">{{ form.causa_impago.label_tag }}{{ form.causa_impago }}</div>
-                    <div class="col-12">{{ form.comentarios.label_tag }}{{ form.comentarios }}</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-success fw-bold">Guardar Registro</button>
-            </div>
-        </form>
-    </div>
-</div>
+{% include 'crm/includes/modal_nuevo_registro.html' %}
 {% endblock %}
