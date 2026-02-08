@@ -94,4 +94,43 @@
         </div>
     </div>
 </div>
+
+<button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
+    <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
+</button>
+
+<div class="modal fade" id="modalNuevoRegistro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="post" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">Registrar Nuevo Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form.agente.label_tag }}{{ form.agente }}</div>
+                    <div class="col-md-6">{{ form.numero_expediente.label_tag }}{{ form.numero_expediente }}</div>
+                    <div class="col-md-8">{{ form.deudor_nombre.label_tag }}{{ form.deudor_nombre }}</div>
+                    <div class="col-md-4">{{ form.deudor_dni.label_tag }}{{ form.deudor_dni }}</div>
+                    <div class="col-md-6">{{ form.deudor_telefono.label_tag }}{{ form.deudor_telefono }}</div>
+                    <div class="col-md-6">{{ form.deudor_email.label_tag }}{{ form.deudor_email }}</div>
+                    <hr>
+                    <div class="col-md-4">{{ form.tipo_producto.label_tag }}{{ form.tipo_producto }}</div>
+                    <div class="col-md-4">{{ form.monto_original.label_tag }}{{ form.monto_original }}</div>
+                    <div class="col-md-4">{{ form.cuotas_totales.label_tag }}{{ form.cuotas_totales }}</div>
+                    <div class="col-md-6">{{ form.fecha_compra.label_tag }}{{ form.fecha_compra }}</div>
+                    <div class="col-md-6">{{ form.fecha_impago.label_tag }}{{ form.fecha_impago }}</div>
+                    <div class="col-md-6">{{ form.estado.label_tag }}{{ form.estado }}</div>
+                    <div class="col-md-6">{{ form.causa_impago.label_tag }}{{ form.causa_impago }}</div>
+                    <div class="col-12">{{ form.comentarios.label_tag }}{{ form.comentarios }}</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success fw-bold">Guardar Registro</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

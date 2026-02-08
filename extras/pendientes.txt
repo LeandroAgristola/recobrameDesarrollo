@@ -1,6 +1,20 @@
 
 CRM
 
+
+(+) darle funcionalidad a registrar un nuevo pago
+
+REG_Recobros: darle funcionalidad a la planilla de registros de recobros
+
+Registro de cliente: darle funcionalidad y formulario de "+ Nuevo Registro)
+
+Papelera: aquí vamos a alojar los clientes que eliminamos del CRM (misma metodología que la papelera de empresas, mismos modales y consultas)
+
+Diseño:
+
+las pestañas no estan unidas con el contenedor 
+
+
 1. CRM:
 
 Pestaña Listados CRM: 
@@ -39,9 +53,9 @@ Coste total
 Cuotas
 Fecha de compra
 Fecha de impago
+Tiempo en impago (va a calcular la cantidad de tiempo en impago)
 Estado (listado de todos los estados)
 Causa de impago (listado con causas básicas)
-Tiempo en impago (va a calcular la cantidad de tiempo en impago)
 Deuda (va calcular la deuda actual)
 Cobrado (colola el total pagado según lo registro de cobros) 
 Comentarios (ver la mejor forma de agregar comentarios)

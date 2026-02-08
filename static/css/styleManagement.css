@@ -213,15 +213,13 @@ label { font-weight: 500; color: #0a2c46; }
     height: 100%;
 }
 
-/* === TOASTS === */
+/* TOASTS*/
 .toast-container {
     position: fixed; top: 20px; right: 20px; z-index: 9999;
 }
 .toast { background-color: #fff; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); opacity: 1 !important; }
 
-/* =========================================
-   ESTILOS ESPECÍFICOS DE LOGIN
-   ========================================= */
+/* ESTILOS ESPECÍFICOS DE LOGIN */
 
 .login-page {
 
@@ -297,3 +295,44 @@ label { font-weight: 500; color: #0a2c46; }
     transform: translateY(-5px);
     box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important;
 }
+
+
+/* ESTILOS ESPECÍFICOS DE LISTADO CRM */
+
+/* Contenedor tipo Google Sheets */
+.crm-table-container {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    border-radius: 8px;
+}
+
+.table-crm {
+    table-layout: fixed; /* Fuerza el respeto a los anchos definidos */
+    width: auto;
+    min-width: 100%;
+}
+
+.table-crm th, .table-crm td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px 12px !important;
+    vertical-align: middle;
+}
+
+/* Clases de ancho fijo según tus medidas */
+.col-agente { width: 150px; }
+.col-id { width: 100px; }
+.col-nombre { width: 250px; }
+.col-tel { width: 120px; }
+.col-tipo { width: 200px; }
+.col-monto { width: 150px; }
+.col-cuota { width: 100px; }
+.col-fecha { width: 200px; }
+.col-dias { width: 100px; }
+.col-estado { width: 200px; }
+.col-causa { width: 200px; }
+.col-comentario { width: 800px; }
+.col-tic { width: 50px; text-align: center; }
+.col-asnef { width: 50px; text-align: center; }
+.col-acciones { width: 150px; position: sticky; right: 0; background: white; z-index: 10; border-left: 2px solid #dee2e6; }

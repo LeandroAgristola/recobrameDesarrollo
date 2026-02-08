@@ -1,39 +1,45 @@
-from django.shortcuts import render, get_object_or_404
-from empresas.models import Empresa
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
 from .models import Expediente, RegistroPago
+from .forms import ExpedienteForm
 
-from django.shortcuts import render, get_object_or_404
-from empresas.models import Empresa
-from .models import Expediente, RegistroPago
-
+# Vista principal actualizada con el formulario
 def dashboard_crm(request, empresa_id):
-    # Usamos is_active para ser coherentes con el modelo Empresa
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
+    expedientes_qs = Expediente.objects.filter(empresa=empresa)
     
-    # Filtramos los datos para que cada pestaña reciba lo que le corresponde
-    # Impagos: Activos, con monto > 0 y que NO estén cedidos
-    impagos = Expediente.objects.filter(empresa=empresa, activo=True, monto_actual__gt=0).exclude(estado='CEDIDO')
-    
-    # Cedidos: Activos con estado CEDIDO
-    cedidos = Expediente.objects.filter(empresa=empresa, activo=True, estado='CEDIDO')
-    
-    # Ha Pagado: Activos con monto 0 o menor
-    pagados = Expediente.objects.filter(empresa=empresa, activo=True, monto_actual__lte=0)
-    
-    # REG_Recobros: Todos los pagos de la empresa
-    recobros = RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago')
+    if request.method == 'POST':
+        form = ExpedienteForm(request.POST)
+        if form.is_valid():
+            nuevo_exp = form.save(commit=False)
+            nuevo_exp.empresa = empresa
+            nuevo_exp.monto_actual = nuevo_exp.monto_original # Inicializamos deuda
+            nuevo_exp.save()
+            messages.success(request, "Cliente registrado correctamente.")
+            return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+    else:
+        form = ExpedienteForm()
 
     context = {
         'empresa': empresa,
-        'impagos': impagos,
-        'cedidos': cedidos,
-        'pagados': pagados,
-        'recobros': recobros,
+        'form': form,
+        'impagos': expedientes_qs.filter(activo=True, monto_actual__gt=0).exclude(estado='CEDIDO'),
+        'cedidos': expedientes_qs.filter(activo=True, estado='CEDIDO'),
+        'pagados': expedientes_qs.filter(activo=True, monto_actual__lte=0),
+        'papelera': expedientes_qs.filter(activo=False),
     }
-    
     return render(request, 'crm/dashboard_empresa.html', context)
 
-def lista_crm(request):
-    empresas = Empresa.objects.filter(is_active=True) 
-    return render(request, 'crm/lista_crm.html', {'empresas': empresas})
+# Funcionalidad Papelera
+def eliminar_expediente(request, exp_id):
+    exp = get_object_or_404(Expediente, id=exp_id)
+    empresa_id = exp.empresa.id
+    exp.eliminar_logico()
+    messages.warning(request, f"Expediente de {exp.deudor_nombre} movido a la papelera.")
+    return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
+def restaurar_expediente(request, exp_id):
+    exp = get_object_or_404(Expediente, id=exp_id)
+    exp.restaurar()
+    messages.success(request, f"Expediente de {exp.deudor_nombre} restaurado.")
+    return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)

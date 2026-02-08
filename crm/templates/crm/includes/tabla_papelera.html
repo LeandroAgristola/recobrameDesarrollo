@@ -1,0 +1,34 @@
+<div class="crm-table-container border shadow-sm">
+    <table class="table table-hover align-middle mb-0 table-crm">
+        <thead class="bg-light">
+            <tr>
+                <th style="width: 250px;">Nombre y Apellido</th>
+                <th style="width: 150px;">DNI</th>
+                <th style="width: 150px;">Monto</th>
+                <th style="width: 200px;">Fecha Eliminación</th>
+                <th style="width: 150px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exp in papelera %}
+            <tr class="table-light">
+                <td class="fw-bold">{{ exp.deudor_nombre }}</td>
+                <td>{{ exp.deudor_dni|default:"-" }}</td>
+                <td class="text-danger">{{ exp.monto_actual }}€</td>
+                <td class="small">{{ exp.fecha_eliminacion|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'crm:restaurar_expediente' exp.id %}" class="btn btn-sm btn-success" title="Restaurar">
+                            <i class="fa-solid fa-trash-arrow-up"></i>
+                        </a>
+                        </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-4 text-muted">La papelera está vacía.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

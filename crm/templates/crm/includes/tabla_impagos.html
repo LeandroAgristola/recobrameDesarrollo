@@ -1,57 +1,84 @@
-<div class="table-responsive">
-    <table class="table table-hover align-middle border" id="tabla-impagos-data">
+<div class="crm-table-container border shadow-sm">
+    <table class="table table-hover align-middle mb-0 table-crm">
         <thead class="bg-light shadow-sm">
             <tr>
-                <th class="text-center"><i class="fa-solid fa-user-tie"></i></th> <th>ID Deudor</th>
-                <th>Nombre y Apellido</th>
-                <th>Teléfono</th>
-                <th>Tipo</th>
-                <th>Deuda Actual</th>
-                <th>Días Impago</th>
-                <th class="text-center">Seguimiento</th>
-                <th class="text-center">ASNEF</th>
-                <th>Acciones</th>
+                <th class="col-agente">Agente</th>
+                <th class="col-id">ID Deudor</th>
+                <th class="col-nombre">Nombre y Apellido</th>
+                <th class="col-tel">Teléfono</th>
+                <th class="col-tipo">Tipo</th>
+                <th class="col-monto">Coste Total</th>
+                <th class="col-cuota">Cuotas</th>
+                <th class="col-fecha">Fecha Compra</th>
+                <th class="col-fecha">Fecha Impago</th>
+                <th class="col-dias">T. Impago</th>
+                <th class="col-estado">Estado</th>
+                <th class="col-causa">Causa</th>
+                <th class="col-monto">Deuda Actual</th>
+                <th class="col-monto">Cobrado</th>
+                <th class="col-comentario">Comentarios</th>
+                {% for i in "12345" %}
+                <th class="col-tic">W{{forloop.counter}}</th>
+                <th class="col-tic">L{{forloop.counter}}</th>
+                {% endfor %}
+                <th class="col-asnef">BE</th>
+                <th class="col-asnef">BR</th>
+                <th class="col-asnef">ASN</th>
+                <th class="col-asnef">LLS</th>
+                <th class="col-fecha">Ult. Msj</th>
+                <th class="col-fecha">Fecha de pago</th>
+                <th class="col-acciones">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for exp in impagos %}
             <tr>
-                <td class="text-center">
-                    <span class="badge bg-secondary opacity-75" title="Agente: {{ exp.agente|default:'Sin asignar' }}">
-                        {{ exp.agente.username|slice:":2"|upper|default:"??" }}
-                    </span>
+                <td class="col-agente">
+                    <select class="form-select form-select-sm border-0 bg-transparent py-0 fw-bold">
+                        <option>{{ exp.agente.get_full_name|default:exp.agente.username|default:"Sin asignar" }}</option>
+                    </select>
                 </td>
-                <td class="small fw-bold text-primary">{{ exp.numero_expediente }}</td>
-                <td>{{ exp.deudor_nombre }}</td>
-                <td>{{ exp.deudor_telefono }}</td>
-                <td><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
-                <td class="fw-bold">{{ exp.monto_actual }}€</td>
-                <td>
+                <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
+                <td class="col-nombre text-dark fw-bold">{{ exp.deudor_nombre }}</td>
+                <td class="col-tel">{{ exp.deudor_telefono }}</td>
+                <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
+                <td class="col-monto">{{ exp.monto_original }}€</td>
+                <td class="col-cuota text-center">{{ exp.cuotas_totales }}</td>
+                <td class="col-fecha small">{{ exp.fecha_compra|date:"d/m/Y" }}</td>
+                <td class="col-fecha small">{{ exp.fecha_impago|date:"d/m/Y" }}</td>
+                <td class="col-dias text-center">
                     <span class="badge {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                         {{ exp.tiempo_en_impago }} d
                     </span>
                 </td>
-                <td class="text-center">
-                    <div class="d-flex justify-content-center gap-1">
-                        <i class="fa-brands fa-whatsapp {% if exp.w1 %}text-success{% else %}text-muted opacity-25{% endif %}" title="W1"></i>
-                        <i class="fa-solid fa-phone {% if exp.ll1 %}text-primary{% else %}text-muted opacity-25{% endif %}" title="LL1"></i>
-                        <i class="fa-solid fa-ellipsis text-muted opacity-50"></i>
+                <td class="col-estado">
+                    <select class="form-select form-select-sm py-0 border-0 bg-transparent fw-bold">
+                        {% for value, text in exp.ESTADOS_GESTION %}
+                        <option value="{{ value }}" {% if exp.estado == value %}selected{% endif %}>{{ text }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="col-causa small">{{ exp.get_causa_impago_display|default:"-" }}</td>
+                <td class="col-monto fw-bold text-danger">{{ exp.monto_actual }}€</td>
+                <td class="col-monto text-success">{{ exp.total_cobrado }}€</td>
+                <td class="col-comentario small text-muted">{{ exp.comentarios|default:"Sin comentarios" }}</td>
+                
+                {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
+
+                <td class="col-asnef"><input type="checkbox" {% if exp.buro_enviado %}checked{% endif %}></td>
+                <td class="col-asnef"><input type="checkbox" {% if exp.buro_recibido %}checked{% endif %}></td>
+                <td class="col-asnef"><input type="checkbox" {% if exp.asnef_inscrito %}checked{% endif %}></td>
+                <td class="col-asnef"><input type="checkbox" {% if exp.llamada_seguimiento_asnef %}checked{% endif %}></td>
+                
+                <td class="col-fecha small">--/--/--</td> <td class="col-fecha small text-info">{% if exp.estado == 'PAGARA' %}--/--/--{% else %}-{% endif %}</td>
+                
+                <td class="col-acciones bg-white">
+                    <div class="d-flex gap-1 justify-content-center">
+                        <button class="btn btn-sm btn-success p-1" title="Registrar Pago"><i class="fa-solid fa-plus"></i></button>
+                        <button class="btn btn-sm btn-outline-primary p-1"><i class="fa-solid fa-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-danger p-1"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </td>
-                <td class="text-center">
-                    {% if exp.buro_enviado %}<span class="badge bg-dark" title="Buro Enviado">BE</span>{% endif %}
-                    {% if exp.asnef_inscrito %}<span class="badge bg-danger" title="Inscrito ASNEF">A</span>{% endif %}
-                </td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-outline-success"><i class="fa-solid fa-euro-sign"></i></button>
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="10" class="text-center py-4 text-muted">No hay expedientes en impago.</td>
             </tr>
             {% endfor %}
         </tbody>
