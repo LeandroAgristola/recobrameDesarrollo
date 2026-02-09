@@ -42,11 +42,14 @@ class Expediente(models.Model):
     agente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cartera')
     
     # Datos Deudor
-    numero_expediente = models.CharField(max_length=100, unique=True)
+    # Agregamos blank=True para que el formulario permita enviarlo vacío y la vista lo calcule
+    numero_expediente = models.CharField(max_length=100, unique=True, blank=True)
     deudor_nombre = models.CharField(max_length=255)
     deudor_dni = models.CharField(max_length=20, blank=True, null=True)
     deudor_telefono = models.CharField(max_length=50)
     deudor_email = models.EmailField(blank=True, null=True)
+    deudor_direccion = models.TextField(blank=True, null=True) 
+    fecha_cesion = models.DateField(null=True, blank=True)
     
     # Datos Financieros
     tipo_producto = models.CharField(max_length=50)
@@ -83,6 +86,19 @@ class Expediente(models.Model):
     buro_recibido = models.BooleanField(default=False)
     asnef_inscrito = models.BooleanField(default=False)
     llamada_seguimiento_asnef = models.BooleanField(default=False)
+
+    def eliminar_logico(self):
+        self.activo = False
+        self.fecha_eliminacion = timezone.now()
+        self.save()
+
+    def restaurar(self):
+        self.activo = True
+        self.fecha_eliminacion = None
+        self.save()
+
+    def __str__(self):
+        return f"{self.numero_expediente} - {self.deudor_nombre}"
 
     @property
     def tiempo_en_impago(self):

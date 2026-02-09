@@ -42,6 +42,7 @@ def lista_empresas(request):
         'active_tab': 'activas' # Variable clave para la pestaña
     })
 
+@login_required
 def crear_empresa(request):
     if request.method == 'POST':
         form = EmpresaForm(request.POST, request.FILES)

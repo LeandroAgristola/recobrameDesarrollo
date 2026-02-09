@@ -6,22 +6,29 @@
                 <th style="width: 150px;">DNI</th>
                 <th style="width: 150px;">Monto</th>
                 <th style="width: 200px;">Fecha Eliminación</th>
-                <th style="width: 150px;">Acciones</th>
+                <th style="width: 150px;" class="text-center">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for exp in papelera %}
             <tr class="table-light">
-                <td class="fw-bold">{{ exp.deudor_nombre }}</td>
+                <td class="fw-bold text-muted">{{ exp.deudor_nombre }}</td>
                 <td>{{ exp.deudor_dni|default:"-" }}</td>
                 <td class="text-danger">{{ exp.monto_actual }}€</td>
-                <td class="small">{{ exp.fecha_eliminacion|date:"d/m/Y H:i" }}</td>
-                <td>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'crm:restaurar_expediente' exp.id %}" class="btn btn-sm btn-success" title="Restaurar">
+                <td class="small text-muted">{{ exp.fecha_eliminacion|date:"d/m/Y H:i" }}</td>
+                <td class="text-center">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{% url 'crm:restaurar_expediente' exp.id %}" class="btn btn-sm btn-success" title="Restaurar al CRM">
                             <i class="fa-solid fa-trash-arrow-up"></i>
                         </a>
-                        </div>
+                        
+                        <a href="{% url 'crm:eliminar_permanente_expediente' exp.id %}" 
+                           class="btn btn-sm btn-danger" 
+                           title="Eliminar DEFINITIVAMENTE"
+                           onclick="return confirm('¿ESTÁS SEGURO?\n\nEsta acción borrará el expediente de {{ exp.deudor_nombre }} y NO se puede deshacer.\n\n¿Continuar?');">
+                            <i class="fa-solid fa-xmark"></i>
+                        </a>
+                    </div>
                 </td>
             </tr>
             {% empty %}
