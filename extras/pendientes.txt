@@ -2,8 +2,7 @@
 CRM
 
 
-
-Filtros y buscador dentro del CRM
+Cambiar informacion para mostrar de la empresa
 Agregar la vista de detalle del cliente
 agregar la opcion de solo colocar la deuda sin fechas
 Agragar editar cliente para editar campos basicos 
@@ -15,7 +14,7 @@ REG_Recobros: darle funcionalidad a la planilla de registros de recobros
 
 Diseño:
 
-las pestañas no estan unidas con el contenedor 
+
 Ajustar anchos de los campos (no se aplica el CSS)
 Anclar campos de nombre y apellid y telefono
 

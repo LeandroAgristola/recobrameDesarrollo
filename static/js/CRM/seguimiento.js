@@ -174,3 +174,19 @@ function cambiarAgente(select, expId) {
         if(data.status === 'ok') mostrarToast("Agente asignado", "success");
     });
 }
+
+// Función para mostrar/ocultar fila de filtros avanzados
+function toggleFiltrosColumna() {
+    const fila = document.getElementById('fila-filtros-avanzados');
+    if (fila.style.display === 'none') {
+        fila.style.display = 'table-row';
+    } else {
+        fila.style.display = 'none';
+    }
+}
+
+// Función alias para compatibilidad
+function toggleFiltros() {
+    const row = document.getElementById('row-filtros');
+    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}

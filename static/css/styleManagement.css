@@ -184,7 +184,7 @@ label { font-weight: 500; color: #0a2c46; }
     background-color: #ffffff; 
     border-radius: 0 0 10px 10px; /* Esquina superior izquierda en punta para conectar con tab */
     padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   
 }
 
@@ -295,7 +295,6 @@ label { font-weight: 500; color: #0a2c46; }
     box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important;
 }
 
-
 /* ESTILOS ESPECÍFICOS DE LISTADO CRM */
 
 /* Contenedor tipo Google Sheets */
@@ -307,31 +306,61 @@ label { font-weight: 500; color: #0a2c46; }
 }
 
 .table-crm {
-    table-layout: fixed; /* Fuerza el respeto a los anchos definidos */
-    width: auto;
+    width: max-content !important; 
     min-width: 100%;
 }
 
-.table-crm th, .table-crm td {
+.table-crm th, 
+.table-crm td {
+    /* Evita que el contenido empuje los bordes de la celda */
+    white-space: nowrap; 
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 8px 12px !important;
-    vertical-align: middle;
 }
 
 /* Clases de ancho fijo según tus medidas */
-.col-agente { width: 350px; }
-.col-id { width: 100px; }
-.col-nombre { width: 250px; }
-.col-tel { width: 120px; }
-.col-tipo { width: 200px; }
-.col-monto { width: 150px; }
-.col-cuota { width: 100px; }
-.col-fecha { width: 200px; }
-.col-dias { width: 100px; }
-.col-estado { width: 200px; }
-.col-causa { width: 200px; }
-.col-comentario { width: 800px; }
-.col-tic { width: 50px; text-align: center; }
-.col-asnef { width: 50px; text-align: center; }
-.col-acciones { width: 150px; position: sticky; right: 0; background: white; z-index: 10; border-left: 2px solid #dee2e6; }
+/* Usar min-width asegura que la columna no se achique más de lo pedido */
+.col-agente { min-width: 150px; width: 150px; }
+.col-id { min-width: 100px; width: 100px; }
+.col-nombre { min-width: 250px; width: 250px; }
+.col-tel { min-width: 120px; width: 120px; }
+.col-tipo { min-width: 100px; width: 100px; }
+.col-monto { min-width: 150px; width: 150px; }
+.col-cuota { min-width: 100px; width: 100px; }
+.col-fecha { min-width: 150px; width: 150px; } /* Ajustado de 200 a 150 por practicidad */
+.col-dias { min-width: 80px; width: 80px; }
+.col-estado { min-width: 150px; width: 150px; }
+.col-comentario { min-width: 400px; width: 400px; white-space: normal !important; } /* Permitir que el comentario sí envuelva texto */
+.col-tic { min-width: 45px; width: 45px; }
+.col-asnef { min-width: 45px; width: 45px; }
+.col-acciones { min-width: 150px; width: 150px; }
+
+.col-nombre, .col-tel, .col-acciones {
+    position: sticky !important;
+    background-color: white !important; /* Fondo blanco OBLIGATORIO */
+    z-index: 5; /* Capa intermedia */
+}
+
+/* 3. Corrección para los encabezados fijos (para que no los tape el scroll vertical) */
+thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
+    z-index: 15; /* Capa superior */
+}
+
+/* Nombre: Se pega al borde izquierdo (tapando ID y Agente al scrollear) */
+.col-nombre {
+    left: 0;
+    min-width: 250px; /* Ancho fijo para que no baile */
+}
+
+/* Teléfono: Se pega justo después del Nombre (0 + 250px) */
+.col-tel {
+    left: 250px; /* Mismo valor que el ancho de .col-nombre */
+    min-width: 120px;
+}
+
+/* Acciones: Se pega al borde derecho */
+.col-acciones {
+    right: 0;
+    min-width: 150px;
+    border-left: 1px solid #0000003b; /* Borde negro para marcar la división */
+}

@@ -52,83 +52,114 @@ def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
     expedientes_qs = Expediente.objects.filter(empresa=empresa)
     
-    # --- [NUEVO] Obtener lista de agentes ---
-    # Filtramos solo usuarios activos. Puedes ajustar esto si tienes un grupo específico 'Agentes'.
-    agentes_disponibles = User.objects.filter(is_active=True).order_by('username')
+    # --- 1. CAPTURA DE PARÁMETROS ---
+    q = request.GET.get('q', '')
     
-    # --- ACTUALIZACIÓN AUTOMÁTICA DE DEUDA ---
-    # Al entrar al dashboard, recalculamos la deuda de los activos
-    # para asegurar que si cambió de mes, la deuda suba sola.
-    for exp in expedientes_qs.filter(activo=True, estado='ACTIVO'):
+    # Filtros Básicos
+    f_agente = request.GET.get('f_agente')
+    f_nombre = request.GET.get('f_nombre')
+    f_tel = request.GET.get('f_tel')
+    f_tipo = request.GET.get('f_tipo')
+    f_monto = request.GET.get('f_monto')
+    f_cuotas = request.GET.get('f_cuotas')
+    f_fecha_compra = request.GET.get('f_fecha_compra')
+    f_fecha_impago = request.GET.get('f_fecha_impago')
+    f_dias = request.GET.get('f_dias')
+    f_estado = request.GET.get('f_estado') # Causa Impago
+    f_deuda = request.GET.get('f_deuda')
+
+    # Filtros Booleanos (ASNEF, BURO)
+    f_be = request.GET.get('f_be') # Buro Enviado
+    f_br = request.GET.get('f_br') # Buro Recibido
+    f_as = request.GET.get('f_as') # ASNEF Inscrito
+    f_ls = request.GET.get('f_ls') # Llamada Seguimiento
+
+    # --- 2. APLICACIÓN DE FILTROS ---
+    
+    # Búsqueda General
+    if q:
+        expedientes_qs = expedientes_qs.filter(
+            Q(deudor_nombre__icontains=q) | 
+            Q(deudor_telefono__icontains=q) | 
+            Q(numero_expediente__icontains=q) |
+            Q(deudor_dni__icontains=q)
+        )
+
+    # Filtros Específicos
+    if f_agente:
+        expedientes_qs = expedientes_qs.filter(agente_id=f_agente)
+    if f_nombre:
+        expedientes_qs = expedientes_qs.filter(deudor_nombre__icontains=f_nombre)
+    if f_tel:
+        expedientes_qs = expedientes_qs.filter(deudor_telefono__icontains=f_tel)
+    if f_tipo:
+        expedientes_qs = expedientes_qs.filter(tipo_producto__icontains=f_tipo)
+    if f_monto:
+        expedientes_qs = expedientes_qs.filter(monto_original__icontains=f_monto)
+    if f_cuotas:
+        expedientes_qs = expedientes_qs.filter(cuotas_totales=f_cuotas)
+    if f_fecha_compra:
+        expedientes_qs = expedientes_qs.filter(fecha_compra=f_fecha_compra)
+    if f_fecha_impago:
+        expedientes_qs = expedientes_qs.filter(fecha_impago=f_fecha_impago)
+    
+    # Filtro Días (Mayor o igual a)
+    if f_dias:
         try:
-            nueva_deuda = calcular_deuda_actualizada(exp)
-            # Solo guardamos si hay una diferencia real (evitamos guardados innecesarios)
-            if abs(float(exp.monto_actual) - nueva_deuda) > 0.01: 
-                exp.monto_actual = nueva_deuda
-                exp.save()
-        except Exception:
-            continue # Si falla un cálculo, seguimos con el siguiente
+            dias = int(f_dias)
+            fecha_limite = timezone.now().date() - timezone.timedelta(days=dias)
+            expedientes_qs = expedientes_qs.filter(fecha_impago__lte=fecha_limite)
+        except ValueError:
+            pass
 
-    # --- PROCESAR FORMULARIO DE ALTA ---
-    if request.method == 'POST':
-        form = ExpedienteForm(request.POST, empresa=empresa)
-        if form.is_valid():
-            # 1. Validación de Duplicados (Solo bloquea si el cliente está ACTIVO hoy)
-            nombre = form.cleaned_data.get('deudor_nombre')
-            telefono = form.cleaned_data.get('deudor_telefono')
-            
-            # Ahora solo bloqueamos si ya existe uno con el mismo nombre/teléfono Y que esté activo
-            duplicado_activo = expedientes_qs.filter(
-                Q(deudor_nombre__iexact=nombre) | Q(deudor_telefono=telefono),
-                activo=True,
-                estado='ACTIVO'
-            ).exists()
+    if f_estado:
+        expedientes_qs = expedientes_qs.filter(causa_impago=f_estado)
+    if f_deuda:
+        expedientes_qs = expedientes_qs.filter(monto_actual__icontains=f_deuda)
 
-            if duplicado_activo:
-                messages.error(request, f"Ya existe una gestión activa para {nombre}. No se puede duplicar.")
-                return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+    # --- 3. FILTROS DINÁMICOS DE TICKS (W1-W5, L1-L5) ---
+    for i in range(1, 6):
+        # Filtro Whatsapp (w1...w5)
+        val_w = request.GET.get(f'f_w{i}')
+        if val_w in ['true', 'false']:
+            is_true = (val_w == 'true')
+            # Construimos el nombre del campo dinámicamente: w1, w2...
+            kwargs = {f'w{i}': is_true}
+            expedientes_qs = expedientes_qs.filter(**kwargs)
 
-            # 2. Preparar objeto
-            nuevo_exp = form.save(commit=False)
-            nuevo_exp.empresa = empresa
-            
-            # 3. Generar ID Único (Ej: EMP-00001)
-            count = expedientes_qs.count() + 1
-            prefix = empresa.nombre[:3].upper()
-            nuevo_exp.numero_expediente = f"{prefix}-{count:05d}"
-            
-            # 4. Inicializar Valores
-            nuevo_exp.monto_recuperado = 0
-            nuevo_exp.estado = 'ACTIVO'
-            nuevo_exp.activo = True
-            
-            # 5. CALCULAR DEUDA INICIAL
-            # Calculamos cuánto debe HOY basado en la fecha de impago que cargaste
-            deuda_inicial = calcular_deuda_actualizada(nuevo_exp)
-            nuevo_exp.monto_actual = deuda_inicial
-            
-            nuevo_exp.save()
-            
-            messages.success(request, f"Expediente registrado. Deuda al día: {nuevo_exp.monto_actual:.2f}€")
-            return redirect('crm:dashboard_crm', empresa_id=empresa.id)
-        else:
-            messages.error(request, "Error en el formulario. Verifique los datos.")
-    else:
-        form = ExpedienteForm(empresa=empresa)
+        # Filtro Llamada (ll1...ll5)
+        val_l = request.GET.get(f'f_l{i}')
+        if val_l in ['true', 'false']:
+            is_true = (val_l == 'true')
+            # Construimos el nombre del campo: ll1, ll2...
+            kwargs = {f'll{i}': is_true}
+            expedientes_qs = expedientes_qs.filter(**kwargs)
 
-    # --- CONTEXTO ---
+    # --- 4. FILTROS BOOLEANOS ASNEF ---
+    if f_be in ['true', 'false']:
+        expedientes_qs = expedientes_qs.filter(buro_enviado=(f_be == 'true'))
+    if f_br in ['true', 'false']:
+        expedientes_qs = expedientes_qs.filter(buro_recibido=(f_br == 'true'))
+    if f_as in ['true', 'false']:
+        expedientes_qs = expedientes_qs.filter(asnef_inscrito=(f_as == 'true'))
+    if f_ls in ['true', 'false']:
+        expedientes_qs = expedientes_qs.filter(llamada_seguimiento_asnef=(f_ls == 'true'))
+
+    # ... Resto de tu lógica (Agentes, Contexto, Render) se mantiene igual ...
+    
     context = {
         'empresa': empresa,
-        'form': form,
-        'agentes_disponibles': agentes_disponibles,
+        'q': q, # Mantenemos búsqueda
+        # Pasamos los QuerySets filtrados
         'impagos': expedientes_qs.filter(activo=True, estado='ACTIVO'),
         'cedidos': expedientes_qs.filter(activo=True, estado='CEDIDO'),
         'pagados': expedientes_qs.filter(activo=True, estado='PAGADO'),
-        'recobros': RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago'),
         'papelera': expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion'),
+        'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
+        'form': ExpedienteForm(empresa=empresa),
+        # ...
     }
     return render(request, 'crm/dashboard_empresa.html', context)
-
 # --- VISTAS DE ACCIÓN ---
 
 @login_required
@@ -297,21 +328,11 @@ def buscar_antecedentes_deudor(request):
     if not nombre or not empresa_id:
         return JsonResponse({'status': 'empty'})
 
-    # Buscamos registros previos que NO estén activos (Pagados o desactivados)
-    # Ordenamos por fecha para traer el más reciente
+    # Buscamos el último registro (incluso si está en papelera o pagado)
     antecedente = Expediente.objects.filter(
         empresa_id=empresa_id,
-        deudor_nombre__iexact=nombre,
-        activo=False
-    ).order_by('-fecha_recepcion').first()
-
-    # Si no hay en papelera, buscamos en los que ya pagaron
-    if not antecedente:
-        antecedente = Expediente.objects.filter(
-            empresa_id=empresa_id,
-            deudor_nombre__iexact=nombre,
-            estado='PAGADO'
-        ).order_by('-fecha_recepcion').first()
+        deudor_nombre__iexact=nombre
+    ).order_by('-fecha_creacion').first()
 
     if antecedente:
         return JsonResponse({

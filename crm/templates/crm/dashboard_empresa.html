@@ -4,20 +4,41 @@
 {% block content %}
 <div class="container-fluid py-4">
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body d-flex justify-content-between align-items-center">
-            <div>
-                <h3 class="fw-bold mb-0 text-dark">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM Operativo</span></h3>
-            </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-sm px-3 shadow-sm"><i class="fa-solid fa-file-import me-1"></i> Importar Excel</button>
-                <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
-                    <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
-                </button>
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-4 align-items-center mt-2">
+                <div class="col-md-4">
+                    <h3 class="fw-bold mb-0 text-dark">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM</span></h3>
+                </div>
+                
+                <div class="col-md-5 col-lg-4">
+                    <form method="get">
+                        <div class="d-flex w-100"> 
+                            <div class="search-box w-100">
+                                <i class="fa-solid fa-search search-icon"></i>
+                                <input type="text" name="q" value="{{ q }}" 
+                                       class="form-control" placeholder="Buscar por nombre, tel o ID...">
+                            </div>
+                            <button class="btn btn-secondary" type="submit" 
+                                    style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                Buscar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="toggleFiltros()" title="Filtros por columna">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-success btn-sm px-3 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
+                        <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <ul class="nav nav-tabs border-0 mb-3" id="crmTab" role="tablist">
+    <ul class="nav nav-tabs border-0" id="crmTab" role="tablist">
         <li class="nav-item">
             <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-impagos">Impagos</button>
         </li>
@@ -35,60 +56,63 @@
         <li class="nav-item">
             <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-info-empresa">Info Empresa</button>
         </li>
-        <li class="nav-item ms-auto">
-            <button class="nav-link fw-bold text-danger border-0" data-bs-toggle="tab" data-bs-target="#tab-papelera">
+        <li class="nav-item">
+            <button class="nav-link fw-bold text-danger" data-bs-toggle="tab" data-bs-target="#tab-papelera">
                 <i class="fa-solid fa-trash-can me-1"></i> Papelera
             </button>
         </li>
     </ul>
 
-    <div class="tab-content bg-white p-3 rounded shadow-sm border">
-        <div class="tab-pane fade show active" id="tab-impagos" role="tabpanel">
-            {% include 'crm/includes/tabla_impagos.html' %}
-        </div>
+    <div class="contenedor-listado">
+        <div class="tab-content bg-white p-3 rounded shadow-sm border">
+            <div class="tab-pane fade show active" id="tab-impagos" role="tabpanel">
+                {% include 'crm/includes/tabla_impagos.html' %}
+            </div>
 
-        <div class="tab-pane fade" id="tab-cedidos" role="tabpanel">
-            {% include 'crm/includes/tabla_cedidos.html' %}
-        </div>
+            <div class="tab-pane fade" id="tab-cedidos" role="tabpanel">
+                {% include 'crm/includes/tabla_cedidos.html' %}
+            </div>
 
-        <div class="tab-pane fade" id="tab-recobros" role="tabpanel">
-            {% include 'crm/includes/tabla_recobros.html' %}
-        </div>
+            <div class="tab-pane fade" id="tab-recobros" role="tabpanel">
+                {% include 'crm/includes/tabla_recobros.html' %}
+            </div>
 
-        <div class="tab-pane fade" id="tab-ha-pagado" role="tabpanel">
-            {% include 'crm/includes/tabla_pagados.html' %}
-        </div>
+            <div class="tab-pane fade" id="tab-ha-pagado" role="tabpanel">
+                {% include 'crm/includes/tabla_pagados.html' %}
+            </div>
 
-        <div class="tab-pane fade" id="tab-info-empresa" role="tabpanel">
-             <div class="row g-4 p-2">
-                <div class="col-md-6">
-                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Datos de Operativa</h6>
-                    <div class="mb-3">
-                        <label class="text-muted d-block small">Cursos / Formaciones:</label>
-                        <div class="p-2 bg-light border rounded" style="min-height: 100px; white-space: pre-wrap;">{{ empresa.cursos|default:"No especificado" }}</div>
+            <div class="tab-pane fade" id="tab-info-empresa" role="tabpanel">
+                <div class="row g-4 p-2">
+                    <div class="col-md-6">
+                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Datos de Operativa</h6>
+                        <div class="mb-3">
+                            <label class="text-muted d-block small">Cursos / Formaciones:</label>
+                            <div class="p-2 bg-light border rounded" style="min-height: 100px; white-space: pre-wrap;">{{ empresa.cursos|default:"No especificado" }}</div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Información de Pago</h6>
-                    <div class="mb-3">
-                        <label class="text-muted d-block small">Datos Bancarios:</label>
-                        <div class="p-3 border rounded bg-light font-monospace" style="font-size: 0.9rem;">
-                            {{ empresa.datos_bancarios|linebreaks }}
+                    <div class="col-md-6">
+                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">Información de Pago</h6>
+                        <div class="mb-3">
+                            <label class="text-muted d-block small">Datos Bancarios:</label>
+                            <div class="p-3 border rounded bg-light font-monospace" style="font-size: 0.9rem;">
+                                {{ empresa.datos_bancarios|linebreaks }}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="tab-pane fade" id="tab-papelera" role="tabpanel">
-            {% include 'crm/includes/tabla_papelera.html' %}
+            <div class="tab-pane fade" id="tab-papelera" role="tabpanel">
+                {% include 'crm/includes/tabla_papelera.html' %}
+            </div>
         </div>
     </div>
 </div>
 
+
 {% block extra_js %}
     <script src="{% static 'js/CRM/seguimiento.js' %}"></script>
-    <script src="{% static 'js/CRM/autocompletado.js' %}"></script>
+    <script src="{% static 'js/CRM/toggleFiltros.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Función para inicializar popovers de Bootstrap
