@@ -86,5 +86,24 @@
     </div>
 </div>
 
+{% block extra_js %}
+    <script src="{% static 'js/CRM/seguimiento.js' %}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Función para inicializar popovers de Bootstrap
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl, {
+                    trigger: 'hover',
+                    html: true,
+                    customClass: 'crm-popover'
+                })
+            });
+        });
+    </script>
+{% endblock %}
+
+
 {% include 'crm/includes/modal_nuevo_registro.html' %}
 {% endblock %}

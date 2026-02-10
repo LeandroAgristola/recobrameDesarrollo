@@ -82,39 +82,60 @@ class Expediente(models.Model):
     comentario_estandar = models.CharField(max_length=50, choices=OPCIONES_COMENTARIO, blank=True, null=True)
     fecha_pago_promesa = models.DateField(null=True, blank=True) # Para la lógica de "PAGARA"
     fecha_eliminacion = models.DateTimeField(null=True, blank=True)
+    motivo_eliminacion = models.TextField(blank=True, null=True)
     
     # Tics Seguimiento
-    # Tics Seguimiento (Mantenemos los booleanos para el checkbox visual, agregamos fechas para la lógica)
-    # Tics Seguimiento (Agregamos las fechas)
+    # Almacenamos: boolean para UI, fecha de acción, y estado (causa_impago) en ese momento
+    
+    # W1
     w1 = models.BooleanField(default=False)
     fecha_w1 = models.DateTimeField(null=True, blank=True)
+    estado_w1 = models.CharField(max_length=50, blank=True, null=True)
     
+    # LL1
     ll1 = models.BooleanField(default=False)
     fecha_ll1 = models.DateTimeField(null=True, blank=True)
+    estado_ll1 = models.CharField(max_length=50, blank=True, null=True)
     
+    # W2
     w2 = models.BooleanField(default=False)
     fecha_w2 = models.DateTimeField(null=True, blank=True)
+    estado_w2 = models.CharField(max_length=50, blank=True, null=True)
     
+    # LL2
     ll2 = models.BooleanField(default=False)
     fecha_ll2 = models.DateTimeField(null=True, blank=True)
+    estado_ll2 = models.CharField(max_length=50, blank=True, null=True)
     
+    # W3
     w3 = models.BooleanField(default=False)
     fecha_w3 = models.DateTimeField(null=True, blank=True)
+    estado_w3 = models.CharField(max_length=50, blank=True, null=True)
     
+    # LL3
     ll3 = models.BooleanField(default=False)
     fecha_ll3 = models.DateTimeField(null=True, blank=True)
+    estado_ll3 = models.CharField(max_length=50, blank=True, null=True)
     
+    # W4
     w4 = models.BooleanField(default=False)
     fecha_w4 = models.DateTimeField(null=True, blank=True)
+    estado_w4 = models.CharField(max_length=50, blank=True, null=True)
     
+    # LL4
     ll4 = models.BooleanField(default=False)
     fecha_ll4 = models.DateTimeField(null=True, blank=True)
+    estado_ll4 = models.CharField(max_length=50, blank=True, null=True)
     
+    # W5
     w5 = models.BooleanField(default=False)
     fecha_w5 = models.DateTimeField(null=True, blank=True)
+    estado_w5 = models.CharField(max_length=50, blank=True, null=True)
     
+    # LL5
     ll5 = models.BooleanField(default=False)
     fecha_ll5 = models.DateTimeField(null=True, blank=True)
+    estado_ll5 = models.CharField(max_length=50, blank=True, null=True)
 
     # ASNEF / BURO
     buro_enviado = models.BooleanField(default=False)
@@ -122,15 +143,18 @@ class Expediente(models.Model):
     asnef_inscrito = models.BooleanField(default=False)
     llamada_seguimiento_asnef = models.BooleanField(default=False)
 
-    def eliminar_logico(self):
-        self.activo = False
-        self.fecha_eliminacion = timezone.now()
-        self.save()
+    def eliminar_logico(self, motivo=None): # <--- Actualizamos esto
+            self.activo = False
+            self.fecha_eliminacion = timezone.now()
+            if motivo:
+                self.motivo_eliminacion = motivo # Guardamos el motivo
+            self.save()
 
     def restaurar(self):
-        self.activo = True
-        self.fecha_eliminacion = None
-        self.save()
+            self.activo = True
+            self.fecha_eliminacion = None
+            self.motivo_eliminacion = None # <--- Limpiamos el motivo al restaurar
+            self.save()
 
     def __str__(self):
         return f"{self.numero_expediente} - {self.deudor_nombre}"

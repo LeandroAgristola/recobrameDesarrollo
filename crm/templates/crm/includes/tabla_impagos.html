@@ -1,21 +1,19 @@
 {% load static %}
 <div class="crm-table-container border shadow-sm">
     <table class="table table-hover align-middle mb-0 table-crm">
-        <thead class="bg-light shadow-sm sticky-top" style="z-index: 1;">
+        <thead class="bg-light shadow-sm sticky-top" style="z-index: 10;">
             <tr>
                 <th class="col-agente">Agente</th>
                 <th class="col-id">ID</th>
                 <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
                 <th class="col-tel">Teléfono</th>
-                <th class="col-tipo">Producto</th>
-                
+                <th class="col-tipo">Tipo</th>
                 <th class="col-monto text-end">Total</th>
                 <th class="col-cuota text-center">Cuotas</th>
+                <th class="col-fecha text-center">F. Compra</th>
                 <th class="col-fecha text-center">F. Impago</th>
                 <th class="col-dias text-center">Días</th>
-                
                 <th class="col-comentario" style="min-width: 160px;">Comentario</th>
-                
                 <th class="col-estado">Estado</th>
                 <th class="col-monto text-end text-danger fw-bold">Deuda Hoy</th>
                 
@@ -28,10 +26,8 @@
                 <th class="col-asnef text-center small">BR</th>
                 <th class="col-asnef text-center small">AS</th>
                 <th class="col-asnef text-center small">LS</th>
-                
                 <th class="col-fecha text-center">Ult. Msj</th>
                 <th class="col-fecha text-center">F. Pago</th>
-                
                 <th class="col-acciones text-center">Acciones</th>
             </tr>
         </thead>
@@ -51,22 +47,19 @@
                         {% endfor %}
                     </select>
                 </td>
-                
                 <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
                 <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
                 <td class="col-tel small">{{ exp.deudor_telefono }}</td>
                 <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
-                
-                <td class="col-monto text-end small">{{ exp.monto_original }}€</td>
+                <td class="col-monto text-end small">{{ exp.monto_original }} €</td>
                 <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
+                <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
                 <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
-                
                 <td class="col-dias text-center">
                     <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                         {{ exp.tiempo_en_impago }}
                     </span>
                 </td>
-                
                 <td class="col-comentario">
                     <select class="form-select form-select-sm border-0 bg-transparent small text-muted p-0" 
                             onchange="actualizarComentario(this, {{ exp.id }})"
@@ -77,13 +70,11 @@
                         {% endfor %}
                     </select>
                 </td>
-                
                 <td class="col-estado">
                     <span id="estado-texto-{{ exp.id }}" class="badge bg-white text-dark border shadow-sm">
                         {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
                     </span>
                 </td>
-                
                 <td class="col-monto text-end fw-bold text-danger" style="font-size: 1.1em;">
                     {{ exp.monto_actual }}€
                 </td>
@@ -100,7 +91,6 @@
                         {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
                     </span>
                 </td>
-                
                 <td class="col-fecha text-center small text-success fw-bold">
                     <span id="fecha-pago-{{ exp.id }}">
                         {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
@@ -108,34 +98,45 @@
                         {% else %}-{% endif %}
                     </span>
                 </td>
-                
                 <td class="col-acciones bg-white">
                     <div class="d-flex gap-1 justify-content-center">
-                        <button class="btn btn-sm btn-success py-0 px-1" title="Registrar Pago">
-                            <i class="fa-solid fa-hand-holding-dollar"></i>
-                        </button>
-                        
-                        <button class="btn btn-sm btn-outline-primary py-0 px-1" title="Ver Detalle">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                        
-                        <a href="{% url 'crm:eliminar_expediente' exp.id %}" class="btn btn-sm btn-outline-danger py-0 px-1" title="Mover a Papelera">
+                        <button class="btn btn-sm btn-success py-0 px-1" title="Registrar Pago"><i class="fa-solid fa-sack-dollar"></i></button>
+                        <button class="btn btn-sm btn-outline-primary py-0 px-1" title="Ver Detalle"><i class="fa-solid fa-eye"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" title="Mover a Papelera" data-bs-toggle="modal" data-bs-target="#modalPapelera{{ exp.id }}">
                             <i class="fa-solid fa-trash"></i>
-                        </a>
+                        </button>
                     </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="25" class="text-center py-5 text-muted">
-                    <i class="fa-regular fa-folder-open fa-2x mb-3 d-block"></i>
-                    No hay expedientes en gestión de impago.
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+{% for exp in impagos %}
+<div class="modal fade" id="modalPapelera{{ exp.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'crm:eliminar_expediente' exp.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
+                    <h6 class="modal-title text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Mover a Papelera</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p class="mb-2">¿Deseas desactivar el expediente de <strong>{{ exp.deudor_nombre }}</strong>?</p>
+                    <label class="form-label small fw-bold text-muted">Motivo de eliminación (Obligatorio):</label>
+                    <textarea name="motivo_eliminacion" class="form-control" rows="2" required placeholder="Ej: Error de carga, duplicado, etc..."></textarea>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-warning fw-bold">Confirmar Baja</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <div class="modal fade" id="modalEstadoTick" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-sm modal-dialog-centered">
@@ -153,8 +154,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                
-                <div id="divFechaPromesa" class="d-none animate__animated animate__fadeIn">
+                <div id="divFechaPromesa" class="d-none">
                     <label class="form-label small fw-bold text-success mb-1">Fecha de Compromiso</label>
                     <input type="date" id="inputFechaPromesa" class="form-control form-control-sm border-success">
                 </div>

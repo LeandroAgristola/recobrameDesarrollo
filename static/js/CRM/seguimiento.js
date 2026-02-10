@@ -162,6 +162,12 @@ function enviarActualizacion(expId, accion, valor, nuevoEstado, fechaPromesa) {
                 fechaPagoSpan.classList.add('text-success', 'fw-bold');
             }
 
+            // REINICIALIZAR POPOVERS TRAS CAMBIO DINÁMICO
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+            popoverTriggerList.map(function (el) {
+                return new bootstrap.Popover(el, { trigger: 'hover', html: true });
+            });
+
             // Notificación de éxito
             mostrarToast("Gestión guardada correctamente", 'success');
         }
@@ -186,3 +192,21 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// --- INICIALIZACIÓN DE POPOVERS ---
+// Función para inicializar o refrescar popovers
+function initPopovers() {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        // Destruir si ya existe para evitar duplicados al refrescar
+        var oldPopover = bootstrap.Popover.getInstance(popoverTriggerEl);
+        if (oldPopover) oldPopover.dispose();
+        
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+}
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    initPopovers();
+});

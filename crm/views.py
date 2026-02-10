@@ -145,8 +145,13 @@ def dashboard_crm(request, empresa_id):
 def eliminar_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
     empresa_id = exp.empresa.id
-    exp.eliminar_logico()
-    messages.warning(request, f"Expediente de {exp.deudor_nombre} movido a la papelera.")
+    
+    # Ahora esperamos un POST desde el modal
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo_eliminacion')
+        exp.eliminar_logico(motivo)
+        messages.warning(request, f"Expediente movido a la papelera.")
+    
     return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 @login_required
@@ -158,12 +163,15 @@ def restaurar_expediente(request, exp_id):
 
 @login_required
 def eliminar_permanente_expediente(request, exp_id):
-    """Elimina el registro FÍSICAMENTE de la base de datos"""
+    """Elimina FÍSICAMENTE tras confirmar en modal"""
     exp = get_object_or_404(Expediente, id=exp_id)
     empresa_id = exp.empresa.id
-    nombre = exp.deudor_nombre
-    exp.delete()
-    messages.success(request, f"El expediente de {nombre} ha sido eliminado definitivamente.")
+    
+    if request.method == 'POST': # Seguridad extra
+        nombre = exp.deudor_nombre
+        exp.delete()
+        messages.success(request, f"El expediente de {nombre} ha sido eliminado definitivamente.")
+        
     return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 @login_required
@@ -195,12 +203,20 @@ def actualizar_seguimiento(request):
         if nuevo_estado:
             exp.causa_impago = nuevo_estado
             
-            # Si es PAGARA y viene fecha, la guardamos
+            # --- NUEVO: GUARDAR EL ESTADO EN EL HISTORIAL DEL TICK ---
+            # Guardamos el estado seleccionado EN EL CAMPO DEL TICK ESPECÍFICO
+            # Ej: estado_w1 = 'NO_QUIERE'
+            if hasattr(exp, f'estado_{accion}'):
+                setattr(exp, f'estado_{accion}', nuevo_estado)
+
             if nuevo_estado == 'PAGARA' and fecha_promesa:
                 exp.fecha_pago_promesa = fecha_promesa
     else:
         setattr(exp, accion, False)
         setattr(exp, f'fecha_{accion}', None)
+        # Limpiamos el historial si se desmarca
+        if hasattr(exp, f'estado_{accion}'):
+            setattr(exp, f'estado_{accion}', None)
 
     exp.save()
     exp.refresh_from_db()

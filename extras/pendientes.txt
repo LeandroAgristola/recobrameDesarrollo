@@ -1,37 +1,24 @@
 
 CRM
 
-No se muestra la fecha de compra
-El boton de borrar debe ejecutar un modal de confirmación tanto para enviar a papelera como para eliminar completamente.
-Al enviar a la papelera debemos agregar un comentario de porque lo estamos eliminando.
+
 Agragar editar cliente para editar campos basicos 
-
-
+Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
+manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 
 (+) darle funcionalidad a registrar un nuevo pago
 
 REG_Recobros: darle funcionalidad a la planilla de registros de recobros
 
-Registro de cliente: darle funcionalidad y formulario de "+ Nuevo Registro)
-
-Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
-¿Cuándo pagará? si cuando apretamos el tick y colocamos el estado "pagara" si o si debemos poner un fecha de pago
-
-
 Diseño:
 
-El thead del listado de impagos se muestra sobre el menu lateral al desplegarse 
 las pestañas no estan unidas con el contenedor 
-
+Ajustar anchos de los campos (no se aplica el CSS)
 
 1. CRM:
 
 Pestaña Listados CRM: 
 
-Agentes solo se muestran los que tiene casos asignados
-En el caso de ser Admin tenemo las opciones de crear, editar o desacartivar un CRM
-
-*Una vez que hacemos click en el CRM nos abre el listado de clientes en impago
 
 *Pestaña con la información de la empresa (traemos los datos de clientes)
 Cursos, contacto de incidencias, datos bancarios
