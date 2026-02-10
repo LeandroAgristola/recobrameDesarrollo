@@ -3,6 +3,10 @@ from django.db import models
 from empresas.models import Empresa
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 
 class CRMConfig(models.Model):
     empresa = models.OneToOneField(Empresa, on_delete=models.CASCADE, related_name='crm_config')
@@ -37,6 +41,14 @@ class Expediente(models.Model):
         ('ESPERANDO', 'Esperando respuesta'),
     ]
 
+    OPCIONES_COMENTARIO = [
+        ('SIN_RESPUESTA', 'No tiene respuesta de la academia'),
+        ('ESTAFADO', 'Se siente estafado'),
+        ('SIN_TRABAJO', 'Se encuentra sin trabajo'),
+        ('DESCONOCE', 'No conoce la academia'),
+        ('INCUMPLIMIENTO', 'No cumple el compromiso'),
+    ]
+
     # Relaciones
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='expedientes')
     agente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cartera')
@@ -67,19 +79,42 @@ class Expediente(models.Model):
     causa_impago = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     comentarios = models.TextField(blank=True, null=True)
     activo = models.BooleanField(default=True)
+    comentario_estandar = models.CharField(max_length=50, choices=OPCIONES_COMENTARIO, blank=True, null=True)
+    fecha_pago_promesa = models.DateField(null=True, blank=True) # Para la lógica de "PAGARA"
     fecha_eliminacion = models.DateTimeField(null=True, blank=True)
     
     # Tics Seguimiento
+    # Tics Seguimiento (Mantenemos los booleanos para el checkbox visual, agregamos fechas para la lógica)
+    # Tics Seguimiento (Agregamos las fechas)
     w1 = models.BooleanField(default=False)
+    fecha_w1 = models.DateTimeField(null=True, blank=True)
+    
     ll1 = models.BooleanField(default=False)
+    fecha_ll1 = models.DateTimeField(null=True, blank=True)
+    
     w2 = models.BooleanField(default=False)
+    fecha_w2 = models.DateTimeField(null=True, blank=True)
+    
     ll2 = models.BooleanField(default=False)
+    fecha_ll2 = models.DateTimeField(null=True, blank=True)
+    
     w3 = models.BooleanField(default=False)
+    fecha_w3 = models.DateTimeField(null=True, blank=True)
+    
     ll3 = models.BooleanField(default=False)
+    fecha_ll3 = models.DateTimeField(null=True, blank=True)
+    
     w4 = models.BooleanField(default=False)
+    fecha_w4 = models.DateTimeField(null=True, blank=True)
+    
     ll4 = models.BooleanField(default=False)
+    fecha_ll4 = models.DateTimeField(null=True, blank=True)
+    
     w5 = models.BooleanField(default=False)
+    fecha_w5 = models.DateTimeField(null=True, blank=True)
+    
     ll5 = models.BooleanField(default=False)
+    fecha_ll5 = models.DateTimeField(null=True, blank=True)
 
     # ASNEF / BURO
     buro_enviado = models.BooleanField(default=False)
@@ -99,6 +134,22 @@ class Expediente(models.Model):
 
     def __str__(self):
         return f"{self.numero_expediente} - {self.deudor_nombre}"
+    
+    # Propiedad para obtener la última fecha de gestión automáticamente
+    @property
+    def ultimo_mensaje_fecha(self):
+        fechas = [
+            self.fecha_w1, self.fecha_ll1, 
+            self.fecha_w2, self.fecha_ll2, 
+            self.fecha_w3, self.fecha_ll3, 
+            self.fecha_w4, self.fecha_ll4, 
+            self.fecha_w5, self.fecha_ll5
+        ]
+        # Filtramos las que no son None
+        fechas_reales = [f for f in fechas if f is not None]
+        if fechas_reales:
+            return max(fechas_reales)
+        return None
 
     @property
     def tiempo_en_impago(self):
@@ -123,3 +174,5 @@ class RegistroPago(models.Model):
 
     def __str__(self):
         return f"Pago {self.monto} - {self.expediente.deudor_nombre}"
+    
+

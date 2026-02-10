@@ -1,6 +1,12 @@
 
 CRM
 
+No se muestra la fecha de compra
+El boton de borrar debe ejecutar un modal de confirmación tanto para enviar a papelera como para eliminar completamente.
+Al enviar a la papelera debemos agregar un comentario de porque lo estamos eliminando.
+Agragar editar cliente para editar campos basicos 
+
+
 
 (+) darle funcionalidad a registrar un nuevo pago
 
@@ -8,10 +14,13 @@ REG_Recobros: darle funcionalidad a la planilla de registros de recobros
 
 Registro de cliente: darle funcionalidad y formulario de "+ Nuevo Registro)
 
-Papelera: aquí vamos a alojar los clientes que eliminamos del CRM (misma metodología que la papelera de empresas, mismos modales y consultas)
+Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
+¿Cuándo pagará? si cuando apretamos el tick y colocamos el estado "pagara" si o si debemos poner un fecha de pago
+
 
 Diseño:
 
+El thead del listado de impagos se muestra sobre el menu lateral al desplegarse 
 las pestañas no estan unidas con el contenedor 
 
 
@@ -67,10 +76,6 @@ BR - Buro Recibido  (Trae la información desde Asnef)
 ASNEF  (Trae la información desde Asnef)
 LLS (llamada de seguimiento para salir de ASNEF)
 
-Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
-Fecha de ultimo msj nos va a mostrar la ultima interaccion con ese agente
-
-¿Cuándo pagará? (si el estado es pagara no nos va a dejar guardar los cambios si no establecemos la fecha de pago
 
 Botón de Nuevo pago nos va a abrir un pequeño formulario con los siguientes campos:
 Nombre y apellido (listado completo de los nombres del CRM con un buscador arriba de todo podremos seleccionarlo de la lista o buscandolo)
@@ -90,7 +95,6 @@ Cargar de reporte:
     opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
 
 
-
 Al apretar sobre el cliente nos va a abrir una nueva vista del cliente
 
 Datos de contacto y fechas de impago
@@ -107,4 +111,9 @@ Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
 Filtros en la parte superior para filtrar por todo tipo.
 Buscador por nombre/ id/ teléfono
 
-Al eliminar un registro un modal nos va a pedir un comentario de porque lo eliminamos, que se agrega a los comentarios base 
+Carga masiva: 
+
+al cargar un excel de carga masiva nos va a preguntar de que tipo es para comparar entre esos tipos en el CRM
+
+
+

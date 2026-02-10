@@ -1,10 +1,10 @@
-<td class="col-tic"><input type="checkbox" {% if exp.w1 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.ll1 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.w2 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.ll2 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.w3 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.ll3 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.w4 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.ll4 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.w5 %}checked{% endif %}></td>
-<td class="col-tic"><input type="checkbox" {% if exp.ll5 %}checked{% endif %}></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.w1 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w1')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.ll1 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll1')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.w2 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w2')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.ll2 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll2')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.w3 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w3')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.ll3 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll3')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.w4 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w4')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.ll4 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll4')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.w5 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w5')"></td>
+<td class="col-tic text-center"><input class="form-check-input" type="checkbox" {% if exp.ll5 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll5')"></td>

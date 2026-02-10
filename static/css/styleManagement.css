@@ -36,7 +36,6 @@ label { font-weight: 500; color: #0a2c46; }
     position: relative;
     overflow: hidden; /* Necesario para que la barra no se escape de las esquinas redondeadas */
     border: none;
-    background-color: #ffffff !important;
     min-width: 320px;
     /* Usamos una sombra similar a la de tus formularios */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -321,7 +320,7 @@ label { font-weight: 500; color: #0a2c46; }
 }
 
 /* Clases de ancho fijo según tus medidas */
-.col-agente { width: 150px; }
+.col-agente { width: 350px; }
 .col-id { width: 100px; }
 .col-nombre { width: 250px; }
 .col-tel { width: 120px; }

@@ -10,3 +10,4 @@ class ExpedienteAdmin(admin.ModelAdmin):
 
 admin.site.register(RegistroPago)
 admin.site.register(CRMConfig)
+

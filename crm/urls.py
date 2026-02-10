@@ -10,4 +10,7 @@ urlpatterns = [
     path('expediente/eliminar/<int:exp_id>/', views.eliminar_expediente, name='eliminar_expediente'),
     path('expediente/restaurar/<int:exp_id>/', views.restaurar_expediente, name='restaurar_expediente'),
     path('expediente/eliminar-total/<int:exp_id>/', views.eliminar_permanente_expediente, name='eliminar_permanente_expediente'),
+    path('api/actualizar-seguimiento/', views.actualizar_seguimiento, name='actualizar_seguimiento'),
+    path('api/actualizar-comentario/', views.actualizar_comentario_estandar, name='actualizar_comentario'),
+    path('api/actualizar-agente/', views.actualizar_agente, name='actualizar_agente'),
 ]

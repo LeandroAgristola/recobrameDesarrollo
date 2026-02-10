@@ -1,9 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q 
 from django.utils import timezone
 from datetime import date
+from django.contrib.auth.decorators import login_required 
+from django.views.decorators.http import require_POST    
+from django.http import JsonResponse
+import json
+from django.contrib.auth.models import User
+
 from empresas.models import Empresa
 from .models import Expediente, RegistroPago
 from .forms import ExpedienteForm
@@ -59,6 +64,10 @@ def calcular_deuda_actualizada(expediente):
 def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
     expedientes_qs = Expediente.objects.filter(empresa=empresa)
+    
+    # --- [NUEVO] Obtener lista de agentes ---
+    # Filtramos solo usuarios activos. Puedes ajustar esto si tienes un grupo específico 'Agentes'.
+    agentes_disponibles = User.objects.filter(is_active=True).order_by('username')
     
     # --- ACTUALIZACIÓN AUTOMÁTICA DE DEUDA ---
     # Al entrar al dashboard, recalculamos la deuda de los activos
@@ -121,6 +130,7 @@ def dashboard_crm(request, empresa_id):
     context = {
         'empresa': empresa,
         'form': form,
+        'agentes_disponibles': agentes_disponibles,
         'impagos': expedientes_qs.filter(activo=True, estado='ACTIVO'),
         'cedidos': expedientes_qs.filter(activo=True, estado='CEDIDO'),
         'pagados': expedientes_qs.filter(activo=True, estado='PAGADO'),
@@ -161,3 +171,83 @@ def lista_crm(request):
     """Vista para el listado general de empresas en el CRM"""
     empresas = Empresa.objects.filter(is_active=True) 
     return render(request, 'crm/lista_crm.html', {'empresas': empresas})
+
+# crm/views.py
+
+# ... imports ...
+
+@login_required
+@require_POST
+def actualizar_seguimiento(request):
+    data = json.loads(request.body)
+    exp_id = data.get('expediente_id')
+    accion = data.get('tipo_accion') 
+    valor = data.get('valor')        
+    nuevo_estado = data.get('nuevo_estado')
+    fecha_promesa = data.get('fecha_promesa') # <--- NUEVO
+
+    exp = get_object_or_404(Expediente, id=exp_id)
+    
+    if valor:
+        setattr(exp, accion, True)
+        setattr(exp, f'fecha_{accion}', timezone.now())
+        
+        if nuevo_estado:
+            exp.causa_impago = nuevo_estado
+            
+            # Si es PAGARA y viene fecha, la guardamos
+            if nuevo_estado == 'PAGARA' and fecha_promesa:
+                exp.fecha_pago_promesa = fecha_promesa
+    else:
+        setattr(exp, accion, False)
+        setattr(exp, f'fecha_{accion}', None)
+
+    exp.save()
+    exp.refresh_from_db()
+    
+    return JsonResponse({
+            'status': 'ok',
+            'fecha_ultimo': exp.ultimo_mensaje_fecha.strftime("%d/%m/%Y") if exp.ultimo_mensaje_fecha else "-",
+            'estado_legible': exp.get_causa_impago_display() or "-",
+            'fecha_promesa_legible': exp.fecha_pago_promesa.strftime("%d/%m") if exp.fecha_pago_promesa else "-"
+        })
+
+@login_required
+@require_POST
+def actualizar_comentario_estandar(request):
+    """Actualiza el select de comentarios de la tabla"""
+    data = json.loads(request.body)
+    exp = get_object_or_404(Expediente, id=data.get('expediente_id'))
+    exp.comentario_estandar = data.get('comentario')
+    exp.save()
+    return JsonResponse({'status': 'ok'})
+
+@login_required
+@require_POST
+def actualizar_agente(request):
+    """
+    Permite cambiar el agente asignado.
+    Solo permitido para ADMINS o STAFF.
+    """
+    if not request.user.is_staff: # Validación de seguridad
+        return JsonResponse({'status': 'error', 'msg': 'No autorizado'}, status=403)
+
+    data = json.loads(request.body)
+    exp = get_object_or_404(Expediente, id=data.get('expediente_id'))
+    
+    nuevo_agente_id = data.get('agente_id')
+    
+    if nuevo_agente_id:
+        usuario = get_object_or_404(User, id=nuevo_agente_id)
+        exp.agente = usuario
+        nombre_agente = usuario.username
+    else:
+        exp.agente = None
+        nombre_agente = "Sin asignar"
+        
+    exp.save()
+    
+    return JsonResponse({
+        'status': 'ok',
+        'agente_nombre': nombre_agente
+    })
