@@ -1,9 +1,12 @@
 
 CRM
 
-El pops over solo muestra la fecha y no el estado 
+
+
+Filtros y buscador dentro del CRM
+Agregar la vista de detalle del cliente
+agregar la opcion de solo colocar la deuda sin fechas
 Agragar editar cliente para editar campos basicos 
-Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 
 (+) darle funcionalidad a registrar un nuevo pago

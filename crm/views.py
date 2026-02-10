@@ -10,7 +10,7 @@ import json
 from django.contrib.auth.models import User
 
 from empresas.models import Empresa
-from .models import Expediente, RegistroPago
+from .models import Expediente, RegistroPago, DocumentoExpediente
 from .forms import ExpedienteForm
 
 # --- HELPER PARA CALCULAR DEUDA ---
@@ -19,44 +19,31 @@ def calcular_deuda_actualizada(expediente):
     Calcula la deuda exigible basándose en la fecha de impago y la fecha actual.
     Logica: (Cuotas Vencidas * Valor Cuota) - Lo que ya pagó
     """
-    # Validaciones básicas para evitar división por cero
+    """
+    Calcula la DEUDA EXIGIBLE (Lo que ya venció y no se pagó).
+    """
     if not expediente.fecha_impago or expediente.monto_original <= 0 or expediente.cuotas_totales <= 0:
-        return expediente.monto_original
+        return 0
 
     hoy = timezone.now().date()
     impago = expediente.fecha_impago
 
-    # Si la fecha de impago es futura, la deuda exigible hoy es 0
     if impago > hoy:
         return 0
 
-    # 1. Calcular valor de la cuota
-    # Convertimos a float para cálculos matemáticos
     valor_cuota = float(expediente.monto_original) / expediente.cuotas_totales
 
-    # 2. Calcular cuántas cuotas han vencido desde la fecha de impago (inclusive)
-    # Diferencia de meses base (Año * 12 + Meses)
-    meses_diferencia = (hoy.year - impago.year) * 12 + (hoy.month - impago.month)
-    
-    # Si el día de hoy es igual o mayor al día del impago, suma el mes actual
-    # Ej: Impago el 1, hoy es 9 -> Ya venció este mes
-    if hoy.day >= impago.day:
-        meses_diferencia += 1
-    
-    # Ajuste: al menos 1 cuota (la del primer impago)
-    cuotas_vencidas = max(1, meses_diferencia)
-    
-    # No podemos cobrar más cuotas de las totales del plan
-    cuotas_vencidas = min(cuotas_vencidas, expediente.cuotas_totales)
+    # Calculamos meses desde el primer impago hasta hoy usando relativedelta
+    from dateutil.relativedelta import relativedelta
+    diff = relativedelta(hoy, impago)
+    meses_vencidos = diff.years * 12 + diff.months + 1  # +1 porque el mes de impago ya cuenta
 
-    # 3. Calculamos la deuda teórica acumulada
-    deuda_teorica = valor_cuota * cuotas_vencidas
+    # No puede superar las cuotas totales del contrato
+    cuotas_vencidas_reales = min(meses_vencidos, expediente.cuotas_totales)
+    deuda_que_deberia_existir = valor_cuota * cuotas_vencidas_reales
 
-    # 4. Restamos lo que ya haya recuperado (si hubo pagos parciales)
-    deuda_real = deuda_teorica - float(expediente.monto_recuperado)
-
-    # La deuda no puede ser negativa
-    return max(0.0, deuda_real)
+    deuda_exigible = deuda_que_deberia_existir - float(expediente.monto_recuperado)
+    return max(0.0, deuda_exigible)
 
 # --- VISTAS ---
 
@@ -86,16 +73,19 @@ def dashboard_crm(request, empresa_id):
     if request.method == 'POST':
         form = ExpedienteForm(request.POST, empresa=empresa)
         if form.is_valid():
-            # 1. Validación de Duplicados
+            # 1. Validación de Duplicados (Solo bloquea si el cliente está ACTIVO hoy)
             nombre = form.cleaned_data.get('deudor_nombre')
             telefono = form.cleaned_data.get('deudor_telefono')
             
-            duplicado = expedientes_qs.filter(
-                Q(deudor_nombre__iexact=nombre) | Q(deudor_telefono=telefono)
+            # Ahora solo bloqueamos si ya existe uno con el mismo nombre/teléfono Y que esté activo
+            duplicado_activo = expedientes_qs.filter(
+                Q(deudor_nombre__iexact=nombre) | Q(deudor_telefono=telefono),
+                activo=True,
+                estado='ACTIVO'
             ).exists()
 
-            if duplicado:
-                messages.error(request, f"Ya existe un expediente para {nombre} o el teléfono {telefono}.")
+            if duplicado_activo:
+                messages.error(request, f"Ya existe una gestión activa para {nombre}. No se puede duplicar.")
                 return redirect('crm:dashboard_crm', empresa_id=empresa.id)
 
             # 2. Preparar objeto
@@ -278,3 +268,59 @@ def actualizar_agente(request):
         'status': 'ok',
         'agente_nombre': nombre_agente
     })
+
+@login_required
+@require_POST
+def subir_documento_crm(request, exp_id):
+    exp = get_object_or_404(Expediente, id=exp_id)
+    tipo = request.POST.get('tipo_documento')
+    archivo = request.FILES.get('archivo')
+    
+    if archivo:
+        DocumentoExpediente.objects.create(
+            expediente=exp,
+            tipo=tipo,
+            archivo=archivo,
+            nombre_archivo=archivo.name
+        )
+        messages.success(request, f"Documento '{archivo.name}' subido correctamente.")
+    else:
+        messages.error(request, "No se seleccionó ningún archivo.")
+        
+    return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
+
+@login_required
+def buscar_antecedentes_deudor(request):
+    nombre = request.GET.get('nombre', '').strip()
+    empresa_id = request.GET.get('empresa_id')
+    
+    if not nombre or not empresa_id:
+        return JsonResponse({'status': 'empty'})
+
+    # Buscamos registros previos que NO estén activos (Pagados o desactivados)
+    # Ordenamos por fecha para traer el más reciente
+    antecedente = Expediente.objects.filter(
+        empresa_id=empresa_id,
+        deudor_nombre__iexact=nombre,
+        activo=False
+    ).order_by('-fecha_recepcion').first()
+
+    # Si no hay en papelera, buscamos en los que ya pagaron
+    if not antecedente:
+        antecedente = Expediente.objects.filter(
+            empresa_id=empresa_id,
+            deudor_nombre__iexact=nombre,
+            estado='PAGADO'
+        ).order_by('-fecha_recepcion').first()
+
+    if antecedente:
+        return JsonResponse({
+            'status': 'success',
+            'datos': {
+                'telefono': antecedente.deudor_telefono,
+                'email': antecedente.deudor_email,
+                'dni': antecedente.deudor_dni,
+            }
+        })
+    
+    return JsonResponse({'status': 'not_found'})

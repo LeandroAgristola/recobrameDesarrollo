@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from dateutil.relativedelta import relativedelta
 
 class CRMConfig(models.Model):
     empresa = models.OneToOneField(Empresa, on_delete=models.CASCADE, related_name='crm_config')
@@ -15,7 +16,7 @@ class CRMConfig(models.Model):
 
     def __str__(self):
         return f"CRM - {self.empresa.nombre}"
-
+    
 class Expediente(models.Model):
     ESTADOS_GESTION = [
         ('ACTIVO', 'Con Deuda'),
@@ -83,6 +84,7 @@ class Expediente(models.Model):
     fecha_pago_promesa = models.DateField(null=True, blank=True) # Para la lógica de "PAGARA"
     fecha_eliminacion = models.DateTimeField(null=True, blank=True)
     motivo_eliminacion = models.TextField(blank=True, null=True)
+    comprobante = models.FileField(upload_to='crm/pagos/', null=True, blank=True)
     
     # Tics Seguimiento
     # Almacenamos: boolean para UI, fecha de acción, y estado (causa_impago) en ese momento
@@ -184,6 +186,47 @@ class Expediente(models.Model):
     def deuda_pendiente(self):
         return self.monto_original - self.monto_recuperado
 
+    @property
+    def fecha_finalizacion_financiacion(self):
+        """Calcula cuándo termina de pagar basándose en la fecha de compra y cuotas totales"""
+        if not self.fecha_compra or not self.cuotas_totales:
+            return None
+        from dateutil.relativedelta import relativedelta
+        return self.fecha_compra + relativedelta(months=self.cuotas_totales)
+
+    @property
+    def cuotas_pagadas_estimadas(self):
+        """Calcula cuántas cuotas ha cubierto con el monto recuperado"""
+        if self.monto_original <= 0 or self.cuotas_totales <= 0:
+            return 0
+        valor_cuota = float(self.monto_original) / self.cuotas_totales
+        return int(float(self.monto_recuperado) // valor_cuota)
+
+    @property
+    def cuotas_restantes(self):
+        """Cuotas que faltan para completar el plan (pagadas vs totales)"""
+        return max(0, self.cuotas_totales - self.cuotas_pagadas_estimadas)
+
+    @property
+    def deuda_total_sistema(self):
+        """
+        Deuda total absoluta: 
+        Lo que debería haber pagado a fecha de hoy (impagas) + lo que falta por vencer (deuda futura)
+        Es simplemente: Monto Original - Monto Recuperado
+        """
+        return float(self.monto_original) - float(self.monto_recuperado)
+    
+    @property
+    def veces_en_impago(self):
+        """
+        Cuenta cuántas veces ha figurado este nombre en la base de datos
+        para la misma empresa (incluyendo registros actuales, pagados o en papelera).
+        """
+        return Expediente.objects.filter(
+            empresa=self.empresa,
+            deudor_nombre__iexact=self.deudor_nombre
+        ).count()
+
     def __str__(self):
         return f"{self.numero_expediente} - {self.deudor_nombre}"
 
@@ -199,4 +242,18 @@ class RegistroPago(models.Model):
     def __str__(self):
         return f"Pago {self.monto} - {self.expediente.deudor_nombre}"
     
+class DocumentoExpediente(models.Model):
+    TIPO_DOC = [
+        ('CONTRATO', 'Contrato de Cesión'),
+        ('OTRO', 'Otra Documentación'),
+    ]
+    
+    expediente = models.ForeignKey(Expediente, on_delete=models.CASCADE, related_name='documentos')
+    tipo = models.CharField(max_length=20, choices=TIPO_DOC)
+    archivo = models.FileField(upload_to='crm/documentos/')
+    nombre_archivo = models.CharField(max_length=255, blank=True)
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.expediente.deudor_nombre}"
 
