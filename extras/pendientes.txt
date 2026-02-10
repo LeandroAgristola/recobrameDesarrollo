@@ -1,7 +1,7 @@
 
 CRM
 
-
+El pops over solo muestra la fecha y no el estado 
 Agragar editar cliente para editar campos basicos 
 Al pasar el mouse sobre los distintos ticks nos mostrara la fecha de ese mjs
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
@@ -14,6 +14,7 @@ Diseño:
 
 las pestañas no estan unidas con el contenedor 
 Ajustar anchos de los campos (no se aplica el CSS)
+Anclar campos de nombre y apellid y telefono
 
 1. CRM:
 

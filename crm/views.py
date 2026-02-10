@@ -220,11 +220,22 @@ def actualizar_seguimiento(request):
 
     exp.save()
     exp.refresh_from_db()
-    
+
+    # Obtener nombre legible del estado específico del tick (ej: estado_w1)
+    estado_tick_legible = None
+    field_name = f'estado_{accion}'
+    display_method = f'get_{field_name}_display'
+    if hasattr(exp, display_method):
+        try:
+            estado_tick_legible = getattr(exp, display_method)()
+        except Exception:
+            estado_tick_legible = None
+
     return JsonResponse({
             'status': 'ok',
             'fecha_ultimo': exp.ultimo_mensaje_fecha.strftime("%d/%m/%Y") if exp.ultimo_mensaje_fecha else "-",
             'estado_legible': exp.get_causa_impago_display() or "-",
+            'estado_tick_legible': estado_tick_legible or "-",
             'fecha_promesa_legible': exp.fecha_pago_promesa.strftime("%d/%m") if exp.fecha_pago_promesa else "-"
         })
 

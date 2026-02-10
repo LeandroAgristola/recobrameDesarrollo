@@ -1,4 +1,7 @@
-// static/js/CRM/seguimiento.js
+/**
+ * Lógica de Seguimiento CRM
+ * Maneja ticks, estados, fechas de compromiso y actualización de popovers.
+ */
 
 let tickActual = null;
 let expedienteIdActual = null;
@@ -13,18 +16,18 @@ function manejarTick(checkbox, expId, tipoAccion) {
         
         // Resetear modal
         document.getElementById('selectEstadoTick').value = "";
-        document.getElementById('divFechaPromesa').classList.add('d-none'); // Ocultar fecha
+        document.getElementById('divFechaPromesa').classList.add('d-none');
         document.getElementById('inputFechaPromesa').value = "";
         
         const modal = new bootstrap.Modal(document.getElementById('modalEstadoTick'));
         modal.show();
     } else {
-        // Desmarcar sin modal
+        // Al desmarcar, enviamos valor false
         enviarActualizacion(expId, tipoAccion, false, null, null);
     }
 }
 
-// Detectar cambio en el select del modal para mostrar fecha si es PAGARA
+// Detectar cambio en el select del modal para lógica de "PAGARA"
 document.addEventListener('DOMContentLoaded', function() {
     const selectEstado = document.getElementById('selectEstadoTick');
     if(selectEstado){
@@ -38,6 +41,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    // Inicializar popovers al cargar
+    initPopovers();
 });
 
 function confirmarEstadoTick() {
@@ -46,13 +51,12 @@ function confirmarEstadoTick() {
     const fechaPromesa = document.getElementById('inputFechaPromesa').value;
 
     if (!estado) {
-        mostrarToast("Por favor selecciona un resultado.", 'warning');
+        mostrarToast("Selecciona un resultado.", "warning");
         return;
     }
 
-    // Validación: Si es PAGARA, la fecha es obligatoria
     if (estado === 'PAGARA' && !fechaPromesa) {
-        mostrarToast("Debes indicar una fecha de compromiso.", 'warning');
+        mostrarToast("Indica la fecha de compromiso.", "warning");
         return;
     }
 
@@ -67,66 +71,7 @@ function cancelarEstadoTick() {
     if (tickActual) tickActual.checked = false;
 }
 
-// 2. MANEJO DE COMENTARIOS ESTANDARIZADOS (ONCHANGE)
-function actualizarComentario(select, expId) {
-    const valor = select.value;
-    
-    fetch('/crm/api/actualizar-comentario/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({
-            'expediente_id': expId,
-            'comentario': valor
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status !== 'ok') mostrarToast("Error al guardar comentario", 'danger');
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        mostrarToast("Error de conexión", 'danger');
-    });
-}
-
-// 3. LÓGICA DE AGENTE
-function cambiarAgente(select, expId) {
-    const nuevoAgenteId = select.value;
-    
-    // Feedback visual inmediato (deshabilitar mientras carga)
-    select.disabled = true;
-
-    fetch('/crm/api/actualizar-agente/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({
-            'expediente_id': expId,
-            'agente_id': nuevoAgenteId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        select.disabled = false;
-        if (data.status === 'ok') {
-            mostrarToast(`Agente asignado: ${data.agente_nombre}`, 'success');
-        } else {
-            mostrarToast("Error al asignar agente", 'danger');
-        }
-    })
-    .catch(error => {
-        select.disabled = false;
-        console.error('Error:', error);
-        mostrarToast("Error de conexión", 'danger');
-    });
-}
-
-// 4. AJAX PRINCIPAL (Actualizado para mostrar Toast)
+// 2. AJAX PRINCIPAL
 function enviarActualizacion(expId, accion, valor, nuevoEstado, fechaPromesa) {
     fetch('/crm/api/actualizar-seguimiento/', {
         method: 'POST',
@@ -145,36 +90,44 @@ function enviarActualizacion(expId, accion, valor, nuevoEstado, fechaPromesa) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'ok') {
-            // Actualizar UI
-            const fechaSpan = document.getElementById(`fecha-ult-${expId}`);
-            if (fechaSpan) fechaSpan.innerText = data.fecha_ultimo;
+            // Actualizar Fecha Último Mensaje
+            const fechaUltSpan = document.getElementById(`fecha-ult-${expId}`);
+            if (fechaUltSpan) fechaUltSpan.innerText = data.fecha_ultimo;
 
-            if (nuevoEstado) {
-                 const estadoSpan = document.getElementById(`estado-texto-${expId}`);
-                 if (estadoSpan) estadoSpan.innerText = data.estado_legible;
-            }
+            // Actualizar Estado General en la tabla
+            const estadoSpan = document.getElementById(`estado-texto-${expId}`);
+            if (estadoSpan) estadoSpan.innerText = data.estado_legible;
             
-            // CORRECCION F. PAGO: Aseguramos que el ID exista y el dato venga
+            // Actualizar Fecha Pago Promesa
             const fechaPagoSpan = document.getElementById(`fecha-pago-${expId}`);
-            if (fechaPagoSpan && data.fecha_promesa_legible) {
-                fechaPagoSpan.innerText = data.fecha_promesa_legible;
-                // Opcional: Agregar clase visual para resaltar
-                fechaPagoSpan.classList.add('text-success', 'fw-bold');
+            if (fechaPagoSpan) fechaPagoSpan.innerText = data.fecha_promesa_legible || "-";
+
+            // --- ACTUALIZAR CONTENIDO DEL POPOVER DINÁMICAMENTE ---
+            const tickContainer = tickActual ? tickActual.closest('[data-bs-toggle="popover"]') : null;
+            if (tickContainer) {
+                const nuevoContenido = `<strong>Fecha:</strong> ${data.fecha_ultimo}<br><strong>Estado:</strong> ${data.estado_tick_legible}`;
+                tickContainer.setAttribute('data-bs-content', nuevoContenido);
+                
+                // Reinicializar el popover específico para que tome el nuevo contenido
+                const pop = bootstrap.Popover.getInstance(tickContainer);
+                if (pop) pop.dispose();
+                new bootstrap.Popover(tickContainer);
             }
 
-            // REINICIALIZAR POPOVERS TRAS CAMBIO DINÁMICO
-            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-            popoverTriggerList.map(function (el) {
-                return new bootstrap.Popover(el, { trigger: 'hover', html: true });
-            });
-
-            // Notificación de éxito
-            mostrarToast("Gestión guardada correctamente", 'success');
+            mostrarToast("Gestión registrada correctamente", "success");
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        mostrarToast("Error al guardar la gestión", 'danger');
+        mostrarToast("Error al procesar la solicitud", "danger");
+    });
+}
+
+// 3. FUNCIONES DE APOYO
+function initPopovers() {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    popoverTriggerList.map(function (el) {
+        return new bootstrap.Popover(el, { trigger: 'hover', html: true });
     });
 }
 
@@ -193,20 +146,31 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// --- INICIALIZACIÓN DE POPOVERS ---
-// Función para inicializar o refrescar popovers
-function initPopovers() {
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        // Destruir si ya existe para evitar duplicados al refrescar
-        var oldPopover = bootstrap.Popover.getInstance(popoverTriggerEl);
-        if (oldPopover) oldPopover.dispose();
-        
-        return new bootstrap.Popover(popoverTriggerEl);
+// Función para Comentarios Estándar
+function actualizarComentario(select, expId) {
+    fetch('/crm/api/actualizar-comentario/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ 'expediente_id': expId, 'comentario': select.value })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'ok') mostrarToast("Comentario actualizado", "success");
     });
 }
 
-// Inicializar al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    initPopovers();
-});
+// Función para cambiar Agente
+function cambiarAgente(select, expId) {
+    fetch('/crm/api/actualizar-agente/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ 'expediente_id': expId, 'agente_id': select.value })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'ok') mostrarToast("Agente asignado", "success");
+    });
+}

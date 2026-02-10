@@ -90,52 +90,52 @@ class Expediente(models.Model):
     # W1
     w1 = models.BooleanField(default=False)
     fecha_w1 = models.DateTimeField(null=True, blank=True)
-    estado_w1 = models.CharField(max_length=50, blank=True, null=True)
+    estado_w1 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # LL1
     ll1 = models.BooleanField(default=False)
     fecha_ll1 = models.DateTimeField(null=True, blank=True)
-    estado_ll1 = models.CharField(max_length=50, blank=True, null=True)
+    estado_ll1 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # W2
     w2 = models.BooleanField(default=False)
     fecha_w2 = models.DateTimeField(null=True, blank=True)
-    estado_w2 = models.CharField(max_length=50, blank=True, null=True)
+    estado_w2 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # LL2
     ll2 = models.BooleanField(default=False)
     fecha_ll2 = models.DateTimeField(null=True, blank=True)
-    estado_ll2 = models.CharField(max_length=50, blank=True, null=True)
+    estado_ll2 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # W3
     w3 = models.BooleanField(default=False)
     fecha_w3 = models.DateTimeField(null=True, blank=True)
-    estado_w3 = models.CharField(max_length=50, blank=True, null=True)
+    estado_w3 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # LL3
     ll3 = models.BooleanField(default=False)
     fecha_ll3 = models.DateTimeField(null=True, blank=True)
-    estado_ll3 = models.CharField(max_length=50, blank=True, null=True)
+    estado_ll3 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # W4
     w4 = models.BooleanField(default=False)
     fecha_w4 = models.DateTimeField(null=True, blank=True)
-    estado_w4 = models.CharField(max_length=50, blank=True, null=True)
+    estado_w4 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # LL4
     ll4 = models.BooleanField(default=False)
     fecha_ll4 = models.DateTimeField(null=True, blank=True)
-    estado_ll4 = models.CharField(max_length=50, blank=True, null=True)
+    estado_ll4 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # W5
     w5 = models.BooleanField(default=False)
     fecha_w5 = models.DateTimeField(null=True, blank=True)
-    estado_w5 = models.CharField(max_length=50, blank=True, null=True)
+    estado_w5 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
     
     # LL5
     ll5 = models.BooleanField(default=False)
     fecha_ll5 = models.DateTimeField(null=True, blank=True)
-    estado_ll5 = models.CharField(max_length=50, blank=True, null=True)
+    estado_ll5 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
 
     # ASNEF / BURO
     buro_enviado = models.BooleanField(default=False)

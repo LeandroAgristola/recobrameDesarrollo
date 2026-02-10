@@ -94,7 +94,7 @@
                 <td class="col-fecha text-center small text-success fw-bold">
                     <span id="fecha-pago-{{ exp.id }}">
                         {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
-                            {{ exp.fecha_pago_promesa|date:"d/m"|default:"-" }}
+                            {{ exp.fecha_pago_promesa|date:"d/m/Y"|default:"-" }}
                         {% else %}-{% endif %}
                     </span>
                 </td>
