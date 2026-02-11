@@ -69,10 +69,10 @@ class Expediente(models.Model):
     monto_original = models.DecimalField(max_digits=12, decimal_places=2)
     monto_actual = models.DecimalField(max_digits=12, decimal_places=2)
     monto_recuperado = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    cuotas_totales = models.IntegerField(default=1)
+    cuotas_totales = models.IntegerField(default=1, null=True, blank=True)
     
     fecha_compra = models.DateField(null=True, blank=True)
-    fecha_impago = models.DateField()
+    fecha_impago = models.DateField(null=True, blank=True)
     fecha_recepcion = models.DateField(default=timezone.now)
 
     # Estado y Seguimiento
@@ -179,8 +179,10 @@ class Expediente(models.Model):
 
     @property
     def tiempo_en_impago(self):
-        delta = timezone.now().date() - self.fecha_impago
-        return delta.days
+        if self.fecha_impago:
+            delta = timezone.now().date() - self.fecha_impago
+            return delta.days
+        return 0 # Si no hay fecha, retornamos 0 días
 
     @property
     def deuda_pendiente(self):

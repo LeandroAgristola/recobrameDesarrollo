@@ -14,51 +14,56 @@ from .models import Expediente, RegistroPago, DocumentoExpediente
 from .forms import ExpedienteForm
 
 # --- HELPER PARA CALCULAR DEUDA (LÓGICA ORIGINAL RESTAURADA) ---
+@login_required
 def calcular_deuda_actualizada(expediente):
     """
-    Calcula la deuda exigible basándose en la fecha de impago y la fecha actual.
-    Logica: (Cuotas Vencidas * Valor Cuota) - Lo que ya pagó
+    Calcula la deuda real.
+    - Si tiene fechas y cuotas: Calcula mora cronológica.
+    - Si NO tiene fechas (Deuda Simple): Es (Total - Pagado).
     """
-    # Validaciones básicas para evitar división por cero
-    if not expediente.fecha_impago or not expediente.monto_original or not expediente.cuotas_totales:
-        return 0
-    
-    if expediente.monto_original <= 0 or expediente.cuotas_totales <= 0:
-        return float(expediente.monto_original)
+    # 1. Aseguramos valores numéricos base
+    monto_original = float(expediente.monto_original) if expediente.monto_original else 0.0
+    monto_recuperado = float(expediente.monto_recuperado) if expediente.monto_recuperado else 0.0
 
+    # 2. LÓGICA DE DEUDA SIMPLE (Si falta fecha de impago O no hay plan de cuotas)
+    if not expediente.fecha_impago or not expediente.cuotas_totales:
+        # En este caso, la deuda es todo lo que falta pagar, sin calendario.
+        deuda_real = monto_original - monto_recuperado
+        return max(0.0, deuda_real)
+
+    # -----------------------------------------------------------
+    # 3. LÓGICA DE CALENDARIO (Solo si tenemos fecha y cuotas)
+    # -----------------------------------------------------------
+    
     hoy = timezone.now().date()
     impago = expediente.fecha_impago
 
-    # Si la fecha de impago es futura, la deuda exigible hoy es 0
+    # Si la fecha de impago es futura, teóricamente no debe nada HOY
     if impago > hoy:
-        return 0
+        return 0.0
 
-    # 1. Calcular valor de la cuota
-    valor_cuota = float(expediente.monto_original) / expediente.cuotas_totales
+    # Calcular valor de la cuota
+    # (Ya validamos arriba que cuotas_totales existe, pero evitamos división por 0 por seguridad)
+    if expediente.cuotas_totales <= 0:
+        return max(0.0, monto_original - monto_recuperado)
+        
+    valor_cuota = monto_original / expediente.cuotas_totales
 
-    # 2. Calcular cuántas cuotas han vencido desde la fecha de impago (inclusive)
-    # Diferencia de meses base (Año * 12 + Meses)
+    # Calcular cuántas cuotas han vencido
     meses_diferencia = (hoy.year - impago.year) * 12 + (hoy.month - impago.month)
     
-    # Si el día de hoy es igual o mayor al día del impago, suma el mes actual
-    # Ej: Impago el 1, hoy es 9 -> Ya venció este mes
     if hoy.day >= impago.day:
         meses_diferencia += 1
     
-    # Ajuste: al menos 1 cuota (la del primer impago)
     cuotas_vencidas = max(1, meses_diferencia)
-    
-    # No podemos cobrar más cuotas de las totales del plan
     cuotas_vencidas = min(cuotas_vencidas, expediente.cuotas_totales)
 
-    # 3. Calculamos la deuda teórica acumulada
+    # Deuda teórica acumulada
     deuda_teorica = valor_cuota * cuotas_vencidas
 
-    # 4. Restamos lo que ya haya recuperado (si hubo pagos parciales)
-    recuperado = float(expediente.monto_recuperado) if expediente.monto_recuperado else 0.0
-    deuda_real = deuda_teorica - recuperado
+    # Restamos lo pagado
+    deuda_real = deuda_teorica - monto_recuperado
 
-    # La deuda no puede ser negativa
     return max(0.0, deuda_real)
 
 

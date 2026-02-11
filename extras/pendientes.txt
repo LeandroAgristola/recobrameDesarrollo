@@ -2,8 +2,10 @@
 CRM
 
 
-agregar la opcion de solo colocar la deuda sin fechas
+
+agregar la opcion de directamente cargar todos los impagos en Cedidos
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
+
 
 (+) darle funcionalidad a registrar un nuevo pago
 

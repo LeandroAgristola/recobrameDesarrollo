@@ -11,46 +11,46 @@
                     <h3 class="fw-bold mb-0 text-dark">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM</span></h3>
                 </div>
                 
-<div class="col-md-5 col-lg-5">
-    <div class="d-flex w-100 align-items-center">
-        
-        <div class="d-flex flex-grow-1">
-            <div class="search-box w-100 position-relative">
-                <i class="fa-solid fa-search search-icon"></i>
-                <input type="text" id="globalSearch" value="{{ q }}" 
-                       class="form-control ps-5" placeholder="Nombre, Tel o ID..."
-                       style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
-                       onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
-            </div>
-            <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
-                    style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
-                {% if request.GET %}
-                    <i class="fa-solid fa-check"></i> {% else %}
-                    Buscar
-                {% endif %}
-            </button>
-        </div>
+            <div class="col-md-5 col-lg-5">
+                <div class="d-flex w-100 align-items-center">
+                    
+                    <div class="d-flex flex-grow-1">
+                        <div class="search-box w-100 position-relative">
+                            <i class="fa-solid fa-search search-icon"></i>
+                            <input type="text" id="globalSearch" value="{{ q }}" 
+                                class="form-control ps-5" placeholder="Nombre, Tel o ID..."
+                                style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
+                                onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
+                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
+                            {% if request.GET %}
+                                <i class="fa-solid fa-check"></i> {% else %}
+                                Buscar
+                            {% endif %}
+                        </button>
+                    </div>
 
-        <div class="d-flex ms-2 gap-1">
-            {% if request.GET %}
-                <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-danger shadow-sm" title="Limpiar y Cerrar Filtros">
-                    <i class="fa-solid fa-trash-can"></i>
-                </a>
-            {% else %}
-                <button type="button" id="btnToggleFiltros" class="btn btn-outline-primary shadow-sm" 
-                        onclick="toggleFiltros()" title="Mostrar filtros por columna">
-                    <i class="fas fa-filter"></i>
-                </button>
-                
-                <button type="button" id="btnAplicarCheck" class="btn btn-outline-success shadow-sm" 
-                        onclick="aplicarFiltrosJS()" style="display: none;">
-                    <i class="fa-solid fa-check"></i>
-                </button>
-            {% endif %}
-        </div>
+                    <div class="d-flex ms-2 gap-1">
+                        {% if request.GET %}
+                            <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-danger shadow-sm" title="Limpiar y Cerrar Filtros">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        {% else %}
+                            <button type="button" id="btnToggleFiltros" class="btn btn-outline-primary shadow-sm" 
+                                    onclick="toggleFiltros()" title="Mostrar filtros por columna">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                            
+                            <button type="button" id="btnAplicarCheck" class="btn btn-outline-success shadow-sm" 
+                                    onclick="aplicarFiltrosJS()" style="display: none;">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                        {% endif %}
+                    </div>
 
-    </div>
-</div>        
+                </div>
+            </div>        
 
                 <div class="col-md-3 text-end">
                     <button class="btn btn-primary btn-sm px-3 shadow-sm"><i class="fa-solid fa-file-import me-1"></i> Importar Excel</button>
@@ -118,6 +118,7 @@
 </div>
 
 {% include 'crm/includes/modal_nuevo_registro.html' %}
+{% include 'crm/includes/modal_confirmar_fecha.html' %}
 
 {% endblock %}
 

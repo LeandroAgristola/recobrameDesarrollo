@@ -158,9 +158,13 @@
                 <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
                 
                 <td class="col-dias text-center">
-                    <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
-                        {{ exp.tiempo_en_impago }}
-                    </span>
+                    {% if exp.tiempo_en_impago > 0 %}
+                        <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                            {{ exp.tiempo_en_impago }}
+                        </span>
+                    {% else %}
+                        <span class="text-muted small">-</span>
+                    {% endif %}
                 </td>
 
                 <td class="col-comentario">
