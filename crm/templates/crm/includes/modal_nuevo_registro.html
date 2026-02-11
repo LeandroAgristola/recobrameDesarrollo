@@ -2,8 +2,10 @@
     <div class="modal-dialog modal-lg">
         <form method="post" class="modal-content" data-empresa-id="{{ empresa.id }}">
             {% csrf_token %}
+            <input type="hidden" name="nuevo_expediente" value="1">
+            
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold">Alta de Deuda</h5>
+                <h5 class="modal-title fw-bold">Nuevo Registro</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">

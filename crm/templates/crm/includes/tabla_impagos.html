@@ -1,117 +1,45 @@
 {% load static %}
+
 <div class="crm-table-container border shadow-sm">
     <table class="table table-hover align-middle mb-0 table-crm">
-        <thead class="bg-light sticky-top" style="z-index: 10;">
+        <thead class="bg-light shadow-sm sticky-top" style="z-index: 100;">
             <tr class="text-center small text-uppercase text-muted">
                 <th class="col-agente">Agente</th>
                 <th class="col-id">ID</th>
-                <th class="col-nombre">Nombre y Apellido</th>
+                <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
                 <th class="col-tel">Teléfono</th>
-                
                 <th class="col-tipo">Tipo</th>
-                <th class="col-monto">Total</th>
-                <th class="col-cuota">Cuotas</th>
-                <th class="col-fecha">F. Compra</th>
-                <th class="col-fecha">F. Impago</th>
-                <th class="col-dias">Días</th>
-                <th class="col-comentario">Comentario</th>
+                <th class="col-monto text-center">Total</th>
+                <th class="col-cuota text-center">Cuotas</th>
+                <th class="col-fecha text-center">F. Compra</th>
+                <th class="col-fecha text-center">F. Impago</th>
+                <th class="col-dias text-center">Días</th>
+                <th class="col-comentario" style="min-width: 160px;">Comentario</th>
                 <th class="col-estado">Estado</th>
-                <th class="col-monto text-danger fw-bold">Deuda</th>
+                <th class="col-monto text-center text-danger fw-bold">Deuda</th>
                 
                 {% for i in "12345" %}
-                <th class="col-tic">W{{forloop.counter}}</th>
-                <th class="col-tic">L{{forloop.counter}}</th>
+                <th class="col-tic text-center text-muted small">W{{forloop.counter}}</th>
+                <th class="col-tic text-center text-muted small">L{{forloop.counter}}</th>
                 {% endfor %}
                 
-                <th class="col-asnef">BE</th>
-                <th class="col-asnef">BR</th>
-                <th class="col-asnef">AS</th>
-                <th class="col-asnef">LS</th>
-                <th class="col-fecha">Ult. Msj</th>
-                <th class="col-fecha">F. Pago</th>
-                
-                <th class="col-acciones">Acciones</th>
-            </tr>
-
-            <tr id="fila-filtros-google" style="display: none;" class="bg-white">
-                <form method="get" id="form-filtros-avanzados">
-                    <input type="hidden" name="q" value="{{ q }}">
-
-                    <td class="col-agente p-1">
-                        <select name="f_agente" class="form-select form-select-sm border-0 bg-light" onchange="this.form.submit()">
-                            <option value="">Todos</option>
-                            {% for a in agentes_disponibles %}
-                            <option value="{{ a.id }}" {% if request.GET.f_agente == a.id|stringformat:"i" %}selected{% endif %}>{{ a.username }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-
-                    <td class="col-id p-1"></td> 
-
-                    <td class="col-nombre p-1 bg-white">
-                        <input type="text" name="f_nombre" value="{{ request.GET.f_nombre|default:'' }}" class="form-control form-control-sm border-0 bg-light" placeholder="Buscar..." onchange="this.form.submit()">
-                    </td>
-
-                    <td class="col-tel p-1 bg-white" style="border-right: 2px solid #000;">
-                        <input type="text" name="f_tel" value="{{ request.GET.f_tel|default:'' }}" class="form-control form-control-sm border-0 bg-light" placeholder="Tel..." onchange="this.form.submit()">
-                    </td>
-
-                    <td class="col-tipo p-1"><input type="text" name="f_tipo" value="{{ request.GET.f_tipo|default:'' }}" class="form-control form-control-sm border-0 bg-light" onchange="this.form.submit()"></td>
-                    
-                    <td class="col-monto p-1"><input type="text" name="f_monto" value="{{ request.GET.f_monto|default:'' }}" class="form-control form-control-sm border-0 bg-light text-end" onchange="this.form.submit()"></td>
-                    
-                    <td class="col-cuota p-1"><input type="number" name="f_cuotas" value="{{ request.GET.f_cuotas|default:'' }}" class="form-control form-control-sm border-0 bg-light text-center" onchange="this.form.submit()"></td>
-                    
-                    <td class="col-fecha p-1"><input type="date" name="f_fecha_compra" value="{{ request.GET.f_fecha_compra|default:'' }}" class="form-control form-control-sm border-0 bg-light p-0" onchange="this.form.submit()"></td>
-                    
-                    <td class="col-fecha p-1"><input type="date" name="f_fecha_impago" value="{{ request.GET.f_fecha_impago|default:'' }}" class="form-control form-control-sm border-0 bg-light p-0" onchange="this.form.submit()"></td>
-                    
-                    <td class="col-dias p-1"><input type="number" name="f_dias" value="{{ request.GET.f_dias|default:'' }}" class="form-control form-control-sm border-0 bg-light text-center" placeholder="> X" onchange="this.form.submit()"></td>
-                    
-                    <td class="col-comentario p-1"></td>
-
-                    <td class="col-estado p-1">
-                        <select name="f_estado" class="form-select form-select-sm border-0 bg-light" onchange="this.form.submit()">
-                            <option value="">Todos</option>
-                            {% for cod, nom in impagos.0.CAUSAS_IMPAGO %}
-                            <option value="{{ cod }}" {% if request.GET.f_estado == cod %}selected{% endif %}>{{ nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-
-                    <td class="col-monto p-1"><input type="text" name="f_deuda" value="{{ request.GET.f_deuda|default:'' }}" class="form-control form-control-sm border-0 bg-light text-end" onchange="this.form.submit()"></td>
-
-                    <td class="col-tic p-0"><select name="f_w1" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_w1 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_w1 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_l1" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_l1 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_l1 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_w2" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_w2 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_w2 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_l2" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_l2 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_l2 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_w3" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_w3 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_w3 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_l3" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_l3 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_l3 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_w4" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_w4 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_w4 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_l4" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_l4 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_l4 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_w5" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_w5 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_w5 == 'false' %}selected{% endif %}>✖</option></select></td>
-                    <td class="col-tic p-0"><select name="f_l5" class="form-select form-select-sm border-0 bg-light p-0 text-center" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_l5 == 'true' %}selected{% endif %}>✔</option><option value="false" {% if request.GET.f_l5 == 'false' %}selected{% endif %}>✖</option></select></td>
-
-                    <td class="col-asnef p-0"><select name="f_be" class="form-select form-select-sm border-0 bg-light p-0" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_be == 'true' %}selected{% endif %}>S</option><option value="false" {% if request.GET.f_be == 'false' %}selected{% endif %}>N</option></select></td>
-                    <td class="col-asnef p-0"><select name="f_br" class="form-select form-select-sm border-0 bg-light p-0" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_br == 'true' %}selected{% endif %}>S</option><option value="false" {% if request.GET.f_br == 'false' %}selected{% endif %}>N</option></select></td>
-                    <td class="col-asnef p-0"><select name="f_as" class="form-select form-select-sm border-0 bg-light p-0" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_as == 'true' %}selected{% endif %}>S</option><option value="false" {% if request.GET.f_as == 'false' %}selected{% endif %}>N</option></select></td>
-                    <td class="col-asnef p-0"><select name="f_ls" class="form-select form-select-sm border-0 bg-light p-0" onchange="this.form.submit()"><option value="">-</option><option value="true" {% if request.GET.f_ls == 'true' %}selected{% endif %}>S</option><option value="false" {% if request.GET.f_ls == 'false' %}selected{% endif %}>N</option></select></td>
-
-                    <td class="col-fecha p-1"></td>
-                    <td class="col-fecha p-1"></td>
-
-                    <td class="col-acciones bg-white text-center" style="border-left: 2px solid #000;">
-                        <a href="?" class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 0.7rem;">Limpiar</a>
-                    </td>
-                </form>
+                <th class="col-asnef text-center small">BE</th>
+                <th class="col-asnef text-center small">BR</th>
+                <th class="col-asnef text-center small">AS</th>
+                <th class="col-asnef text-center small">LS</th>
+                <th class="col-fecha text-center">Ult. Msj</th>
+                <th class="col-fecha text-center">F. Pago</th>
+                <th class="col-acciones text-center">Acciones</th>
             </tr>
         </thead>
+        
         <tbody>
             {% for exp in impagos %}
             <tr id="fila-exp-{{ exp.id }}" class="text-center">
                 <td class="col-agente">
                     <select class="form-select form-select-sm fw-bold small text-muted"
                             onchange="cambiarAgente(this, {{ exp.id }})"
+                            style="cursor: pointer; border: 1px solid #dee2e6;"
                             {% if not user.is_staff %}disabled{% endif %}>
                         <option value="" {% if not exp.agente %}selected{% endif %}>- Sin Asignar -</option>
                         {% for agente in agentes_disponibles %}
@@ -122,22 +50,22 @@
                     </select>
                 </td>
                 <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
-                <td class="col-nombre fw-bold text-start ps-3">{{ exp.deudor_nombre }}</td>
+                <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
                 <td class="col-tel small">{{ exp.deudor_telefono }}</td>
-                
                 <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
-                <td class="col-monto small">{{ exp.monto_original }} €</td>
-                <td class="col-cuota small">{{ exp.cuotas_totales }}</td>
-                <td class="col-fecha small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
-                <td class="col-fecha small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
-                <td class="col-dias">
+                <td class="col-monto text-center small">{{ exp.monto_original }} €</td>
+                <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
+                <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
+                <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
+                <td class="col-dias text-center">
                     <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                         {{ exp.tiempo_en_impago }}
                     </span>
                 </td>
                 <td class="col-comentario">
                     <select class="form-select form-select-sm small text-muted" 
-                            onchange="actualizarComentario(this, {{ exp.id }})">
+                            onchange="actualizarComentario(this, {{ exp.id }})"
+                            style="border: 1px solid #dee2e6;">
                         <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -</option>
                         {% for val, text in exp.OPCIONES_COMENTARIO %}
                         <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
@@ -149,23 +77,23 @@
                         {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
                     </span>
                 </td>
-                <td class="col-monto fw-bold text-danger" style="font-size: 1.1em;">
+                <td class="col-monto text-center fw-bold text-danger" style="font-size: 1.1em;">
                     {{ exp.monto_actual }}€
                 </td>
                 
                 {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
 
-                <td class="col-asnef"><input type="checkbox" {% if exp.buro_enviado %}checked{% endif %} disabled></td>
-                <td class="col-asnef"><input type="checkbox" {% if exp.buro_recibido %}checked{% endif %} disabled></td>
-                <td class="col-asnef"><input type="checkbox" {% if exp.asnef_inscrito %}checked{% endif %} disabled></td>
-                <td class="col-asnef"><input type="checkbox" {% if exp.llamada_seguimiento_asnef %}checked{% endif %} disabled></td>
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.buro_enviado %}checked{% endif %} disabled></td>
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.buro_recibido %}checked{% endif %} disabled></td>
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.asnef_inscrito %}checked{% endif %} disabled></td>
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.llamada_seguimiento_asnef %}checked{% endif %} disabled></td>
                 
-                <td class="col-fecha small text-muted">
+                <td class="col-fecha text-center small text-muted">
                     <span id="fecha-ult-{{ exp.id }}">
                         {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
                     </span>
                 </td>
-                <td class="col-fecha small text-success fw-bold">
+                <td class="col-fecha text-center small text-success fw-bold">
                     <span id="fecha-pago-{{ exp.id }}">
                         {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
                             {{ exp.fecha_pago_promesa|date:"d/m/Y"|default:"-" }}
@@ -241,7 +169,9 @@
                             {% endfor %}
                         </ul>
                     </div>
+
                     <hr>
+
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Tipo de documento:</label>
                         <select name="tipo_documento" class="form-select form-select-sm" required>
@@ -292,5 +222,3 @@
         </div>
     </div>
 </div>
-
-<script src="{% static 'js/CRM/seguimiento.js' %}"></script>

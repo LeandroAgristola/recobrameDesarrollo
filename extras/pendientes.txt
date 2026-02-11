@@ -2,7 +2,7 @@
 CRM
 
 
-Cambiar informacion para mostrar de la empresa
+Cambiar informacion para mostrar de la empresa: Cursos, contacto de incidencias, datos bancarios
 Agregar la vista de detalle del cliente
 agregar la opcion de solo colocar la deuda sin fechas
 Agragar editar cliente para editar campos basicos 
@@ -15,16 +15,9 @@ REG_Recobros: darle funcionalidad a la planilla de registros de recobros
 Diseño:
 
 
-Ajustar anchos de los campos (no se aplica el CSS)
-Anclar campos de nombre y apellid y telefono
-
 1. CRM:
 
 Pestaña Listados CRM: 
-
-
-*Pestaña con la información de la empresa (traemos los datos de clientes)
-Cursos, contacto de incidencias, datos bancarios
 
 *Vamos a tener dos pestañas (impagos y cedidos) Cedido a mano solo con los Squra manual (agregar en tipo)
 
@@ -36,8 +29,6 @@ Muestra solo el listado de recobros
 Funcionalidades
 
 Listados CRM:
-
-
 
 Vamos a tener los campos: 
 
