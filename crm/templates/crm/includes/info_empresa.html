@@ -1,0 +1,83 @@
+<div class="p-4 bg-light border rounded shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+        <h5 class="fw-bold mb-3 text-primary">
+            <i class="fa-solid fa-circle-info me-2"></i>Información General de la Empresa
+        </h5>
+        <span class="badge {% if empresa.is_active %}bg-success{% else %}bg-danger{% endif %} shadow-lg">
+            {% if empresa.is_active %}Activa{% else %}Inactiva{% endif %}
+        </span>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 h-100 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold text-muted mb-3"><i class="fa-solid fa-headset me-2"></i>Gestión de Incidencias</h6>
+                    
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Contacto de Incidencias:</label>
+                        <span class="fw-semibold text-dark">{{ empresa.contacto_incidencias|default:"No asignado" }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="text-muted small d-block">Email de Incidencias:</label>
+                        {% if empresa.email_incidencias %}
+                            <a href="mailto:{{ empresa.email_incidencias }}" class="text-decoration-none fw-semibold">
+                                <i class="fa-solid fa-envelope me-1 small"></i>{{ empresa.email_incidencias }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted fst-italic">No registrado</span>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-3 opacity-50">
+
+                    <h6 class="fw-bold text-muted mb-3"><i class="fa-solid fa-gears me-2"></i>Tipos de impago</h6>
+                    <div>
+                        <label class="text-muted small d-block mb-3">Tipos de Impago Configurados:</label>
+                        {% if empresa.tipos_impagos %}
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for tipo in empresa.tipos_impagos.split %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle">{{ tipo|cut:"," }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">Sin configuración específica</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 h-100 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold text-muted mb-3"><i class="fa-solid fa-graduation-cap me-2"></i>Cursos / Formaciones</h6>
+                    <div class="p-3 bg-light border rounded small overflow-auto" style="max-height: 120px; border-style: dashed !important;">
+                        {{ empresa.cursos|linebreaks|default:"No hay información de cursos disponible." }}
+                    </div>
+
+                    <h6 class="fw-bold text-muted mt-4 mb-3"><i class="fa-solid fa-note-sticky me-2"></i>Otra Información (Notas)</h6>
+                    <div class="p-3 bg-white border rounded small text-secondary">
+                        {{ empresa.notas|linebreaks|default:"Sin observaciones adicionales." }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 bg-white shadow-sm border-start border-4 border-success">
+                <div class="card-body">
+                    <h6 class="fw-bold text-success mb-3">
+                        <i class="fa-solid fa-building-columns me-2"></i>Datos Bancarios de la Empresa
+                    </h6>
+                    <div class="font-monospace small p-2 bg-light rounded border">
+                        {{ empresa.datos_bancarios|linebreaks|default:"Consultar con administración para pagos." }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -15,4 +15,6 @@ urlpatterns = [
     path('api/actualizar-agente/', views.actualizar_agente, name='actualizar_agente'),
     path('expediente/<int:exp_id>/subir-doc/', views.subir_documento_crm, name='subir_documento_crm'),
     path('buscar-antecedentes/', views.buscar_antecedentes_deudor, name='buscar_antecedentes'),
+    path('expediente/editar/<int:exp_id>/', views.editar_expediente, name='editar_expediente'),
+    path('documento/eliminar/<int:doc_id>/', views.eliminar_documento_crm, name='eliminar_documento'),
 ]

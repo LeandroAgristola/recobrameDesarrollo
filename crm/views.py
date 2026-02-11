@@ -98,7 +98,7 @@ def buscar_antecedentes_deudor(request):
 @login_required
 def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
-    expedientes_qs = Expediente.objects.filter(empresa=empresa)
+    expedientes_qs = Expediente.objects.filter(empresa=empresa).order_by('numero_expediente')
     
     # --- ACTUALIZACIÓN AUTOMÁTICA DE DEUDA (RESTAURADO) ---
     # Al entrar al dashboard, recalculamos la deuda de los activos
@@ -403,3 +403,33 @@ def subir_documento_crm(request, exp_id):
         messages.error(request, "No se seleccionó ningún archivo.")
         
     return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
+
+@login_required
+def editar_expediente(request, exp_id):
+    expediente = get_object_or_404(Expediente, id=exp_id)
+    empresa = expediente.empresa
+    
+    if request.method == 'POST':
+        form = ExpedienteForm(request.POST, instance=expediente, empresa=empresa)
+        if form.is_valid():
+            # Guardamos los cambios
+            exp = form.save()
+            # Recalculamos la deuda por si cambiaron fechas o montos
+            exp.monto_actual = calcular_deuda_actualizada(exp)
+            exp.save()
+            
+            messages.success(request, f"Expediente {exp.numero_expediente} actualizado.")
+            return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+    
+    # Si por alguna razón llega aquí por GET, redirigimos al dashboard
+    return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+
+@login_required
+@require_POST
+def eliminar_documento_crm(request, doc_id):
+    documento = get_object_or_404(DocumentoExpediente, id=doc_id)
+    exp_id = documento.expediente.id
+    nombre = documento.nombre_archivo
+    documento.delete()
+    
+    return JsonResponse({'status': 'ok', 'message': f"Documento {nombre} eliminado."})
