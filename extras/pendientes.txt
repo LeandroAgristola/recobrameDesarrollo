@@ -1,23 +1,30 @@
 
 CRM
 
-
+agregar columna de pagado (no esta actualmente)
 
 agregar la opcion de directamente cargar todos los impagos en Cedidos
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
-
-
-(+) darle funcionalidad a registrar un nuevo pago
-
-REG_Recobros: darle funcionalidad a la planilla de registros de recobros
 Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
+Cargar de reporte:
+    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
+    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
+
+Reparar filtro que se muestra
+agregar advertencia si el pago es mayor a la deuda
+Mover registros con deuda 0 a la pestaña de pagados
+cuando editamos un formulario y cambiamos las fecha nos aparece la advertencia de "sin fechas"
 
 Vista de listado de empresa:
+No se puede ver el detalle hasta que no implementemos la funcionalidad de pagos
+Calcualar correctamente las comisiones
+Agregar metodos de pago
 
-Agregar funcionalidad de ver los datos que ahora son planos
-
+Logicas de editar/ eliminar pagos
 
 Diseño:
+
+separar miles con .
 
 
 Pestaña Listados CRM: 
@@ -46,11 +53,8 @@ Cuando registramos el pago se agrega a REG_RECOBROS
 
 Formulario de carga de pago dentro de un modal para mejorar el UX/UI
 El formulario muestra el nombre y apellido y autocomplete la fecha de hoy con opcion de cambiarla
-El detalle del cliente permite editar los pagos ya cargados
 Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
-Cargar de reporte:
-    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
-    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
+
 
 
  
@@ -61,9 +65,6 @@ Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
 Filtros en la parte superior para filtrar por todo tipo.
 Buscador por nombre/ id/ teléfono
 
-Carga masiva: 
-
-al cargar un excel de carga masiva nos va a preguntar de que tipo es para comparar entre esos tipos en el CRM
 
 
 

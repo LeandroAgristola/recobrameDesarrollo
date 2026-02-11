@@ -1,5 +1,5 @@
 from django import forms
-from .models import Expediente
+from .models import Expediente, RegistroPago
 from empresas.models import EsquemaComision
 
 class ExpedienteForm(forms.ModelForm):
@@ -48,3 +48,14 @@ class ExpedienteForm(forms.ModelForm):
                 self.add_error('fecha_impago', "La fecha de impago no puede ser anterior a la fecha de compra.")
         
         return cleaned_data
+    
+class PagoForm(forms.ModelForm):
+    class Meta:
+        model = RegistroPago
+        fields = ['monto', 'fecha_pago', 'metodo_pago', 'comprobante']
+        widgets = {
+            'fecha_pago': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'monto': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+            'metodo_pago': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Transferencia, Bizum...'}),
+            'comprobante': forms.FileInput(attrs={'class': 'form-control'}),
+        }

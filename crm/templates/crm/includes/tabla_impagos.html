@@ -121,9 +121,9 @@
             {# 1. Capturamos la fecha de hoy en formato comparable #}
             {% now "Y-m-d" as hoy %}
 
+            {# --- INICIO DEL BUCLE ÚNICO --- #}
             {% for exp in impagos %}
             
-            {# 2. Definimos la clase de la fila según la fecha de promesa #}
             <tr id="fila-exp-{{ exp.id }}" 
                 class="text-center 
                 {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}
@@ -211,7 +211,10 @@
 
                 <td class="col-acciones bg-white">
                     <div class="d-flex gap-1 justify-content-center">
-                        <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" title="Registrar Pago">
+                        <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" 
+                                title="Registrar Pago" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalPago-{{ exp.id }}">
                             <i class="fa-solid fa-sack-dollar"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
@@ -235,85 +238,86 @@
                     </div>
                 </td>
             </tr>
+
+            {# --- ZONA DE MODALES (DENTRO DEL BUCLE) --- #}
+
             {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
-            {% endfor %}
+            
+            {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
+
+            <div class="modal fade" id="modalPapelera{{ exp.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <form action="{% url 'crm:eliminar_expediente' exp.id %}" method="post">
+                            {% csrf_token %}
+                            <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
+                                <h6 class="modal-title text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Mover a Papelera</h6>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-start">
+                                <p class="mb-2">¿Deseas desactivar el expediente de <strong>{{ exp.deudor_nombre }}</strong>?</p>
+                                <label class="form-label small fw-bold text-muted">Motivo de eliminación (Obligatorio):</label>
+                                <textarea name="motivo_eliminacion" class="form-control" rows="2" required placeholder="Ej: Error de carga, duplicado, etc..."></textarea>
+                            </div>
+                            <div class="modal-footer border-top-0 pt-0">
+                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Confirmar Baja</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalDocs{{ exp.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <form action="{% url 'crm:subir_documento_crm' exp.id %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="modal-header bg-secondary text-white py-2">
+                                <h6 class="modal-title fw-bold">Documentación: {{ exp.deudor_nombre }}</h6>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Archivos guardados:</label>
+                                    <ul class="list-group list-group-flush border rounded">
+                                        {% for doc in exp.documentos.all %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-1 small">
+                                            <span><i class="fa-solid fa-file-pdf me-2"></i>{{ doc.nombre_archivo|truncatechars:30 }}</span>
+                                            <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-link btn-sm p-0"><i class="fa-solid fa-download"></i></a>
+                                        </li>
+                                        {% empty %}
+                                        <li class="list-group-item small text-muted text-center">Sin documentos</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <hr>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Tipo de documento:</label>
+                                    <select name="tipo_documento" class="form-select form-select-sm" required>
+                                        <option value="CONTRATO">Contrato de Cesión</option>
+                                        <option value="OTRO" selected>Otra Documentación</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Seleccionar archivo:</label>
+                                    <input type="file" name="archivo" class="form-control form-control-sm" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light py-2">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Subir Documento</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %} 
+            {# --- FIN DEL BUCLE ÚNICO --- #}
         </tbody>
     </table>
 </div>
-
-{% for exp in impagos %}
-<div class="modal fade" id="modalPapelera{{ exp.id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <form action="{% url 'crm:eliminar_expediente' exp.id %}" method="post">
-                {% csrf_token %}
-                <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
-                    <h6 class="modal-title text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Mover a Papelera</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-start">
-                    <p class="mb-2">¿Deseas desactivar el expediente de <strong>{{ exp.deudor_nombre }}</strong>?</p>
-                    <label class="form-label small fw-bold text-muted">Motivo de eliminación (Obligatorio):</label>
-                    <textarea name="motivo_eliminacion" class="form-control" rows="2" required placeholder="Ej: Error de carga, duplicado, etc..."></textarea>
-                </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm btn-warning fw-bold">Confirmar Baja</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endfor %}
-
-{% for exp in impagos %}
-<div class="modal fade" id="modalDocs{{ exp.id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <form action="{% url 'crm:subir_documento_crm' exp.id %}" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="modal-header bg-secondary text-white py-2">
-                    <h6 class="modal-title fw-bold">Documentación: {{ exp.deudor_nombre }}</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Archivos guardados:</label>
-                        <ul class="list-group list-group-flush border rounded">
-                            {% for doc in exp.documentos.all %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-1 small">
-                                <span><i class="fa-solid fa-file-pdf me-2"></i>{{ doc.nombre_archivo|truncatechars:30 }}</span>
-                                <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-link btn-sm p-0"><i class="fa-solid fa-download"></i></a>
-                            </li>
-                            {% empty %}
-                            <li class="list-group-item small text-muted text-center">Sin documentos</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                    <hr>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Tipo de documento:</label>
-                        <select name="tipo_documento" class="form-select form-select-sm" required>
-                            <option value="CONTRATO">Contrato de Cesión</option>
-                            <option value="OTRO" selected>Otra Documentación</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Seleccionar archivo:</label>
-                        <input type="file" name="archivo" class="form-control form-control-sm" required>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light py-2">
-                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-sm btn-primary">Subir Documento</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endfor %}
 
 <div class="modal fade" id="modalEstadoTick" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-sm modal-dialog-centered">

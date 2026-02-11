@@ -236,10 +236,18 @@ class Expediente(models.Model):
 class RegistroPago(models.Model):
     expediente = models.ForeignKey(Expediente, on_delete=models.CASCADE, related_name='pagos')
     monto = models.DecimalField(max_digits=12, decimal_places=2)
-    fecha_pago = models.DateTimeField(default=timezone.now)
-    metodo_pago = models.CharField(max_length=100)
+    # Cambiamos a DateField para facilitar el input de "Fecha", o lo dejamos DateTime si prefieres hora
+    fecha_pago = models.DateField(default=timezone.now) 
+    metodo_pago = models.CharField(max_length=100, default='TRANSFERENCIA') # Un default ayuda
     comprobante = models.FileField(upload_to='pagos/comprobantes/', null=True, blank=True)
+    
+    # NUEVO CAMPO NECESARIO PARA QUE NO FALLE 'EMPRESAS'
+    comision = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
     fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha_pago']
 
     def __str__(self):
         return f"Pago {self.monto} - {self.expediente.deudor_nombre}"

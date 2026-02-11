@@ -9,6 +9,8 @@ from django.core.paginator import Paginator
 from .models import Empresa, EsquemaComision, TramoComision
 from .forms import EmpresaForm, EsquemaComisionForm, TramoFormSet
 from .models import OPCIONES_IMPAGOS
+from django.db.models import Count, Sum, Q, FloatField, F
+from django.db.models.functions import Coalesce
 
 # === HELPER PARA BÚSQUEDA (Para no repetir código en ambas vistas) ===
 def aplicar_busqueda(queryset, busqueda):
@@ -23,15 +25,49 @@ def aplicar_busqueda(queryset, busqueda):
 @login_required
 def lista_empresas(request):
     """
-    PESTAÑA 1: Empresas Activas
+    PESTAÑA 1: Empresas Activas con Datos del CRM
     """
     busqueda = request.GET.get('busqueda', '')
     
-    # Solo Activas
-    empresas_list = Empresa.objects.filter(is_active=True).order_by('-fecha_alta')
-    empresas_list = aplicar_busqueda(empresas_list, busqueda)
+    # 1. Base QuerySet
+    qs = Empresa.objects.filter(is_active=True)
 
-    # Paginación
+    # 2. Búsqueda
+    if busqueda:
+        qs = qs.filter(
+            Q(nombre__icontains=busqueda) | 
+            Q(razon_social__icontains=busqueda) |
+            Q(cif_nif__icontains=busqueda)
+        )
+
+    # 3. ANOTACIONES (Usamos prefijo 'crm_' para evitar conflictos con el modelo)
+    empresas_list = qs.annotate(
+        # Cantidad Activos
+        crm_n_activos=Count(
+            'expedientes', 
+            filter=Q(expedientes__activo=True) & ~Q(expedientes__estado='PAGADO')
+        ),
+        # Cantidad Recuperados
+        crm_n_recuperados=Count(
+            'expedientes', 
+            filter=Q(expedientes__estado='PAGADO')
+        ),
+        # Deuda Total (Viva)
+        crm_deuda=Coalesce(
+            Sum('expedientes__monto_actual', 
+                filter=Q(expedientes__activo=True) & ~Q(expedientes__estado='PAGADO')),
+            0.0,
+            output_field=FloatField()
+        ),
+        # Monto Recuperado
+        crm_recuperado=Coalesce(
+            Sum('expedientes__monto_recuperado'),
+            0.0,
+            output_field=FloatField()
+        )
+    ).order_by('-fecha_alta')
+
+    # 4. Paginación
     paginator = Paginator(empresas_list, 20) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -39,7 +75,7 @@ def lista_empresas(request):
     return render(request, 'empresas/lista_empresas.html', {
         'page_obj': page_obj,
         'filtros': {'busqueda': busqueda},
-        'active_tab': 'activas' # Variable clave para la pestaña
+        'active_tab': 'activas'
     })
 
 @login_required

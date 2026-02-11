@@ -18,4 +18,5 @@ urlpatterns = [
     path('expediente/editar/<int:exp_id>/', views.editar_expediente, name='editar_expediente'),
     path('documento/eliminar/<int:doc_id>/', views.eliminar_documento_crm, name='eliminar_documento'),
     path('expediente/detalle/<int:exp_id>/', views.detalle_expediente, name='detalle_expediente'),
+    path('registrar-pago/<int:expediente_id>/', views.registrar_pago, name='registrar_pago'),
 ]

@@ -61,17 +61,17 @@
               </div>
           </td>
           
-          <td class="text-center">
-              <h5 class="mb-0 fw-bold text-success">{{ empresa.monto_recuperado }} €</h5>
+        <td class="text-center">
+              <h5 class="mb-0 fw-bold text-success">{{ empresa.crm_recuperado|floatformat:2 }} €</h5>
               <small class="text-muted" style="font-size: 0.85rem;">
-                  {{ empresa.cantidad_recuperados }} Exp. Recuperados
+                  {{ empresa.crm_n_recuperados }} Exp. Recuperados
               </small>
           </td>
 
           <td class="text-end">
-              <h5 class="mb-0 fw-bold text-danger">{{ empresa.deuda_total }} €</h5>
+              <h5 class="mb-0 fw-bold text-danger">{{ empresa.crm_deuda|floatformat:2 }} €</h5>
               <small class="text-muted" style="font-size: 0.85rem;">
-                  {{ empresa.cantidad_activos }} Exp. Activos
+                  {{ empresa.crm_n_activos }} Exp. Activos
               </small>
           </td>
           

@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.db.models import Sum, Count, Q
 
 # Mantenemos tus opciones (Agregamos SEQURA_PASS si no estaba)
 OPCIONES_IMPAGOS = [
@@ -47,19 +48,40 @@ class Empresa(models.Model):
     # NOTA: Eliminamos tipo_comision, porcentaje_unico y porcentaje_base
     # Ahora la lógica estará en el modelo EsquemaComision
 
-    # === PROPERTIES PARA LISTADO (Placeholders) ===
+    # === PROPERTIES PARA LISTADO  ===
     @property
-    def total_recobrado(self): return 0.00
+    def monto_recuperado(self):
+        # CAMBIO: self.expedientes en lugar de self.expediente_set
+        resultado = self.expedientes.aggregate(total=Sum('monto_recuperado'))
+        return resultado['total'] or 0.00
+
     @property
-    def deuda_actual(self): return 0.00
+    def cantidad_recuperados(self):
+        return self.expedientes.filter(estado='PAGADO').count()
+
     @property
-    def cantidad_recuperados(self): return 0
+    def deuda_actual(self):
+        resultado = self.expedientes.filter(activo=True).exclude(estado='PAGADO').aggregate(total=Sum('monto_actual'))
+        return resultado['total'] or 0.00
+
     @property
-    def deuda_total(self): return 0.00
+    def cantidad_activos(self):
+        return self.expedientes.filter(activo=True).exclude(estado='PAGADO').count()
+
     @property
-    def cantidad_activos(self): return 0
+    def total_comisionado(self):
+        # Asumiendo relación con RegistroPago
+        resultado = self.expedientes.aggregate(total=Sum('pagos__comision'))
+        return resultado['total'] or 0.00
+
     @property
-    def total_comisionado(self): return 0.00
+    def deuda_total(self):
+        return self.deuda_actual
+    
+    # Este alias es útil si en algún template usaste 'deuda_total'
+    @property
+    def deuda_total(self):
+        return self.deuda_actual
 
     def __str__(self):
         return self.nombre

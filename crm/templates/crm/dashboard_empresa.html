@@ -129,6 +129,18 @@
     <script src="{% static 'js/CRM/validarFechas.js' %}"></script>
     
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Detectar si hay filtros de recobros en la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('r_q') || urlParams.has('r_desde') || urlParams.has('r_hasta') || urlParams.get('tab') === 'recobros') {
+                // Activar pestaña Recobros
+                const tabRecobros = new bootstrap.Tab(document.querySelector('#recobros-tab'));
+                tabRecobros.show();
+            }
+        });
+    </script>
+
+    <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Inicializar popovers
             var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))

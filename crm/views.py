@@ -8,13 +8,14 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 import json
 from django.contrib.auth.models import User
+from decimal import Decimal
 
 from empresas.models import Empresa
 from .models import Expediente, RegistroPago, DocumentoExpediente
-from .forms import ExpedienteForm
+from .forms import ExpedienteForm, PagoForm
 
-# --- HELPER PARA CALCULAR DEUDA (LÓGICA ORIGINAL RESTAURADA) ---
-@login_required
+# --- HELPER PARA CALCULAR DEUDA ---
+# ¡IMPORTANTE: SIN @login_required AQUÍ!
 def calcular_deuda_actualizada(expediente):
     """
     Calcula la deuda real.
@@ -103,176 +104,231 @@ def buscar_antecedentes_deudor(request):
 @login_required
 def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
-    # Mantenemos el orden por número de expediente
+    
+    # Base QuerySet
     expedientes_qs = Expediente.objects.filter(empresa=empresa).order_by('numero_expediente')
     
-    # --- ACTUALIZACIÓN AUTOMÁTICA DE DEUDA ---
+    # --- 1. ACTUALIZACIÓN AUTOMÁTICA DE DEUDA (Solo activos y con deuda) ---
+    # Optimizamos: Solo recalculamos si no se ha hecho hoy o si el usuario entra al dashboard
+    # Para evitar sobrecarga en cada refresh, podrías mover esto a una tarea programada (Celery/Cron)
+    # Por ahora, lo mantenemos simple pero protegido con try/except
     for exp in expedientes_qs.filter(activo=True, estado='ACTIVO'):
         try:
             nueva_deuda = calcular_deuda_actualizada(exp)
+            # Solo guardamos si hay diferencia significativa para no saturar la DB
             if exp.monto_actual is None or abs(float(exp.monto_actual) - nueva_deuda) > 0.01: 
-                exp.monto_actual = nueva_deuda
-                exp.save()
+                exp.monto_actual = Decimal(str(nueva_deuda))
+                exp.save(update_fields=['monto_actual'])
         except Exception:
             continue
 
-    # ---------------------------------------------------------
-    # 1. PROCESAMIENTO DEL FORMULARIO DE ALTA (POST)
-    # ---------------------------------------------------------
-    form = ExpedienteForm(empresa=empresa) # Formulario vacío por defecto
+    # --- 2. PROCESAMIENTO DEL FORMULARIO DE ALTA (POST) ---
+    form = ExpedienteForm(empresa=empresa) 
 
     if request.method == 'POST' and 'nuevo_expediente' in request.POST:
-        form = ExpedienteForm(request.POST, empresa=empresa) 
+        form = ExpedienteForm(request.POST, request.FILES, empresa=empresa) 
         if form.is_valid():
             # Validación de duplicados
             nombre = form.cleaned_data.get('deudor_nombre')
             telefono = form.cleaned_data.get('deudor_telefono')
+            
+            # Buscamos duplicados solo en esta empresa
             duplicado = expedientes_qs.filter(
                 Q(deudor_nombre__iexact=nombre) | Q(deudor_telefono=telefono)
             ).exists()
             
             if duplicado:
-                messages.warning(request, f"Atención: Ya existe un expediente para {nombre} o el teléfono {telefono}.")
-                # Si quieres bloquear el registro duplicado, descomenta la siguiente línea:
-                # return render(request, 'crm/dashboard_empresa.html', { ... }) 
+                messages.warning(request, f"Nota: Ya existe un expediente similar para {nombre} o {telefono}.")
 
             nuevo_exp = form.save(commit=False)
             nuevo_exp.empresa = empresa 
             
-            # --- ID PERSONALIZADO (PEP-000001) ---
+            # Generar ID Personalizado (Ej: EMP-000001)
             prefix = empresa.nombre[:3].upper()
             count = Expediente.objects.filter(empresa=empresa).count() + 1
             nuevo_exp.numero_expediente = f"{prefix}-{count:06d}"
 
-            # --- CALCULAR DEUDA INICIAL ---
+            # Calcular Deuda Inicial usando la función helper
             try:
-                nuevo_exp.monto_actual = calcular_deuda_actualizada(nuevo_exp)
+                nuevo_exp.monto_actual = Decimal(str(calcular_deuda_actualizada(nuevo_exp)))
             except Exception:
                 nuevo_exp.monto_actual = nuevo_exp.monto_original
 
-            nuevo_exp.monto_recuperado = 0
+            nuevo_exp.monto_recuperado = Decimal('0.00')
             nuevo_exp.estado = 'ACTIVO'
             nuevo_exp.activo = True
             nuevo_exp.save()
             
-            messages.success(request, f"Expediente {nuevo_exp.numero_expediente} registrado correctamente.")
+            # Guardar relación ManyToMany (si el form tiene campos m2m)
+            form.save_m2m()
+            
+            messages.success(request, f"Expediente {nuevo_exp.numero_expediente} creado exitosamente.")
             return redirect('crm:dashboard_crm', empresa_id=empresa.id)
         else:
-            # SI HAY ERRORES: No redireccionamos. 
-            # El objeto 'form' con los errores y los datos se pasará al contexto.
             messages.error(request, "Error al crear expediente. Revisa los campos marcados.")
-    else:
-        form = ExpedienteForm(empresa=empresa)
 
-    # ---------------------------------------------------------
-    # 2. LÓGICA DE FILTROS (GET)
-    # ---------------------------------------------------------
+    # --- 3. LÓGICA DE FILTROS (GET) ---
+    # Inicializamos con todos los expedientes de la empresa
+    qs_filtrado = expedientes_qs 
+
+    # Búsqueda Global
     q = request.GET.get('q', '')
-
-    # --- Filtros de Columnas ---
-    f_agente = request.GET.get('f_agente')
-    f_tel = request.GET.get('f_tel')
-    f_tipo = request.GET.get('f_tipo')
-    f_monto = request.GET.get('f_monto')
-    f_cuotas = request.GET.get('f_cuotas')
-    
-    # Fechas (Rangos)
-    f_compra_desde = request.GET.get('f_compra_desde')
-    f_compra_hasta = request.GET.get('f_compra_hasta')
-    f_impago_desde = request.GET.get('f_impago_desde')
-    f_impago_hasta = request.GET.get('f_impago_hasta')
-    
-    f_dias_max = request.GET.get('f_dias_max') # Menor a X días
-    f_estado = request.GET.get('f_estado')
-    f_comentario = request.GET.get('f_comentario')
-    
-    # Últimos mensajes y pagos (Rangos)
-    f_msj_desde = request.GET.get('f_msj_desde')
-    f_msj_hasta = request.GET.get('f_msj_hasta')
-    f_pago_desde = request.GET.get('f_pago_desde')
-    f_pago_hasta = request.GET.get('f_pago_hasta')
-
-    # --- APLICACIÓN DE FILTROS ---
-    
-    # 1. Buscador Global (ID, Nombre, DNI, Email)
     if q:
-        expedientes_qs = expedientes_qs.filter(
+        qs_filtrado = qs_filtrado.filter(
             Q(deudor_nombre__icontains=q) | 
             Q(numero_expediente__icontains=q) |
             Q(deudor_dni__icontains=q) |
-            Q(deudor_email__icontains=q)
+            Q(deudor_email__icontains=q) |
+            Q(deudor_telefono__icontains=q)
         )
 
-    # 2. Filtros Específicos
-    if f_agente: expedientes_qs = expedientes_qs.filter(agente_id=f_agente)
-    if f_tel: expedientes_qs = expedientes_qs.filter(deudor_telefono__icontains=f_tel)
-    if f_tipo: expedientes_qs = expedientes_qs.filter(tipo_producto__icontains=f_tipo)
-    if f_monto: expedientes_qs = expedientes_qs.filter(monto_original=f_monto) # O usar range si prefieres
-    if f_cuotas: expedientes_qs = expedientes_qs.filter(cuotas_totales=f_cuotas)
-    if f_estado: expedientes_qs = expedientes_qs.filter(causa_impago=f_estado)
-    if f_comentario: expedientes_qs = expedientes_qs.filter(comentario_estandar=f_comentario)
-
-    # 3. Filtros de Fecha (Rangos)
-    # F. Compra Rango
-    if f_compra_desde: expedientes_qs = expedientes_qs.filter(fecha_compra__gte=f_compra_desde)
-    if f_compra_hasta: expedientes_qs = expedientes_qs.filter(fecha_compra__lte=f_compra_hasta)
+    # Filtros Específicos
+    f_agente = request.GET.get('f_agente')
+    if f_agente: qs_filtrado = qs_filtrado.filter(agente_id=f_agente)
     
-    # F. Impago Rango
-    if f_impago_desde: expedientes_qs = expedientes_qs.filter(fecha_impago__gte=f_impago_desde)
-    if f_impago_hasta: expedientes_qs = expedientes_qs.filter(fecha_impago__lte=f_impago_hasta)
+    f_tel = request.GET.get('f_tel')
+    if f_tel: qs_filtrado = qs_filtrado.filter(deudor_telefono__icontains=f_tel)
+    
+    f_tipo = request.GET.get('f_tipo')
+    if f_tipo: qs_filtrado = qs_filtrado.filter(tipo_producto__icontains=f_tipo)
+    
+    f_monto = request.GET.get('f_monto')
+    if f_monto: qs_filtrado = qs_filtrado.filter(monto_original=f_monto)
+    
+    f_cuotas = request.GET.get('f_cuotas')
+    if f_cuotas: qs_filtrado = qs_filtrado.filter(cuotas_totales=f_cuotas)
+    
+    f_estado = request.GET.get('f_estado')
+    if f_estado: qs_filtrado = qs_filtrado.filter(causa_impago=f_estado)
+    
+    f_comentario = request.GET.get('f_comentario')
+    if f_comentario: qs_filtrado = qs_filtrado.filter(comentario_estandar=f_comentario)
 
-    # 4. Filtro "Menor a X días en impago"
+    # Filtros de Fechas (Rangos)
+    f_compra_desde = request.GET.get('f_compra_desde')
+    f_compra_hasta = request.GET.get('f_compra_hasta')
+    if f_compra_desde: qs_filtrado = qs_filtrado.filter(fecha_compra__gte=f_compra_desde)
+    if f_compra_hasta: qs_filtrado = qs_filtrado.filter(fecha_compra__lte=f_compra_hasta)
+    
+    f_impago_desde = request.GET.get('f_impago_desde')
+    f_impago_hasta = request.GET.get('f_impago_hasta')
+    if f_impago_desde: qs_filtrado = qs_filtrado.filter(fecha_impago__gte=f_impago_desde)
+    if f_impago_hasta: qs_filtrado = qs_filtrado.filter(fecha_impago__lte=f_impago_hasta)
+
+    # Filtro "Menor a X días en impago"
+    f_dias_max = request.GET.get('f_dias_max')
     if f_dias_max:
         try:
             dias = int(f_dias_max)
-            # Si lleva menos de 30 días, la fecha de impago debe ser POSTERIOR a (Hoy - 30)
             fecha_limite = timezone.now().date() - timezone.timedelta(days=dias)
-            expedientes_qs = expedientes_qs.filter(fecha_impago__gte=fecha_limite)
+            qs_filtrado = qs_filtrado.filter(fecha_impago__gte=fecha_limite)
         except ValueError:
             pass
 
-    # 5. Filtros Ticks (W1-W5, L1-L5) y Booleanos
-    # Solo filtramos si vienen marcados como 'true'
+    # Filtros Booleanos (Ticks W/L y Documentación)
+    # Iteramos dinámicamente sobre los campos w1..w5 y ll1..ll5
     for i in range(1, 6):
         if request.GET.get(f'f_w{i}') == 'true':
-            expedientes_qs = expedientes_qs.filter(**{f'w{i}': True})
+            qs_filtrado = qs_filtrado.filter(**{f'w{i}': True})
         if request.GET.get(f'f_l{i}') == 'true':
-            expedientes_qs = expedientes_qs.filter(**{f'll{i}': True})
+            qs_filtrado = qs_filtrado.filter(**{f'll{i}': True})
 
-    if request.GET.get('f_be') == 'true': expedientes_qs = expedientes_qs.filter(buro_enviado=True)
-    if request.GET.get('f_br') == 'true': expedientes_qs = expedientes_qs.filter(buro_recibido=True)
-    if request.GET.get('f_as') == 'true': expedientes_qs = expedientes_qs.filter(asnef_inscrito=True)
-    if request.GET.get('f_ls') == 'true': expedientes_qs = expedientes_qs.filter(llamada_seguimiento_asnef=True)
+    if request.GET.get('f_be') == 'true': qs_filtrado = qs_filtrado.filter(buro_enviado=True)
+    if request.GET.get('f_br') == 'true': qs_filtrado = qs_filtrado.filter(buro_recibido=True)
+    if request.GET.get('f_as') == 'true': qs_filtrado = qs_filtrado.filter(asnef_inscrito=True)
+    if request.GET.get('f_ls') == 'true': qs_filtrado = qs_filtrado.filter(llamada_seguimiento_asnef=True)
 
-    # 6. Ult. Mensaje Rango (Basado en los campos reales de gestión)
+    # Filtros de Última Interacción (Mensajes)
+    f_msj_desde = request.GET.get('f_msj_desde')
+    f_msj_hasta = request.GET.get('f_msj_hasta')
+    
     if f_msj_desde or f_msj_hasta:
+        # Esto filtra si ALGUNA de las fechas de gestión cae en el rango
         q_msj = Q()
-        campos_fecha = ['fecha_w1', 'fecha_ll1', 'fecha_w2', 'fecha_ll2', 'fecha_w3', 'fecha_ll3', 'fecha_w4', 'fecha_ll4', 'fecha_w5', 'fecha_ll5']
+        campos_fecha = [f'fecha_w{i}' for i in range(1,6)] + [f'fecha_ll{i}' for i in range(1,6)]
+        
+        # Filtramos solo aquellos campos que tienen valor
         for campo in campos_fecha:
-            if f_msj_desde: q_msj |= Q(**{f"{campo}__date__gte": f_msj_desde})
-            if f_msj_hasta: q_msj |= Q(**{f"{campo}__date__lte": f_msj_hasta})
-        expedientes_qs = expedientes_qs.filter(q_msj)
+            condicion = Q()
+            if f_msj_desde: condicion &= Q(**{f"{campo}__date__gte": f_msj_desde})
+            if f_msj_hasta: condicion &= Q(**{f"{campo}__date__lte": f_msj_hasta})
+            
+            if condicion:
+                q_msj |= condicion
+        
+        qs_filtrado = qs_filtrado.filter(q_msj)
 
-    # 7. F. Pago Promesa Rango
-    if f_pago_desde: expedientes_qs = expedientes_qs.filter(fecha_pago_promesa__gte=f_pago_desde)
-    if f_pago_hasta: expedientes_qs = expedientes_qs.filter(fecha_pago_promesa__lte=f_pago_hasta)
+    # Filtro Fecha Promesa de Pago
+    f_pago_desde = request.GET.get('f_pago_desde')
+    f_pago_hasta = request.GET.get('f_pago_hasta')
+    if f_pago_desde: qs_filtrado = qs_filtrado.filter(fecha_pago_promesa__gte=f_pago_desde)
+    if f_pago_hasta: qs_filtrado = qs_filtrado.filter(fecha_pago_promesa__lte=f_pago_hasta)
 
-    # Obtener opciones para los selects del filtro
-    tipos_producto = Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct()
+    # --- LÓGICA DE RECOBROS (FILTROS INDEPENDIENTES) ---
+    recobros_qs = RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago')
+
+    # Filtros con prefijo 'r_' para no chocar con los de impagos
+    r_q = request.GET.get('r_q', '')
+    r_desde = request.GET.get('r_desde')
+    r_hasta = request.GET.get('r_hasta')
+
+    if r_q:
+        recobros_qs = recobros_qs.filter(
+            Q(expediente__deudor_nombre__icontains=r_q) |
+            Q(expediente__numero_expediente__icontains=r_q)
+        )
+    if r_desde:
+        recobros_qs = recobros_qs.filter(fecha_pago__gte=r_desde)
+    if r_hasta:
+        recobros_qs = recobros_qs.filter(fecha_pago__lte=r_hasta)
+
+    # Contexto actualizado
+    context = {
+        # ... otros ...
+        'recobros': recobros_qs, # Ahora enviamos la lista filtrada
+        'filtros_recobros': { # Enviamos los valores para rellenar los inputs
+            'r_q': r_q,
+            'r_desde': r_desde,
+            'r_hasta': r_hasta
+        },
+        'active_tab': 'recobros' if (r_q or r_desde or r_hasta) else 'impagos' # Truco para mantener pestaña
+    }
+
+    # --- 4. PREPARAR CONTEXTO ---
+    
+    # Listas filtradas para cada pestaña
+    # IMPORTANTE: Usamos 'qs_filtrado' que ya tiene todos los filtros aplicados
+    impagos = qs_filtrado.filter(activo=True, estado='ACTIVO')
+    cedidos = qs_filtrado.filter(activo=True, estado='CEDIDO')
+    pagados = qs_filtrado.filter(activo=True, estado='PAGADO')
+    
+    # La papelera suele mostrarse aparte, sin filtros o con filtros propios, 
+    # pero aquí aplicamos los mismos por coherencia (salvo estado activo)
+    papelera = expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion')
+    
+    # Recobros (Pagos registrados)
+    # Se muestran todos los de la empresa, ordenados por fecha reciente
+    recobros = RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago')
+
+    # Datos auxiliares para los selects de filtro
+    agentes_disponibles = User.objects.filter(is_active=True).order_by('username')
+    tipos_producto = Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct().order_by('tipo_producto')
 
     context = {
         'empresa': empresa,
-        'q': q,
-        'impagos': expedientes_qs.filter(activo=True, estado='ACTIVO'),
-        'cedidos': expedientes_qs.filter(activo=True, estado='CEDIDO'),
-        'pagados': expedientes_qs.filter(activo=True, estado='PAGADO'),
-        'recobros': RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago'),
-        'papelera': expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion'),
-        'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
-        'tipos_producto': Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct(),
-        'form': form, # Pasamos el form (con datos si hubo error, o vacío si es GET)
+        'impagos': impagos,
+        'cedidos': cedidos,
+        'pagados': pagados,
+        'recobros': recobros,  # <--- Vital para la tabla de cobros
+        'papelera': papelera,
+        'agentes_disponibles': agentes_disponibles,
+        'tipos_producto': tipos_producto,
+        'form': form,
+        'filtros': request.GET # Para mantener los valores en los inputs del HTML
     }
+    
     return render(request, 'crm/dashboard_empresa.html', context)
+
 
 # --- VISTAS DE ACCIÓN ---
 @login_required
@@ -486,3 +542,88 @@ def detalle_expediente(request, exp_id):
         'agentes_disponibles': agentes_disponibles,
     }
     return render(request, 'crm/detalle_expediente.html', context)
+
+@login_required
+def lista_recobros(request):
+    # Obtener todos los pagos ordenados por fecha
+    pagos_qs = RegistroPago.objects.all().select_related('expediente', 'expediente__empresa')
+
+    # --- FILTROS ---
+    busqueda = request.GET.get('q', '')
+    if busqueda:
+        pagos_qs = pagos_qs.filter(
+            Q(expediente__deudor_nombre__icontains=busqueda) |
+            Q(expediente__deudor_telefono__icontains=busqueda) |
+            Q(expediente__numero_expediente__icontains=busqueda)
+        )
+    
+    # Filtro por Empresa (si es staff o admin de empresa)
+    empresa_id = request.GET.get('empresa')
+    if empresa_id:
+        pagos_qs = pagos_qs.filter(expediente__empresa_id=empresa_id)
+
+    # Filtro por Fechas
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    if fecha_desde:
+        pagos_qs = pagos_qs.filter(fecha_pago__gte=fecha_desde)
+    if fecha_hasta:
+        pagos_qs = pagos_qs.filter(fecha_pago__lte=fecha_hasta)
+
+    # Paginación
+    paginator = Paginator(pagos_qs, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'crm/lista_recobros.html', {
+        'page_obj': page_obj,
+        'filtros': request.GET
+    })
+
+
+@login_required
+@require_POST
+def registrar_pago(request, expediente_id):
+    expediente = get_object_or_404(Expediente, pk=expediente_id)
+    form = PagoForm(request.POST, request.FILES)
+    
+    if form.is_valid():
+        try:
+            # 1. Guardar el Pago
+            pago = form.save(commit=False)
+            pago.expediente = expediente
+            pago.comision = pago.monto * Decimal('0.10') # Placeholder 10%
+            pago.save()
+
+            # 2. Actualizar el Total Recuperado en el objeto (memoria)
+            recuperado_anterior = expediente.monto_recuperado or Decimal('0.00')
+            nuevo_recuperado = recuperado_anterior + pago.monto
+            expediente.monto_recuperado = nuevo_recuperado
+
+            # 3. RECALCULAR DEUDA (Llamamos a la función YA CORREGIDA)
+            # Como ya actualizamos expediente.monto_recuperado arriba, el cálculo será correcto
+            nueva_deuda = calcular_deuda_actualizada(expediente)
+            expediente.monto_actual = Decimal(str(nueva_deuda))
+
+            # 4. Verificar cancelación total
+            monto_original = expediente.monto_original or Decimal('0.00')
+            saldo_total = monto_original - nuevo_recuperado
+            
+            if saldo_total <= Decimal('1.00'):
+                expediente.estado = 'PAGADO'
+                expediente.causa_impago = 'PAGADO'
+                expediente.activo = False
+                expediente.monto_actual = Decimal('0.00')
+            
+            # 5. GUARDAR CAMBIOS EN EXPEDIENTE
+            expediente.save()
+            
+            messages.success(request, f"Pago de {pago.monto}€ registrado. Nueva deuda: {expediente.monto_actual}€")
+        
+        except Exception as e:
+            messages.error(request, f"Error interno: {str(e)}")
+    else:
+        messages.error(request, "Datos inválidos en el formulario.")
+
+    referer = request.META.get('HTTP_REFERER')
+    return redirect(referer if referer else 'crm:dashboard_crm', empresa_id=expediente.empresa.id)
