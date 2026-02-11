@@ -98,27 +98,28 @@ def buscar_antecedentes_deudor(request):
 @login_required
 def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
+    # Mantenemos el orden por número de expediente
     expedientes_qs = Expediente.objects.filter(empresa=empresa).order_by('numero_expediente')
     
-    # --- ACTUALIZACIÓN AUTOMÁTICA DE DEUDA (RESTAURADO) ---
-    # Al entrar al dashboard, recalculamos la deuda de los activos
+    # --- ACTUALIZACIÓN AUTOMÁTICA DE DEUDA ---
     for exp in expedientes_qs.filter(activo=True, estado='ACTIVO'):
         try:
             nueva_deuda = calcular_deuda_actualizada(exp)
-            # Solo guardamos si hay una diferencia real > 0.01
             if exp.monto_actual is None or abs(float(exp.monto_actual) - nueva_deuda) > 0.01: 
                 exp.monto_actual = nueva_deuda
                 exp.save()
         except Exception:
-            continue 
+            continue
 
     # ---------------------------------------------------------
     # 1. PROCESAMIENTO DEL FORMULARIO DE ALTA (POST)
     # ---------------------------------------------------------
+    form = ExpedienteForm(empresa=empresa) # Formulario vacío por defecto
+
     if request.method == 'POST' and 'nuevo_expediente' in request.POST:
         form = ExpedienteForm(request.POST, empresa=empresa) 
         if form.is_valid():
-            # Validación de duplicados básica
+            # Validación de duplicados
             nombre = form.cleaned_data.get('deudor_nombre')
             telefono = form.cleaned_data.get('deudor_telefono')
             duplicado = expedientes_qs.filter(
@@ -127,14 +128,15 @@ def dashboard_crm(request, empresa_id):
             
             if duplicado:
                 messages.warning(request, f"Atención: Ya existe un expediente para {nombre} o el teléfono {telefono}.")
-                # No bloqueamos, pero avisamos. Si quieres bloquear, usa return redirect aquí.
+                # Si quieres bloquear el registro duplicado, descomenta la siguiente línea:
+                # return render(request, 'crm/dashboard_empresa.html', { ... }) 
 
             nuevo_exp = form.save(commit=False)
             nuevo_exp.empresa = empresa 
             
-            # --- ID PERSONALIZADO (Ej: PEP-00001) ---
+            # --- ID PERSONALIZADO (PEP-000001) ---
             prefix = empresa.nombre[:3].upper()
-            count = expedientes_qs.count() + 1
+            count = Expediente.objects.filter(empresa=empresa).count() + 1
             nuevo_exp.numero_expediente = f"{prefix}-{count:06d}"
 
             # --- CALCULAR DEUDA INICIAL ---
@@ -143,18 +145,17 @@ def dashboard_crm(request, empresa_id):
             except Exception:
                 nuevo_exp.monto_actual = nuevo_exp.monto_original
 
-            # Inicializar valores por defecto
             nuevo_exp.monto_recuperado = 0
             nuevo_exp.estado = 'ACTIVO'
             nuevo_exp.activo = True
-            
             nuevo_exp.save()
             
-            messages.success(request, f"Expediente {nuevo_exp.numero_expediente} registrado. Deuda al día: {nuevo_exp.monto_actual}€")
+            messages.success(request, f"Expediente {nuevo_exp.numero_expediente} registrado correctamente.")
             return redirect('crm:dashboard_crm', empresa_id=empresa.id)
         else:
-            messages.error(request, "Error al crear expediente. Revisa los campos.")
-            print("Errores del formulario:", form.errors)
+            # SI HAY ERRORES: No redireccionamos. 
+            # El objeto 'form' con los errores y los datos se pasará al contexto.
+            messages.error(request, "Error al crear expediente. Revisa los campos marcados.")
     else:
         form = ExpedienteForm(empresa=empresa)
 
@@ -263,11 +264,10 @@ def dashboard_crm(request, empresa_id):
         'recobros': RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago'),
         'papelera': expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion'),
         'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
-        'tipos_producto': tipos_producto, # Necesario para el select de filtro
-        'form': form,
+        'tipos_producto': Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct(),
+        'form': form, # Pasamos el form (con datos si hubo error, o vacío si es GET)
     }
     return render(request, 'crm/dashboard_empresa.html', context)
-
 
 # --- VISTAS DE ACCIÓN ---
 @login_required
@@ -412,16 +412,25 @@ def editar_expediente(request, exp_id):
     if request.method == 'POST':
         form = ExpedienteForm(request.POST, instance=expediente, empresa=empresa)
         if form.is_valid():
-            # Guardamos los cambios
             exp = form.save()
             # Recalculamos la deuda por si cambiaron fechas o montos
             exp.monto_actual = calcular_deuda_actualizada(exp)
             exp.save()
             
-            messages.success(request, f"Expediente {exp.numero_expediente} actualizado.")
-            return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+            messages.success(request, f"Expediente {exp.numero_expediente} actualizado correctamente.")
+        else:
+            # Si hay errores (ej: un campo obligatorio vacío), los capturamos
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error en {field}: {error}")
+
+    # LÓGICA DE RETORNO INTELIGENTE:
+    # Intentamos volver a la página anterior (Detalle o Dashboard)
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
     
-    # Si por alguna razón llega aquí por GET, redirigimos al dashboard
+    # Si por algún motivo no hay referer, volvemos al dashboard por defecto
     return redirect('crm:dashboard_crm', empresa_id=empresa.id)
 
 @login_required
@@ -439,32 +448,20 @@ def detalle_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
     empresa = exp.empresa
     
-    # --- CÁLCULOS DE LA RADIOGRAFÍA FINANCIERA ---
+    # --- CÁLCULOS FINANCIEROS ---
     valor_cuota = float(exp.monto_original) / exp.cuotas_totales if exp.cuotas_totales > 0 else 0
-    
-    # 1. Cuotas Pre-Impago (Lo que pagó antes de caer en mora)
-    # Calculamos meses entre compra e impago
-    if exp.fecha_compra and exp.fecha_impago:
-        meses_pre = (exp.fecha_impago.year - exp.fecha_compra.year) * 12 + (exp.fecha_impago.month - exp.fecha_compra.month)
-        # Si el día de impago es >= al de compra, se cuenta ese mes como "pagado" o transcurrido
-        if exp.fecha_impago.day >= exp.fecha_compra.day:
-            cuotas_pre_impago = meses_pre
-        else:
-            cuotas_pre_impago = max(0, meses_pre - 1)
-    else:
-        cuotas_pre_impago = 0
-
-    # 2. Deuda Vencida (Exigible hoy)
-    # Usamos tu función helper ya existente
     deuda_exigible = calcular_deuda_actualizada(exp)
-    
-    # 3. Deuda a Vencer (Futuro)
-    # Es el total - (lo que ya pagó antes + lo que ya venció)
-    # Para ser exactos: Original - monto_recuperado - deuda_exigible
     monto_a_vencer = float(exp.monto_original) - float(exp.monto_recuperado) - deuda_exigible
-    monto_a_vencer = max(0.0, monto_a_vencer)
 
-    # Antecedentes (Veces en impago)
+    # --- DATOS PARA EL MODAL DE EDICIÓN (ESTO ES LO QUE FALTA) ---
+    # Obtenemos los tipos de producto únicos que ya existen en la empresa
+    # O bien, puedes sacarlos de empresa.tipos_impagos si prefieres esa lista
+    tipos_producto = Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct()
+    
+    # También necesitamos los agentes para el select de edición
+    agentes_disponibles = User.objects.filter(is_active=True).order_by('username')
+
+    # Antecedentes
     veces_impago = Expediente.objects.filter(
         empresa=empresa, 
         deudor_dni=exp.deudor_dni
@@ -474,11 +471,13 @@ def detalle_expediente(request, exp_id):
         'empresa': empresa,
         'exp': exp,
         'valor_cuota': round(valor_cuota, 2),
-        'cuotas_pre': cuotas_pre_impago,
-        'monto_pre': round(cuotas_pre_impago * valor_cuota, 2),
         'deuda_vencida': round(deuda_exigible, 2),
         'deuda_futura': round(monto_a_vencer, 2),
         'veces_impago': veces_impago,
         'pagos': exp.pagos.all().order_by('-fecha_pago'),
+        
+        # Nuevos campos para que el modal funcione correctamente:
+        'tipos_producto': tipos_producto,
+        'agentes_disponibles': agentes_disponibles,
     }
     return render(request, 'crm/detalle_expediente.html', context)

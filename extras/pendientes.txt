@@ -2,23 +2,21 @@
 CRM
 
 
-
-Agregar la vista de detalle del cliente
 agregar la opcion de solo colocar la deuda sin fechas
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 
 (+) darle funcionalidad a registrar un nuevo pago
 
 REG_Recobros: darle funcionalidad a la planilla de registros de recobros
+Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
 
 Vista de listado de empresa:
 
 Agregar funcionalidad de ver los datos que ahora son planos
 
+
 Diseño:
 
-
-1. CRM:
 
 Pestaña Listados CRM: 
 
@@ -34,6 +32,38 @@ Funcionalidades
 Listados CRM:
 
 Vamos a tener los campos: 
+
+
+Botón de Nuevo pago nos va a abrir un pequeño formulario con los siguientes campos:
+Nombre y apellido (listado completo de los nombres del CRM con un buscador arriba de todo podremos seleccionarlo de la lista o buscandolo)
+Auto completa el teléfono de la persona
+Establecer fecha
+Establecer monto
+Cargar comprobante opcional (solo para transferencias) 
+Cuando registramos el pago se agrega a REG_RECOBROS
+
+Formulario de carga de pago dentro de un modal para mejorar el UX/UI
+El formulario muestra el nombre y apellido y autocomplete la fecha de hoy con opcion de cambiarla
+El detalle del cliente permite editar los pagos ya cargados
+Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
+Cargar de reporte:
+    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
+    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
+
+
+ 
+Pestaña REG_Recobros:
+
+Listado total de pagos listado por fechas.
+Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
+Filtros en la parte superior para filtrar por todo tipo.
+Buscador por nombre/ id/ teléfono
+
+Carga masiva: 
+
+al cargar un excel de carga masiva nos va a preguntar de que tipo es para comparar entre esos tipos en el CRM
+
+
 
 Agente (asignado)		
 ID del deudor
@@ -59,45 +89,3 @@ BE - Buro enviado (Trae la información desde Asnef)
 BR - Buro Recibido  (Trae la información desde Asnef)
 ASNEF  (Trae la información desde Asnef)
 LLS (llamada de seguimiento para salir de ASNEF)
-
-
-Botón de Nuevo pago nos va a abrir un pequeño formulario con los siguientes campos:
-Nombre y apellido (listado completo de los nombres del CRM con un buscador arriba de todo podremos seleccionarlo de la lista o buscandolo)
-Auto completa el teléfono de la persona
-Establecer fecha
-Establecer monto
-Cargar comprobante opcional (solo para transferencias) 
-Cuando registramos el pago se agrega a REG_RECOBROS
-
-Cargar pago directamente al lado del registro
-Formulario de carga de pago dentro de un modal para mejorar el UX/UI
-El formulario muestra el nombre y apellido y autocomplete la fecha de hoy con opcion de cambiarla
-El detalle del cliente permite editar los pagos ya cargados
-Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
-Cargar de reporte:
-    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
-    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
-
-
-Al apretar sobre el cliente nos va a abrir una nueva vista del cliente
-
-Datos de contacto y fechas de impago
-Listado de pagos realizados con sus comprobantes
-Veces que ingreso a impago:
-cada vez que un cliente entra en impago guardamos la fecha y contamos la cantidad de veces que estuvo en impago
-listado de comentarios
-Listado de documentación asociada (contratos de cesión, contratos firmados, Buros, Etc)
- 
-Pestaña REG_Recobros:
-
-Listado total de pagos listado por fechas.
-Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
-Filtros en la parte superior para filtrar por todo tipo.
-Buscador por nombre/ id/ teléfono
-
-Carga masiva: 
-
-al cargar un excel de carga masiva nos va a preguntar de que tipo es para comparar entre esos tipos en el CRM
-
-
-

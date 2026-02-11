@@ -375,29 +375,60 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
     padding: 0;
 }
 
+
+/* --- PROMESAS DE PAGO --- */
+
+/* 1. PAGOS PARA HOY (AMARILLO) */
+.row-promesa-hoy td {
+    background-color: #fff3cd !important;
+}
+.row-promesa-hoy {
+    border-left: 5px solid #ffc107 !important;
+}
+
+/* 2. PAGOS VENCIDOS (ROSADO) */
+.row-promesa-vencida td {
+    background-color: #f8d7da !important; /* Rosado/Rojo suave */
+}
+.row-promesa-vencida {
+    border-left: 5px solid #dc3545 !important; /* Borde rojo fuerte */
+}
+
+/* Efectos hover para ambos */
+.row-promesa-hoy:hover td { background-color: #ffeeb5 !important; }
+.row-promesa-vencida:hover td { background-color: #f1b0b7 !important; }
+
 /* ==========================================================================
-   LÓGICA DE IMPRESIÓN PARA FICHAS DE CLIENTE
+   LÓGICA DE IMPRESIÓN PARA FICHAS DE CLIENTE (CORREGIDA)
    ========================================================================== */
 @media print {
-    /* Ocultar elementos de navegación y estructurales */
-    #wrapper .sidebar, 
-    #wrapper .navbar, 
+    /* 1. Ocultamos la sidebar por su clase real y otros elementos molestos */
+    .sidebar, 
+    .navbar, 
     .breadcrumb, 
     .btn, 
+    .btn-action-crm,
     .nav-tabs, 
+    .toast-container,
     footer,
     .no-print {
         display: none !important;
     }
 
-    /* Resetear márgenes para el papel */
-    #wrapper #page-content-wrapper {
+    /* 2. Ajustamos el contenedor principal (.main-content) */
+    /* Quitamos el margen de 60px que dejas para la sidebar y usamos todo el ancho */
+    .main-content {
+        margin-left: 0 !important;
         padding: 0 !important;
-        margin: 0 !important;
         width: 100% !important;
     }
 
-    /* Asegurar legibilidad de las tarjetas */
+    /* 3. Ajustamos el contenedor flex para que no cause problemas de ancho */
+    .admin-wrapper {
+        display: block !important;
+    }
+
+    /* 4. Asegurar legibilidad de las tarjetas */
     .card {
         border: 1px solid #dee2e6 !important;
         box-shadow: none !important;
@@ -405,9 +436,11 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
         margin-bottom: 1rem !important;
     }
 
-    /* Forzar impresión de colores de fondo (badges, barras de progreso) */
+    /* 5. Forzar la impresión de colores para que las barras y badges se vean */
     body {
+        background-color: white !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 }
+

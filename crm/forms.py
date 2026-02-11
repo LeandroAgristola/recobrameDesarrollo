@@ -8,7 +8,7 @@ class ExpedienteForm(forms.ModelForm):
         fields = [
             'agente', 'tipo_producto', 
             'deudor_nombre', 'deudor_telefono', 
-            'deudor_dni', 'deudor_email', # <--- RESTAURADOS
+            'deudor_dni', 'deudor_email',
             'monto_original', 'cuotas_totales', 
             'fecha_compra', 'fecha_impago'
         ]
@@ -25,10 +25,22 @@ class ExpedienteForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs.update({'class': 'form-control'})
 
-        # Tipo de producto dinámico según empresa
         if empresa:
             tipos = EsquemaComision.objects.filter(empresa=empresa).values_list('tipo_producto', 'tipo_producto').distinct()
             self.fields['tipo_producto'] = forms.ChoiceField(
                 choices=tipos, 
                 widget=forms.Select(attrs={'class': 'form-select'})
             )
+
+    def clean(self):
+        """Validación cruzada de fechas"""
+        cleaned_data = super().clean()
+        fecha_compra = cleaned_data.get("fecha_compra")
+        fecha_impago = cleaned_data.get("fecha_impago")
+
+        if fecha_compra and fecha_impago:
+            if fecha_compra > fecha_impago:
+                # Error dirigido específicamente al campo fecha_impago
+                self.add_error('fecha_impago', "La fecha de impago no puede ser anterior a la fecha de compra.")
+        
+        return cleaned_data

@@ -245,4 +245,7 @@
 </div>
 
 {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
+{% block extra_scripts %}
+    <script src="{% static 'js/CRM/validarFechas.js' %}"></script>
+{% endblock %}
 {% endblock %}

@@ -118,8 +118,22 @@
         </thead>
         
         <tbody>
+            {# 1. Capturamos la fecha de hoy en formato comparable #}
+            {% now "Y-m-d" as hoy %}
+
             {% for exp in impagos %}
-            <tr id="fila-exp-{{ exp.id }}" class="text-center">
+            
+            {# 2. Definimos la clase de la fila según la fecha de promesa #}
+            <tr id="fila-exp-{{ exp.id }}" 
+                class="text-center 
+                {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}
+                    {% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}
+                        row-promesa-hoy
+                    {% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}
+                        row-promesa-vencida
+                    {% endif %}
+                {% endif %}">
+                
                 <td class="col-agente">
                     <select class="form-select form-select-sm fw-bold small text-muted"
                             onchange="cambiarAgente(this, {{ exp.id }})"
@@ -133,6 +147,7 @@
                         {% endfor %}
                     </select>
                 </td>
+
                 <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
                 <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
                 <td class="col-tel small">{{ exp.deudor_telefono }}</td>
@@ -141,11 +156,13 @@
                 <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
                 <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
                 <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
+                
                 <td class="col-dias text-center">
                     <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                         {{ exp.tiempo_en_impago }}
                     </span>
                 </td>
+
                 <td class="col-comentario">
                     <select class="form-select form-select-sm small text-muted" 
                             onchange="actualizarComentario(this, {{ exp.id }})"
@@ -156,11 +173,13 @@
                         {% endfor %}
                     </select>
                 </td>
+
                 <td class="col-estado">
                     <span id="estado-texto-{{ exp.id }}" class="badge bg-white text-dark border shadow-sm">
                         {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
                     </span>
                 </td>
+
                 <td class="col-monto text-center fw-bold text-danger" style="font-size: 1.1em;">
                     {{ exp.monto_actual }}€
                 </td>
@@ -177,6 +196,7 @@
                         {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
                     </span>
                 </td>
+
                 <td class="col-fecha text-center small text-success fw-bold">
                     <span id="fecha-pago-{{ exp.id }}">
                         {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
@@ -184,38 +204,34 @@
                         {% else %}-{% endif %}
                     </span>
                 </td>
-<td class="col-acciones bg-white">
-    <div class="d-flex gap-1 justify-content-center">
-        <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" title="Registrar Pago">
-            <i class="fa-solid fa-sack-dollar"></i>
-        </button>
 
-        <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
-            <i class="fa-solid fa-eye"></i>
-        </a>
-
-        <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm" 
-                data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 
-                title="Editar Cliente">
-            <i class="fa-solid fa-pen-to-square"></i>
-        </button>
-
-        <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
-                title="Documentación" data-bs-toggle="modal" 
-                data-bs-target="#modalDocs{{ exp.id }}">
-            <i class="fa-solid fa-folder-open"></i>
-        </button>
-
-        <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm" 
-                title="Mover a Papelera" data-bs-toggle="modal" 
-                data-bs-target="#modalPapelera{{ exp.id }}">
-            <i class="fa-solid fa-trash"></i>
-        </button>
-    </div>
-</td>
-
-{% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
+                <td class="col-acciones bg-white">
+                    <div class="d-flex gap-1 justify-content-center">
+                        <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" title="Registrar Pago">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
+                                title="Documentación" data-bs-toggle="modal" 
+                                data-bs-target="#modalDocs{{ exp.id }}">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary btn-action-crm" 
+                                data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 
+                                title="Editar Cliente">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm" 
+                                title="Mover a Papelera" data-bs-toggle="modal" 
+                                data-bs-target="#modalPapelera{{ exp.id }}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
             </tr>
+            {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
             {% endfor %}
         </tbody>
     </table>

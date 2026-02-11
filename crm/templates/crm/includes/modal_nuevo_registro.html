@@ -1,6 +1,6 @@
 <div class="modal fade" id="modalNuevoRegistro" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form method="post" class="modal-content" data-empresa-id="{{ empresa.id }}">
+        <form method="post" class="modal-content" data-empresa-id="{{ empresa.id }}" onsubmit="return validarFechasExpediente(this)">
             {% csrf_token %}
             <input type="hidden" name="nuevo_expediente" value="1">
             
