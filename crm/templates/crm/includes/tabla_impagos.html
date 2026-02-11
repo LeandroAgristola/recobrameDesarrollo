@@ -190,9 +190,9 @@
             <i class="fa-solid fa-sack-dollar"></i>
         </button>
 
-        <button type="button" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
+        <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
             <i class="fa-solid fa-eye"></i>
-        </button>
+        </a>
 
         <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm" 
                 data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 

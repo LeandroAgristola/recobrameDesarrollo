@@ -374,3 +374,40 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
     justify-content: center;
     padding: 0;
 }
+
+/* ==========================================================================
+   LÓGICA DE IMPRESIÓN PARA FICHAS DE CLIENTE
+   ========================================================================== */
+@media print {
+    /* Ocultar elementos de navegación y estructurales */
+    #wrapper .sidebar, 
+    #wrapper .navbar, 
+    .breadcrumb, 
+    .btn, 
+    .nav-tabs, 
+    footer,
+    .no-print {
+        display: none !important;
+    }
+
+    /* Resetear márgenes para el papel */
+    #wrapper #page-content-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Asegurar legibilidad de las tarjetas */
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Forzar impresión de colores de fondo (badges, barras de progreso) */
+    body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}

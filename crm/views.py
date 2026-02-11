@@ -433,3 +433,52 @@ def eliminar_documento_crm(request, doc_id):
     documento.delete()
     
     return JsonResponse({'status': 'ok', 'message': f"Documento {nombre} eliminado."})
+
+@login_required
+def detalle_expediente(request, exp_id):
+    exp = get_object_or_404(Expediente, id=exp_id)
+    empresa = exp.empresa
+    
+    # --- CÁLCULOS DE LA RADIOGRAFÍA FINANCIERA ---
+    valor_cuota = float(exp.monto_original) / exp.cuotas_totales if exp.cuotas_totales > 0 else 0
+    
+    # 1. Cuotas Pre-Impago (Lo que pagó antes de caer en mora)
+    # Calculamos meses entre compra e impago
+    if exp.fecha_compra and exp.fecha_impago:
+        meses_pre = (exp.fecha_impago.year - exp.fecha_compra.year) * 12 + (exp.fecha_impago.month - exp.fecha_compra.month)
+        # Si el día de impago es >= al de compra, se cuenta ese mes como "pagado" o transcurrido
+        if exp.fecha_impago.day >= exp.fecha_compra.day:
+            cuotas_pre_impago = meses_pre
+        else:
+            cuotas_pre_impago = max(0, meses_pre - 1)
+    else:
+        cuotas_pre_impago = 0
+
+    # 2. Deuda Vencida (Exigible hoy)
+    # Usamos tu función helper ya existente
+    deuda_exigible = calcular_deuda_actualizada(exp)
+    
+    # 3. Deuda a Vencer (Futuro)
+    # Es el total - (lo que ya pagó antes + lo que ya venció)
+    # Para ser exactos: Original - monto_recuperado - deuda_exigible
+    monto_a_vencer = float(exp.monto_original) - float(exp.monto_recuperado) - deuda_exigible
+    monto_a_vencer = max(0.0, monto_a_vencer)
+
+    # Antecedentes (Veces en impago)
+    veces_impago = Expediente.objects.filter(
+        empresa=empresa, 
+        deudor_dni=exp.deudor_dni
+    ).count() if exp.deudor_dni else 1
+
+    context = {
+        'empresa': empresa,
+        'exp': exp,
+        'valor_cuota': round(valor_cuota, 2),
+        'cuotas_pre': cuotas_pre_impago,
+        'monto_pre': round(cuotas_pre_impago * valor_cuota, 2),
+        'deuda_vencida': round(deuda_exigible, 2),
+        'deuda_futura': round(monto_a_vencer, 2),
+        'veces_impago': veces_impago,
+        'pagos': exp.pagos.all().order_by('-fecha_pago'),
+    }
+    return render(request, 'crm/detalle_expediente.html', context)

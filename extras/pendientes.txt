@@ -11,6 +11,10 @@ manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 
 REG_Recobros: darle funcionalidad a la planilla de registros de recobros
 
+Vista de listado de empresa:
+
+Agregar funcionalidad de ver los datos que ahora son planos
+
 Diseño:
 
 
