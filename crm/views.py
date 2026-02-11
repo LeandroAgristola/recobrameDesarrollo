@@ -159,75 +159,100 @@ def dashboard_crm(request, empresa_id):
         form = ExpedienteForm(empresa=empresa)
 
     # ---------------------------------------------------------
-    # 2. FILTROS Y BÚSQUEDA (GET)
+    # 2. LÓGICA DE FILTROS (GET)
     # ---------------------------------------------------------
-    
     q = request.GET.get('q', '')
-    
-    # Filtros Básicos
+
+    # --- Filtros de Columnas ---
     f_agente = request.GET.get('f_agente')
-    f_nombre = request.GET.get('f_nombre')
     f_tel = request.GET.get('f_tel')
     f_tipo = request.GET.get('f_tipo')
     f_monto = request.GET.get('f_monto')
     f_cuotas = request.GET.get('f_cuotas')
-    f_fecha_compra = request.GET.get('f_fecha_compra')
-    f_fecha_impago = request.GET.get('f_fecha_impago')
-    f_dias = request.GET.get('f_dias')
+    
+    # Fechas (Rangos)
+    f_compra_desde = request.GET.get('f_compra_desde')
+    f_compra_hasta = request.GET.get('f_compra_hasta')
+    f_impago_desde = request.GET.get('f_impago_desde')
+    f_impago_hasta = request.GET.get('f_impago_hasta')
+    
+    f_dias_max = request.GET.get('f_dias_max') # Menor a X días
     f_estado = request.GET.get('f_estado')
-    f_deuda = request.GET.get('f_deuda')
+    f_comentario = request.GET.get('f_comentario')
+    
+    # Últimos mensajes y pagos (Rangos)
+    f_msj_desde = request.GET.get('f_msj_desde')
+    f_msj_hasta = request.GET.get('f_msj_hasta')
+    f_pago_desde = request.GET.get('f_pago_desde')
+    f_pago_hasta = request.GET.get('f_pago_hasta')
 
-    # Filtros Booleanos
-    f_be = request.GET.get('f_be')
-    f_br = request.GET.get('f_br')
-    f_as = request.GET.get('f_as')
-    f_ls = request.GET.get('f_ls')
-
-    # Búsqueda General
+    # --- APLICACIÓN DE FILTROS ---
+    
+    # 1. Buscador Global (ID, Nombre, DNI, Email)
     if q:
         expedientes_qs = expedientes_qs.filter(
             Q(deudor_nombre__icontains=q) | 
-            Q(deudor_telefono__icontains=q) | 
             Q(numero_expediente__icontains=q) |
-            Q(deudor_dni__icontains=q)
+            Q(deudor_dni__icontains=q) |
+            Q(deudor_email__icontains=q)
         )
 
-    # Aplicación de Filtros
+    # 2. Filtros Específicos
     if f_agente: expedientes_qs = expedientes_qs.filter(agente_id=f_agente)
-    if f_nombre: expedientes_qs = expedientes_qs.filter(deudor_nombre__icontains=f_nombre)
     if f_tel: expedientes_qs = expedientes_qs.filter(deudor_telefono__icontains=f_tel)
     if f_tipo: expedientes_qs = expedientes_qs.filter(tipo_producto__icontains=f_tipo)
-    if f_monto: expedientes_qs = expedientes_qs.filter(monto_original__icontains=f_monto)
+    if f_monto: expedientes_qs = expedientes_qs.filter(monto_original=f_monto) # O usar range si prefieres
     if f_cuotas: expedientes_qs = expedientes_qs.filter(cuotas_totales=f_cuotas)
-    if f_fecha_compra: expedientes_qs = expedientes_qs.filter(fecha_compra=f_fecha_compra)
-    if f_fecha_impago: expedientes_qs = expedientes_qs.filter(fecha_impago=f_fecha_impago)
+    if f_estado: expedientes_qs = expedientes_qs.filter(causa_impago=f_estado)
+    if f_comentario: expedientes_qs = expedientes_qs.filter(comentario_estandar=f_comentario)
+
+    # 3. Filtros de Fecha (Rangos)
+    # F. Compra Rango
+    if f_compra_desde: expedientes_qs = expedientes_qs.filter(fecha_compra__gte=f_compra_desde)
+    if f_compra_hasta: expedientes_qs = expedientes_qs.filter(fecha_compra__lte=f_compra_hasta)
     
-    if f_dias:
+    # F. Impago Rango
+    if f_impago_desde: expedientes_qs = expedientes_qs.filter(fecha_impago__gte=f_impago_desde)
+    if f_impago_hasta: expedientes_qs = expedientes_qs.filter(fecha_impago__lte=f_impago_hasta)
+
+    # 4. Filtro "Menor a X días en impago"
+    if f_dias_max:
         try:
-            dias = int(f_dias)
+            dias = int(f_dias_max)
+            # Si lleva menos de 30 días, la fecha de impago debe ser POSTERIOR a (Hoy - 30)
             fecha_limite = timezone.now().date() - timezone.timedelta(days=dias)
-            expedientes_qs = expedientes_qs.filter(fecha_impago__lte=fecha_limite)
+            expedientes_qs = expedientes_qs.filter(fecha_impago__gte=fecha_limite)
         except ValueError:
             pass
 
-    if f_estado: expedientes_qs = expedientes_qs.filter(causa_impago=f_estado)
-    if f_deuda: expedientes_qs = expedientes_qs.filter(monto_actual__icontains=f_deuda)
-
-    # Filtros Dinámicos de Ticks
+    # 5. Filtros Ticks (W1-W5, L1-L5) y Booleanos
+    # Solo filtramos si vienen marcados como 'true'
     for i in range(1, 6):
-        val_w = request.GET.get(f'f_w{i}')
-        if val_w in ['true', 'false']:
-            expedientes_qs = expedientes_qs.filter(**{f'w{i}': (val_w == 'true')})
+        if request.GET.get(f'f_w{i}') == 'true':
+            expedientes_qs = expedientes_qs.filter(**{f'w{i}': True})
+        if request.GET.get(f'f_l{i}') == 'true':
+            expedientes_qs = expedientes_qs.filter(**{f'll{i}': True})
 
-        val_l = request.GET.get(f'f_l{i}')
-        if val_l in ['true', 'false']:
-            expedientes_qs = expedientes_qs.filter(**{f'll{i}': (val_l == 'true')})
+    if request.GET.get('f_be') == 'true': expedientes_qs = expedientes_qs.filter(buro_enviado=True)
+    if request.GET.get('f_br') == 'true': expedientes_qs = expedientes_qs.filter(buro_recibido=True)
+    if request.GET.get('f_as') == 'true': expedientes_qs = expedientes_qs.filter(asnef_inscrito=True)
+    if request.GET.get('f_ls') == 'true': expedientes_qs = expedientes_qs.filter(llamada_seguimiento_asnef=True)
 
-    # Filtros Booleanos ASNEF
-    if f_be in ['true', 'false']: expedientes_qs = expedientes_qs.filter(buro_enviado=(f_be == 'true'))
-    if f_br in ['true', 'false']: expedientes_qs = expedientes_qs.filter(buro_recibido=(f_br == 'true'))
-    if f_as in ['true', 'false']: expedientes_qs = expedientes_qs.filter(asnef_inscrito=(f_as == 'true'))
-    if f_ls in ['true', 'false']: expedientes_qs = expedientes_qs.filter(llamada_seguimiento_asnef=(f_ls == 'true'))
+    # 6. Ult. Mensaje Rango (Basado en los campos reales de gestión)
+    if f_msj_desde or f_msj_hasta:
+        q_msj = Q()
+        campos_fecha = ['fecha_w1', 'fecha_ll1', 'fecha_w2', 'fecha_ll2', 'fecha_w3', 'fecha_ll3', 'fecha_w4', 'fecha_ll4', 'fecha_w5', 'fecha_ll5']
+        for campo in campos_fecha:
+            if f_msj_desde: q_msj |= Q(**{f"{campo}__date__gte": f_msj_desde})
+            if f_msj_hasta: q_msj |= Q(**{f"{campo}__date__lte": f_msj_hasta})
+        expedientes_qs = expedientes_qs.filter(q_msj)
+
+    # 7. F. Pago Promesa Rango
+    if f_pago_desde: expedientes_qs = expedientes_qs.filter(fecha_pago_promesa__gte=f_pago_desde)
+    if f_pago_hasta: expedientes_qs = expedientes_qs.filter(fecha_pago_promesa__lte=f_pago_hasta)
+
+    # Obtener opciones para los selects del filtro
+    tipos_producto = Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct()
 
     context = {
         'empresa': empresa,
@@ -238,7 +263,8 @@ def dashboard_crm(request, empresa_id):
         'recobros': RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago'),
         'papelera': expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion'),
         'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
-        'form': form, 
+        'tipos_producto': tipos_producto, # Necesario para el select de filtro
+        'form': form,
     }
     return render(request, 'crm/dashboard_empresa.html', context)
 
