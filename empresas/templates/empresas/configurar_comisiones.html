@@ -12,15 +12,18 @@
                 <p class="text-muted mb-0 fst-italic">Empresa: <strong>{{ empresa.nombre }}</strong></p>
             </div>
             
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center">
                 {% if faltantes %}
                     <button class="btn btn-warning fw-bold px-4 shadow-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalIncompleto">
                         <i class="fa-solid fa-triangle-exclamation me-2"></i>Finalizar (Pendiente)
                     </button>
                 {% else %}
-                    <a href="{% url 'empresas:detalle_empresa' empresa.id %}" class="btn btn-success px-5 py-2 fw-bold" >
-                        <i class="fa-solid fa-check me-2"></i>Finalizar Configuración
-                    </a>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="finalizar_proceso" value="true" class="btn btn-success px-5 py-2 fw-bold">
+                            <i class="fa-solid fa-check me-2"></i>Finalizar Configuración
+                        </button>
+                    </form>
                 {% endif %}
             </div>
         </div>
@@ -142,7 +145,13 @@
             </div>
             <div class="modal-footer border-0 bg-light">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Seguir Editando</button>
-                <a href="{% url 'empresas:detalle_empresa' empresa.id %}" class="btn fw-bold" style="background-color: var(--color-accent); color: var(--color-primary);">Finalizar igualmente</a>
+                
+                <form method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" name="finalizar_proceso" value="true" class="btn fw-bold" style="background-color: var(--color-accent); color: var(--color-primary);">
+                        Finalizar igualmente
+                    </button>
+                </form>
             </div>
         </div>
     </div>

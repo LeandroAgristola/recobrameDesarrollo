@@ -1,9 +1,12 @@
 
 CRM
 
+Agregar llamada de seguimiento al seguido de BE (buro entregado)
+Agregar campo de comentario para completar por el Agente
+Agregar opcion de refinanciar (ver en detalle)
+Validacion de duplicados (si es q esta refinancioado)
 
 agregar la opcion de directamente cargar todos los impagos en Cedidos
-
 Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
 Cargar de reporte:
     opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
@@ -16,17 +19,18 @@ cuando el impago tiene mas de 67 dias tiene q darnos la opcion de mover al CRM d
     El sistema muestra una alerta en la fila y al cargar en documentos el contrato de cesion automaticamente lo mueve al CRM de Cedidos
 
 
+REG_Recobros:
+    agrgar al filtro de dias en impago un rango
+    Logicas de editar/ eliminar pagos
+
 Vista de listado de empresa:
-Calcualar correctamente las comisiones
-Agregar metodos de pago
+    Calcualar correctamente las comisiones
+    Agregar metodos de pago
 
-agrgar al filtro de dias en impago un rango
 
-Logicas de editar/ eliminar pagos
+Cambiar filtro de fechas para que sea un calendario por rangos
 
-Empreas: 
-    Tenemos que utilizar La Razon social para agregar varias empresas bajo una misma Razon social
-    La idea de esto es que una misma empresa pueda tener asociadas varias empresas
+
 
 Diseño:
 
@@ -34,23 +38,6 @@ separar miles con .
 
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 
-Pestaña Listados CRM: 
-
-*Vamos a tener dos pestañas (impagos y cedidos) Cedido a mano solo con los Squra manual (agregar en tipo)
-
-*Pestaña REG_Recobros:
-Muestra solo el listado de recobros
-Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
-
-
-
- 
-Pestaña REG_Recobros:
-
-Listado total de pagos listado por fechas.
-Botón de ver comprobante que nos va a mostrar el comprobante asociado al pago.
-Filtros en la parte superior para filtrar por todo tipo.
-Buscador por nombre/ id/ teléfono
 
 
 
@@ -79,3 +66,5 @@ BE - Buro enviado (Trae la información desde Asnef)
 BR - Buro Recibido  (Trae la información desde Asnef)
 ASNEF  (Trae la información desde Asnef)
 LLS (llamada de seguimiento para salir de ASNEF)
+
+Desbloquear tics de seguimiento a medida que los abogados realizan acciones 

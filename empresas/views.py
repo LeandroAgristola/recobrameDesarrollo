@@ -78,18 +78,34 @@ def lista_empresas(request):
         'active_tab': 'activas'
     })
 
-@login_required
 def crear_empresa(request):
+    # 1. Verificar si ya estamos en medio de un proceso de creación
+    empresa_id_session = request.session.get('creando_empresa_id')
+    instance = None
+    
+    # Si existe el ID en sesión, intentamos recuperar esa empresa para editarla (UPDATE)
+    if empresa_id_session:
+        instance = Empresa.objects.filter(id=empresa_id_session).first()
+        # Si no se encuentra (se borró manualmente), limpiamos la sesión
+        if not instance:
+            del request.session['creando_empresa_id']
+
     if request.method == 'POST':
-        form = EmpresaForm(request.POST, request.FILES)
+        # Pasamos 'instance' al formulario. 
+        # Si instance existe, Django hace un UPDATE. Si es None, hace un INSERT.
+        form = EmpresaForm(request.POST, request.FILES, instance=instance)
+        
         if form.is_valid():
             empresa = form.save()
-            messages.success(request, f"Empresa creada. Configuremos las comisiones.")
-            # REDIRECCIÓN CLAVE: Al paso 2 (Configuración)
+            
+            # Guardamos el ID en la sesión para indicar que estamos trabajando en esta empresa
+            request.session['creando_empresa_id'] = empresa.id
+            
+            messages.success(request, "Datos de empresa guardados. Configure las comisiones.")
             return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
     else:
-        form = EmpresaForm()
-    
+        form = EmpresaForm(instance=instance)
+
     return render(request, 'empresas/form_empresa.html', {'form': form})
 
         
@@ -216,38 +232,18 @@ def detalle_empresa(request, empresa_id):
 @login_required
 def configurar_comisiones(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
-    esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
     
-    seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
-    reglas = empresa.esquemas.all()
+    # --- LÓGICA DE FINALIZACIÓN DEL WIZARD (IMPORTANTE) ---
+    # Si el usuario hace clic en "Finalizar Configuración", limpiamos la sesión
+    # para evitar sobrescribir esta empresa si vuelve a entrar a "Nueva Empresa".
+    if request.method == 'POST' and 'finalizar_proceso' in request.POST:
+        if 'creando_empresa_id' in request.session:
+            del request.session['creando_empresa_id']
+        
+        messages.success(request, f"Empresa {empresa.nombre} configurada exitosamente.")
+        return redirect('empresas:lista_empresas')
 
-    # 1. Reglas generales
-    tiene_todos_impago = reglas.filter(tipo_caso='IMPAGO', tipo_producto='TODOS').exists()
-    tiene_todos_cedido = reglas.filter(tipo_caso='CEDIDO', tipo_producto='TODOS').exists()
-
-    # 2. Diccionarios de búsqueda rápida para lo ya configurado
-    configurados_impago = reglas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
-    configurados_cedido = reglas.filter(tipo_caso='CEDIDO').values_list('tipo_producto', flat=True)
-
-    # Nota: Asegúrate de que el string sea 'AUTOFINANCIACION' como en tu models.py
-    PRODUCTOS_CON_CESION = ['SEQURA_MANUAL', 'AUTOFINANCIACION']
-    faltantes = []
-
-    # --- Validar Impagos ---
-    if not tiene_todos_impago:
-        for prod in seleccionados:
-            if prod not in configurados_impago:
-                faltantes.append(f"Impago: {prod}")
-
-    # --- Validar Cedidos (CORRECCIÓN AQUÍ) ---
-    # Si NO existe una regla general 'TODOS' para Cedidos, 
-    # comprobamos cada producto individualmente
-    if not tiene_todos_cedido:
-        for prod in PRODUCTOS_CON_CESION:
-            if prod in seleccionados and prod not in configurados_cedido:
-                # Ahora agregará AMBOS a la lista de faltantes si no existen
-                faltantes.append(f"Cesión: {prod}")
-
+    # --- LÓGICA DE GUARDADO DE REGLAS (POST NORMAL) ---
     if request.method == 'POST':
         form = EsquemaComisionForm(request.POST, empresa=empresa)
         tramo_formset = TramoFormSet(request.POST)
@@ -262,11 +258,42 @@ def configurar_comisiones(request, empresa_id):
                 if tramo_formset.is_valid():
                     tramo_formset.save()
             
-            messages.success(request, "Regla guardada correctamente.")
+            messages.success(request, "Regla agregada correctamente.")
+            # Recargamos la misma página para ver la regla nueva y permitir agregar otra
             return redirect('empresas:configurar_comisiones', empresa_id=empresa.id)
     else:
         form = EsquemaComisionForm(empresa=empresa)
         tramo_formset = TramoFormSet()
+
+    # --- LÓGICA DE VALIDACIÓN VISUAL (GET y Renderizado) ---
+    esquemas = empresa.esquemas.all().order_by('tipo_caso', 'tipo_producto')
+    seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
+    reglas = empresa.esquemas.all()
+
+    # 1. Reglas generales
+    tiene_todos_impago = reglas.filter(tipo_caso='IMPAGO', tipo_producto='TODOS').exists()
+    tiene_todos_cedido = reglas.filter(tipo_caso='CEDIDO', tipo_producto='TODOS').exists()
+
+    # 2. Diccionarios de búsqueda
+    configurados_impago = reglas.filter(tipo_caso='IMPAGO').values_list('tipo_producto', flat=True)
+    configurados_cedido = reglas.filter(tipo_caso='CEDIDO').values_list('tipo_producto', flat=True)
+
+    # 3. Listado de productos que requieren configuración
+    PRODUCTOS_CON_CESION = ['SEQURA_MANUAL', 'AUTOFINANCIACION']
+    faltantes = []
+
+    # Validar Impagos
+    if not tiene_todos_impago:
+        for prod in seleccionados:
+            if prod not in configurados_impago:
+                faltantes.append(f"Impago: {prod}")
+
+    # Validar Cedidos
+    if not tiene_todos_cedido:
+        for prod in PRODUCTOS_CON_CESION:
+            # Si el producto está seleccionado en la empresa Y no tiene regla de cesión
+            if prod in seleccionados and prod not in configurados_cedido:
+                faltantes.append(f"Cesión: {prod}")
 
     return render(request, 'empresas/configurar_comisiones.html', {
         'empresa': empresa,

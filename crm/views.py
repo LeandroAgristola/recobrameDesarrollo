@@ -8,10 +8,12 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 import json
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from decimal import Decimal
 from empresas.models import Empresa
 from .models import Expediente, RegistroPago, DocumentoExpediente
 from .forms import ExpedienteForm, PagoForm
+
 
 # --- HELPER PARA CALCULAR DEUDA ---
 # ¡IMPORTANTE: SIN @login_required AQUÍ!
