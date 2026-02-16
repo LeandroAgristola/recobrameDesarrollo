@@ -1,6 +1,7 @@
 from django import forms
 from .models import Expediente, RegistroPago
 from empresas.models import EsquemaComision
+from decimal import Decimal
 
 class ExpedienteForm(forms.ModelForm):
     class Meta:
@@ -50,12 +51,42 @@ class ExpedienteForm(forms.ModelForm):
         return cleaned_data
     
 class PagoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.expediente = kwargs.pop('expediente', None)
+        super().__init__(*args, **kwargs)
+
     class Meta:
         model = RegistroPago
         fields = ['monto', 'fecha_pago', 'metodo_pago', 'comprobante']
-        widgets = {
-            'fecha_pago': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'monto': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-            'metodo_pago': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Transferencia, Bizum...'}),
-            'comprobante': forms.FileInput(attrs={'class': 'form-control'}),
-        }
+
+    def clean_monto(self):
+        monto = self.cleaned_data.get('monto')
+        if self.expediente:
+            # Tolerancia de 0.01 por posibles redondeos decimales
+            if monto > (self.expediente.monto_actual + Decimal('0.01')):
+                raise forms.ValidationError(f"El monto excede la deuda actual ({self.expediente.monto_actual}€).")
+        return monto
+
+    # === NUEVA VALIDACIÓN PARA MÉTODOS DE PAGO ===
+    def clean_metodo_pago(self):
+        metodo = self.cleaned_data.get('metodo_pago')
+        
+        if self.expediente:
+            # 1. Reglas para CEDIDOS
+            if self.expediente.estado == 'CEDIDO':
+                if metodo not in ['TRANSFERENCIA', 'SEQURA_PASS']:
+                    raise forms.ValidationError(
+                        f"El método '{metodo}' no está admitido para expedientes en estado Cedido."
+                    )
+            
+            # 2. Reglas para IMPAGOS (Solo Transferencia o los configurados en la Empresa)
+            else:
+                if metodo != 'TRANSFERENCIA':
+                    tipos_admitidos = self.expediente.empresa.tipos_impagos or ""
+                    
+                    if metodo not in tipos_admitidos:
+                        raise forms.ValidationError(
+                            f"La empresa no tiene habilitado el método de pago: {metodo}."
+                        )
+                        
+        return metodo

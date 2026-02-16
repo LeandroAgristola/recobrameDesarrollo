@@ -1,31 +1,38 @@
 
 CRM
 
-agregar columna de pagado (no esta actualmente)
 
 agregar la opcion de directamente cargar todos los impagos en Cedidos
-manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
+
 Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
 Cargar de reporte:
     opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
     opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
 
-Reparar filtro que se muestra
-agregar advertencia si el pago es mayor a la deuda
-Mover registros con deuda 0 a la pestaña de pagados
-cuando editamos un formulario y cambiamos las fecha nos aparece la advertencia de "sin fechas"
+Agregar acciones en el listado de Ha pagado
+
+
+cuando el impago tiene mas de 67 dias tiene q darnos la opcion de mover al CRM de Cedidos agregando el contrato de Cesion 
+    El sistema muestra una alerta en la fila y al cargar en documentos el contrato de cesion automaticamente lo mueve al CRM de Cedidos
+
 
 Vista de listado de empresa:
-No se puede ver el detalle hasta que no implementemos la funcionalidad de pagos
 Calcualar correctamente las comisiones
 Agregar metodos de pago
 
+agrgar al filtro de dias en impago un rango
+
 Logicas de editar/ eliminar pagos
+
+Empreas: 
+    Tenemos que utilizar La Razon social para agregar varias empresas bajo una misma Razon social
+    La idea de esto es que una misma empresa pueda tener asociadas varias empresas
 
 Diseño:
 
 separar miles con .
 
+manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 
 Pestaña Listados CRM: 
 
@@ -33,26 +40,6 @@ Pestaña Listados CRM:
 
 *Pestaña REG_Recobros:
 Muestra solo el listado de recobros
-
-
-
-Funcionalidades
-
-Listados CRM:
-
-Vamos a tener los campos: 
-
-
-Botón de Nuevo pago nos va a abrir un pequeño formulario con los siguientes campos:
-Nombre y apellido (listado completo de los nombres del CRM con un buscador arriba de todo podremos seleccionarlo de la lista o buscandolo)
-Auto completa el teléfono de la persona
-Establecer fecha
-Establecer monto
-Cargar comprobante opcional (solo para transferencias) 
-Cuando registramos el pago se agrega a REG_RECOBROS
-
-Formulario de carga de pago dentro de un modal para mejorar el UX/UI
-El formulario muestra el nombre y apellido y autocomplete la fecha de hoy con opcion de cambiarla
 Ver opcion de que al cargar el pago podamos enviarlos de forma automatico al grupo de telegram
 
 

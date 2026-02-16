@@ -11,47 +11,6 @@
                     <h3 class="fw-bold mb-0 text-dark">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM</span></h3>
                 </div>
                 
-            <div class="col-md-5 col-lg-5">
-                <div class="d-flex w-100 align-items-center">
-                    
-                    <div class="d-flex flex-grow-1">
-                        <div class="search-box w-100 position-relative">
-                            <i class="fa-solid fa-search search-icon"></i>
-                            <input type="text" id="globalSearch" value="{{ q }}" 
-                                class="form-control ps-5" placeholder="Nombre, Tel o ID..."
-                                style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
-                                onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
-                        </div>
-                        <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
-                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
-                            {% if request.GET %}
-                                <i class="fa-solid fa-check"></i> {% else %}
-                                Buscar
-                            {% endif %}
-                        </button>
-                    </div>
-
-                    <div class="d-flex ms-2 gap-1">
-                        {% if request.GET %}
-                            <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-danger shadow-sm" title="Limpiar y Cerrar Filtros">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </a>
-                        {% else %}
-                            <button type="button" id="btnToggleFiltros" class="btn btn-outline-primary shadow-sm" 
-                                    onclick="toggleFiltros()" title="Mostrar filtros por columna">
-                                <i class="fas fa-filter"></i>
-                            </button>
-                            
-                            <button type="button" id="btnAplicarCheck" class="btn btn-outline-success shadow-sm" 
-                                    onclick="aplicarFiltrosJS()" style="display: none;">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
-                        {% endif %}
-                    </div>
-
-                </div>
-            </div>        
-
                 <div class="col-md-3 text-end">
                     <button class="btn btn-primary btn-sm px-3 shadow-sm"><i class="fa-solid fa-file-import me-1"></i> Importar Excel</button>
                     <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
@@ -62,24 +21,40 @@
 
             <ul class="nav nav-tabs border-0" id="crmTab" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-impagos">Impagos</button>
+                    <button class="nav-link {% if tab_activa == 'impagos' %}active{% endif %} fw-bold" 
+                            id="impagos-tab" data-bs-toggle="tab" data-bs-target="#tab-impagos" type="button">
+                        Impagos
+                    </button>
                 </li>
                 {% if empresa.crm_config.tiene_cedidos %}
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-cedidos">Cedidos</button>
+                    <button class="nav-link {% if tab_activa == 'cedidos' %}active{% endif %} fw-bold" 
+                            id="cedidos-tab" data-bs-toggle="tab" data-bs-target="#tab-cedidos" type="button">
+                        Cedidos
+                    </button>
                 </li>
                 {% endif %}
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-recobros">REG_Recobros</button>
+                    <button class="nav-link {% if tab_activa == 'recobros' %}active{% endif %} fw-bold" 
+                            id="recobros-tab" data-bs-toggle="tab" data-bs-target="#tab-recobros" type="button">
+                        REG_Recobros
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-ha-pagado">Ha Pagado</button>
+                    <button class="nav-link {% if tab_activa == 'ha-pagado' %}active{% endif %} fw-bold" 
+                            id="ha-pagado-tab" data-bs-toggle="tab" data-bs-target="#tab-ha-pagado" type="button">
+                        Ha Pagado
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-info-empresa">Info Empresa</button>
+                    <button class="nav-link {% if tab_activa == 'info-empresa' %}active{% endif %} fw-bold" 
+                            id="info-empresa-tab" data-bs-toggle="tab" data-bs-target="#tab-info-empresa" type="button">
+                        Info Empresa
+                    </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link fw-bold text-danger" data-bs-toggle="tab" data-bs-target="#tab-papelera">
+                    <button class="nav-link {% if tab_activa == 'papelera' %}active{% endif %} fw-bold text-danger" 
+                            id="papelera-tab" data-bs-toggle="tab" data-bs-target="#tab-papelera" type="button">
                         <i class="fa-solid fa-trash-can me-1"></i> Papelera
                     </button>
                 </li>
@@ -87,29 +62,29 @@
             
             <div class="tab-content border-0" id="crmTabContent">
                 
-                <div class="tab-pane fade show active" id="tab-impagos" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'impagos' %}show active{% endif %}" id="tab-impagos" role="tabpanel">
                     {% include 'crm/includes/tabla_impagos.html' %}
                 </div>
                 
                 {% if empresa.crm_config.tiene_cedidos %}
-                <div class="tab-pane fade" id="tab-cedidos" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'cedidos' %}show active{% endif %}" id="tab-cedidos" role="tabpanel">
                     {% include 'crm/includes/tabla_cedidos.html' %}
                 </div>
                 {% endif %}
                 
-                <div class="tab-pane fade" id="tab-recobros" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'recobros' %}show active{% endif %}" id="tab-recobros" role="tabpanel">
                     {% include 'crm/includes/tabla_recobros.html' %}
                 </div>
 
-                <div class="tab-pane fade" id="tab-ha-pagado" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'ha-pagado' %}show active{% endif %}" id="tab-ha-pagado" role="tabpanel">
                     {% include 'crm/includes/tabla_pagados.html' %}
                 </div>
 
-                <div class="tab-pane fade" id="tab-info-empresa" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'info-empresa' %}show active{% endif %}" id="tab-info-empresa" role="tabpanel">
                     {% include 'crm/includes/info_empresa.html' %}
                 </div>
 
-                <div class="tab-pane fade" id="tab-papelera" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'papelera' %}show active{% endif %}" id="tab-papelera" role="tabpanel">
                     {% include 'crm/includes/tabla_papelera.html' %}
                 </div>
              </div>
@@ -126,23 +101,12 @@
     <script src="{% static 'js/CRM/seguimiento.js' %}"></script>
     <script src="{% static 'js/CRM/autocompletado.js' %}"></script>
     <script src="{% static 'js/CRM/toggleFiltros.js' %}"></script>
-    <script src="{% static 'js/CRM/validarFechas.js' %}"></script>
+    <script src="{% static 'js/CRM/crm_list.js' %}"></script> 
+    <script src="{% static 'js/CRM/validarPago.js' %}"></script>
     
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Detectar si hay filtros de recobros en la URL
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('r_q') || urlParams.has('r_desde') || urlParams.has('r_hasta') || urlParams.get('tab') === 'recobros') {
-                // Activar pestaña Recobros
-                const tabRecobros = new bootstrap.Tab(document.querySelector('#recobros-tab'));
-                tabRecobros.show();
-            }
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Inicializar popovers
+            // 1. Inicializar Popovers
             var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
             var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
                 return new bootstrap.Popover(popoverTriggerEl, {
@@ -151,6 +115,18 @@
                     customClass: 'crm-popover'
                 })
             });
+
+            // 2. Activar Pestaña Correcta (Persistencia)
+            // Tomamos la variable tab_activa que enviamos desde el backend
+            const tabName = "{{ tab_activa|default:'impagos' }}"; 
+            
+            // Buscamos el botón por el ID que acabamos de crear (ej: recobros-tab)
+            const triggerEl = document.querySelector(`#${tabName}-tab`);
+            
+            if (triggerEl) {
+                const tabInstance = new bootstrap.Tab(triggerEl);
+                tabInstance.show();
+            }
         });
     </script>
 {% endblock %}

@@ -9,7 +9,6 @@ from django.http import JsonResponse
 import json
 from django.contrib.auth.models import User
 from decimal import Decimal
-
 from empresas.models import Empresa
 from .models import Expediente, RegistroPago, DocumentoExpediente
 from .forms import ExpedienteForm, PagoForm
@@ -105,17 +104,13 @@ def buscar_antecedentes_deudor(request):
 def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
     
-    # Base QuerySet
+    # --- 1. LÓGICA DE EXPEDIENTES ---
     expedientes_qs = Expediente.objects.filter(empresa=empresa).order_by('numero_expediente')
     
-    # --- 1. ACTUALIZACIÓN AUTOMÁTICA DE DEUDA (Solo activos y con deuda) ---
-    # Optimizamos: Solo recalculamos si no se ha hecho hoy o si el usuario entra al dashboard
-    # Para evitar sobrecarga en cada refresh, podrías mover esto a una tarea programada (Celery/Cron)
-    # Por ahora, lo mantenemos simple pero protegido con try/except
+    # Actualización automática de deuda (Solo activos)
     for exp in expedientes_qs.filter(activo=True, estado='ACTIVO'):
         try:
             nueva_deuda = calcular_deuda_actualizada(exp)
-            # Solo guardamos si hay diferencia significativa para no saturar la DB
             if exp.monto_actual is None or abs(float(exp.monto_actual) - nueva_deuda) > 0.01: 
                 exp.monto_actual = Decimal(str(nueva_deuda))
                 exp.save(update_fields=['monto_actual'])
@@ -124,55 +119,46 @@ def dashboard_crm(request, empresa_id):
 
     # --- 2. PROCESAMIENTO DEL FORMULARIO DE ALTA (POST) ---
     form = ExpedienteForm(empresa=empresa) 
-
     if request.method == 'POST' and 'nuevo_expediente' in request.POST:
         form = ExpedienteForm(request.POST, request.FILES, empresa=empresa) 
         if form.is_valid():
-            # Validación de duplicados
-            nombre = form.cleaned_data.get('deudor_nombre')
-            telefono = form.cleaned_data.get('deudor_telefono')
-            
-            # Buscamos duplicados solo en esta empresa
-            duplicado = expedientes_qs.filter(
-                Q(deudor_nombre__iexact=nombre) | Q(deudor_telefono=telefono)
-            ).exists()
-            
-            if duplicado:
-                messages.warning(request, f"Nota: Ya existe un expediente similar para {nombre} o {telefono}.")
-
             nuevo_exp = form.save(commit=False)
             nuevo_exp.empresa = empresa 
             
-            # Generar ID Personalizado (Ej: EMP-000001)
-            prefix = empresa.nombre[:3].upper()
+            # --- NUEVA LÓGICA DE ID SEGURO ---
+            # Agregamos el ID de la empresa al prefijo para evitar colisiones entre empresas
+            prefix = f"{empresa.nombre[:3].upper()}{empresa.id}"
             count = Expediente.objects.filter(empresa=empresa).count() + 1
-            nuevo_exp.numero_expediente = f"{prefix}-{count:06d}"
+            nuevo_numero = f"{prefix}-{count:06d}"
 
-            # Calcular Deuda Inicial usando la función helper
+            # Bucle de seguridad: Si por alguna razón (borrados, concurrencia) ese número ya existe, pasa al siguiente
+            while Expediente.objects.filter(numero_expediente=nuevo_numero).exists():
+                count += 1
+                nuevo_numero = f"{prefix}-{count:06d}"
+                
+            nuevo_exp.numero_expediente = nuevo_numero
+            # ---------------------------------
+
             try:
                 nuevo_exp.monto_actual = Decimal(str(calcular_deuda_actualizada(nuevo_exp)))
-            except Exception:
+            except:
                 nuevo_exp.monto_actual = nuevo_exp.monto_original
 
             nuevo_exp.monto_recuperado = Decimal('0.00')
             nuevo_exp.estado = 'ACTIVO'
             nuevo_exp.activo = True
             nuevo_exp.save()
-            
-            # Guardar relación ManyToMany (si el form tiene campos m2m)
             form.save_m2m()
             
-            messages.success(request, f"Expediente {nuevo_exp.numero_expediente} creado exitosamente.")
+            messages.success(request, f"Expediente {nuevo_exp.numero_expediente} creado correctamente.")
             return redirect('crm:dashboard_crm', empresa_id=empresa.id)
         else:
-            messages.error(request, "Error al crear expediente. Revisa los campos marcados.")
+            messages.error(request, "Error al crear expediente. Revisa los campos.")
 
-    # --- 3. LÓGICA DE FILTROS (GET) ---
-    # Inicializamos con todos los expedientes de la empresa
+    # --- 3. LÓGICA DE FILTROS IMPAGOS (GET) ---
     qs_filtrado = expedientes_qs 
-
-    # Búsqueda Global
     q = request.GET.get('q', '')
+
     if q:
         qs_filtrado = qs_filtrado.filter(
             Q(deudor_nombre__icontains=q) | 
@@ -182,29 +168,23 @@ def dashboard_crm(request, empresa_id):
             Q(deudor_telefono__icontains=q)
         )
 
-    # Filtros Específicos
+    # Filtros por columna (f_*)
     f_agente = request.GET.get('f_agente')
     if f_agente: qs_filtrado = qs_filtrado.filter(agente_id=f_agente)
-    
     f_tel = request.GET.get('f_tel')
     if f_tel: qs_filtrado = qs_filtrado.filter(deudor_telefono__icontains=f_tel)
-    
     f_tipo = request.GET.get('f_tipo')
     if f_tipo: qs_filtrado = qs_filtrado.filter(tipo_producto__icontains=f_tipo)
-    
     f_monto = request.GET.get('f_monto')
     if f_monto: qs_filtrado = qs_filtrado.filter(monto_original=f_monto)
-    
     f_cuotas = request.GET.get('f_cuotas')
     if f_cuotas: qs_filtrado = qs_filtrado.filter(cuotas_totales=f_cuotas)
-    
     f_estado = request.GET.get('f_estado')
     if f_estado: qs_filtrado = qs_filtrado.filter(causa_impago=f_estado)
-    
     f_comentario = request.GET.get('f_comentario')
     if f_comentario: qs_filtrado = qs_filtrado.filter(comentario_estandar=f_comentario)
-
-    # Filtros de Fechas (Rangos)
+    
+    # Filtros de fechas (f_*)
     f_compra_desde = request.GET.get('f_compra_desde')
     f_compra_hasta = request.GET.get('f_compra_hasta')
     if f_compra_desde: qs_filtrado = qs_filtrado.filter(fecha_compra__gte=f_compra_desde)
@@ -215,59 +195,9 @@ def dashboard_crm(request, empresa_id):
     if f_impago_desde: qs_filtrado = qs_filtrado.filter(fecha_impago__gte=f_impago_desde)
     if f_impago_hasta: qs_filtrado = qs_filtrado.filter(fecha_impago__lte=f_impago_hasta)
 
-    # Filtro "Menor a X días en impago"
-    f_dias_max = request.GET.get('f_dias_max')
-    if f_dias_max:
-        try:
-            dias = int(f_dias_max)
-            fecha_limite = timezone.now().date() - timezone.timedelta(days=dias)
-            qs_filtrado = qs_filtrado.filter(fecha_impago__gte=fecha_limite)
-        except ValueError:
-            pass
+    # --- 4. LÓGICA DE FILTROS RECOBROS ---
+    recobros_qs = RegistroPago.objects.filter(expediente__empresa=empresa).select_related('expediente').order_by('-fecha_pago')
 
-    # Filtros Booleanos (Ticks W/L y Documentación)
-    # Iteramos dinámicamente sobre los campos w1..w5 y ll1..ll5
-    for i in range(1, 6):
-        if request.GET.get(f'f_w{i}') == 'true':
-            qs_filtrado = qs_filtrado.filter(**{f'w{i}': True})
-        if request.GET.get(f'f_l{i}') == 'true':
-            qs_filtrado = qs_filtrado.filter(**{f'll{i}': True})
-
-    if request.GET.get('f_be') == 'true': qs_filtrado = qs_filtrado.filter(buro_enviado=True)
-    if request.GET.get('f_br') == 'true': qs_filtrado = qs_filtrado.filter(buro_recibido=True)
-    if request.GET.get('f_as') == 'true': qs_filtrado = qs_filtrado.filter(asnef_inscrito=True)
-    if request.GET.get('f_ls') == 'true': qs_filtrado = qs_filtrado.filter(llamada_seguimiento_asnef=True)
-
-    # Filtros de Última Interacción (Mensajes)
-    f_msj_desde = request.GET.get('f_msj_desde')
-    f_msj_hasta = request.GET.get('f_msj_hasta')
-    
-    if f_msj_desde or f_msj_hasta:
-        # Esto filtra si ALGUNA de las fechas de gestión cae en el rango
-        q_msj = Q()
-        campos_fecha = [f'fecha_w{i}' for i in range(1,6)] + [f'fecha_ll{i}' for i in range(1,6)]
-        
-        # Filtramos solo aquellos campos que tienen valor
-        for campo in campos_fecha:
-            condicion = Q()
-            if f_msj_desde: condicion &= Q(**{f"{campo}__date__gte": f_msj_desde})
-            if f_msj_hasta: condicion &= Q(**{f"{campo}__date__lte": f_msj_hasta})
-            
-            if condicion:
-                q_msj |= condicion
-        
-        qs_filtrado = qs_filtrado.filter(q_msj)
-
-    # Filtro Fecha Promesa de Pago
-    f_pago_desde = request.GET.get('f_pago_desde')
-    f_pago_hasta = request.GET.get('f_pago_hasta')
-    if f_pago_desde: qs_filtrado = qs_filtrado.filter(fecha_pago_promesa__gte=f_pago_desde)
-    if f_pago_hasta: qs_filtrado = qs_filtrado.filter(fecha_pago_promesa__lte=f_pago_hasta)
-
-    # --- LÓGICA DE RECOBROS (FILTROS INDEPENDIENTES) ---
-    recobros_qs = RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago')
-
-    # Filtros con prefijo 'r_' para no chocar con los de impagos
     r_q = request.GET.get('r_q', '')
     r_desde = request.GET.get('r_desde')
     r_hasta = request.GET.get('r_hasta')
@@ -275,62 +205,76 @@ def dashboard_crm(request, empresa_id):
     if r_q:
         recobros_qs = recobros_qs.filter(
             Q(expediente__deudor_nombre__icontains=r_q) |
-            Q(expediente__numero_expediente__icontains=r_q)
+            Q(expediente__numero_expediente__icontains=r_q) |
+            Q(monto__icontains=r_q)
         )
-    if r_desde:
-        recobros_qs = recobros_qs.filter(fecha_pago__gte=r_desde)
-    if r_hasta:
-        recobros_qs = recobros_qs.filter(fecha_pago__lte=r_hasta)
+    if r_desde: recobros_qs = recobros_qs.filter(fecha_pago__gte=r_desde)
+    if r_hasta: recobros_qs = recobros_qs.filter(fecha_pago__lte=r_hasta)
 
-    # Contexto actualizado
-    context = {
-        # ... otros ...
-        'recobros': recobros_qs, # Ahora enviamos la lista filtrada
-        'filtros_recobros': { # Enviamos los valores para rellenar los inputs
-            'r_q': r_q,
-            'r_desde': r_desde,
-            'r_hasta': r_hasta
-        },
-        'active_tab': 'recobros' if (r_q or r_desde or r_hasta) else 'impagos' # Truco para mantener pestaña
-    }
+    # --- 5. DETERMINAR ESTADO DE LA UI (VITAL) ---
+    tab_activa = request.GET.get('tab', 'impagos')
+    # Si hay filtros de recobros, la pestaña activa debe ser recobros
+    if r_q or r_desde or r_hasta:
+        tab_activa = 'recobros'
 
-    # --- 4. PREPARAR CONTEXTO ---
-    
-    # Listas filtradas para cada pestaña
-    # IMPORTANTE: Usamos 'qs_filtrado' que ya tiene todos los filtros aplicados
-    impagos = qs_filtrado.filter(activo=True, estado='ACTIVO')
-    cedidos = qs_filtrado.filter(activo=True, estado='CEDIDO')
-    pagados = qs_filtrado.filter(activo=True, estado='PAGADO')
-    
-    # La papelera suele mostrarse aparte, sin filtros o con filtros propios, 
-    # pero aquí aplicamos los mismos por coherencia (salvo estado activo)
-    papelera = expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion')
-    
-    # Recobros (Pagos registrados)
-    # Se muestran todos los de la empresa, ordenados por fecha reciente
-    recobros = RegistroPago.objects.filter(expediente__empresa=empresa).order_by('-fecha_pago')
-
-    # Datos auxiliares para los selects de filtro
-    agentes_disponibles = User.objects.filter(is_active=True).order_by('username')
-    tipos_producto = Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct().order_by('tipo_producto')
+    # DETERMINAMOS SI SE DEBE MOSTRAR LA FILA DE FILTROS DE IMPAGOS
+    # Solo si el usuario está filtrando específicamente por esa pestaña
+    hay_filtros_impagos = any(key.startswith('f_') for key in request.GET) or (q != '')
 
     context = {
         'empresa': empresa,
-        'impagos': impagos,
-        'cedidos': cedidos,
-        'pagados': pagados,
-        'recobros': recobros,  # <--- Vital para la tabla de cobros
-        'papelera': papelera,
-        'agentes_disponibles': agentes_disponibles,
-        'tipos_producto': tipos_producto,
+        'impagos': qs_filtrado.filter(activo=True, estado='ACTIVO'),
+        'cedidos': qs_filtrado.filter(activo=True, estado='CEDIDO'),
+        'pagados': qs_filtrado.filter(activo=True, estado='PAGADO'),
+        'papelera': expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion'),
+        
+        'recobros': recobros_qs, # Variable filtrada
+        
+        'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
+        'tipos_producto': Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct().order_by('tipo_producto'),
         'form': form,
-        'filtros': request.GET # Para mantener los valores en los inputs del HTML
+        
+        'q': q,
+        'filtros_recobros': {'r_q': r_q, 'r_desde': r_desde, 'r_hasta': r_hasta},
+        'tab_activa': tab_activa,
+        'hay_filtros_impagos': hay_filtros_impagos,
+        'filtros': request.GET
     }
-    
     return render(request, 'crm/dashboard_empresa.html', context)
+ 
 
 
 # --- VISTAS DE ACCIÓN ---
+
+@login_required
+def editar_expediente(request, exp_id):
+    expediente = get_object_or_404(Expediente, id=exp_id)
+    empresa = expediente.empresa
+    
+    if request.method == 'POST':
+        form = ExpedienteForm(request.POST, instance=expediente, empresa=empresa)
+        if form.is_valid():
+            exp = form.save()
+            # Recalculamos la deuda por si cambiaron fechas o montos
+            exp.monto_actual = calcular_deuda_actualizada(exp)
+            exp.save()
+            
+            messages.success(request, f"Expediente {exp.numero_expediente} actualizado correctamente.")
+        else:
+            # Si hay errores (ej: un campo obligatorio vacío), los capturamos
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error en {field}: {error}")
+
+    # LÓGICA DE RETORNO INTELIGENTE:
+    # Intentamos volver a la página anterior (Detalle o Dashboard)
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    
+    # Si por algún motivo no hay referer, volvemos al dashboard por defecto
+    return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+
 @login_required
 def eliminar_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
@@ -465,34 +409,7 @@ def subir_documento_crm(request, exp_id):
         
     return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
 
-@login_required
-def editar_expediente(request, exp_id):
-    expediente = get_object_or_404(Expediente, id=exp_id)
-    empresa = expediente.empresa
-    
-    if request.method == 'POST':
-        form = ExpedienteForm(request.POST, instance=expediente, empresa=empresa)
-        if form.is_valid():
-            exp = form.save()
-            # Recalculamos la deuda por si cambiaron fechas o montos
-            exp.monto_actual = calcular_deuda_actualizada(exp)
-            exp.save()
-            
-            messages.success(request, f"Expediente {exp.numero_expediente} actualizado correctamente.")
-        else:
-            # Si hay errores (ej: un campo obligatorio vacío), los capturamos
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"Error en {field}: {error}")
 
-    # LÓGICA DE RETORNO INTELIGENTE:
-    # Intentamos volver a la página anterior (Detalle o Dashboard)
-    referer = request.META.get('HTTP_REFERER')
-    if referer:
-        return redirect(referer)
-    
-    # Si por algún motivo no hay referer, volvemos al dashboard por defecto
-    return redirect('crm:dashboard_crm', empresa_id=empresa.id)
 
 @login_required
 @require_POST
@@ -580,50 +497,46 @@ def lista_recobros(request):
         'filtros': request.GET
     })
 
-
 @login_required
 @require_POST
 def registrar_pago(request, expediente_id):
     expediente = get_object_or_404(Expediente, pk=expediente_id)
-    form = PagoForm(request.POST, request.FILES)
+    
+    # Pasamos el expediente al form para la validación
+    form = PagoForm(request.POST, request.FILES, expediente=expediente)
     
     if form.is_valid():
         try:
-            # 1. Guardar el Pago
             pago = form.save(commit=False)
             pago.expediente = expediente
-            pago.comision = pago.monto * Decimal('0.10') # Placeholder 10%
+            pago.comision = Decimal(str(pago.monto)) * Decimal('0.10') # 10% ejemplo
             pago.save()
 
-            # 2. Actualizar el Total Recuperado en el objeto (memoria)
+            # Actualizar lo recuperado
             recuperado_anterior = expediente.monto_recuperado or Decimal('0.00')
             nuevo_recuperado = recuperado_anterior + pago.monto
             expediente.monto_recuperado = nuevo_recuperado
 
-            # 3. RECALCULAR DEUDA (Llamamos a la función YA CORREGIDA)
-            # Como ya actualizamos expediente.monto_recuperado arriba, el cálculo será correcto
+            # Recalcular deuda actual
             nueva_deuda = calcular_deuda_actualizada(expediente)
             expediente.monto_actual = Decimal(str(nueva_deuda))
 
-            # 4. Verificar cancelación total
-            monto_original = expediente.monto_original or Decimal('0.00')
-            saldo_total = monto_original - nuevo_recuperado
-            
-            if saldo_total <= Decimal('1.00'):
+            # Lógica de cierre si el total está pagado
+            if (expediente.monto_original - nuevo_recuperado) <= Decimal('1.00'):
                 expediente.estado = 'PAGADO'
-                expediente.causa_impago = 'PAGADO'
                 expediente.activo = False
-                expediente.monto_actual = Decimal('0.00')
             
-            # 5. GUARDAR CAMBIOS EN EXPEDIENTE
             expediente.save()
-            
-            messages.success(request, f"Pago de {pago.monto}€ registrado. Nueva deuda: {expediente.monto_actual}€")
+            messages.success(request, f"Pago de {pago.monto}€ registrado correctamente.")
         
         except Exception as e:
-            messages.error(request, f"Error interno: {str(e)}")
+            messages.error(request, f"Error al procesar el pago: {str(e)}")
     else:
-        messages.error(request, "Datos inválidos en el formulario.")
+        # Mostramos los errores de validación del formulario (ej: monto superior a deuda)
+        for error in form.non_field_errors():
+            messages.error(request, error)
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"{error}")
 
-    referer = request.META.get('HTTP_REFERER')
-    return redirect(referer if referer else 'crm:dashboard_crm', empresa_id=expediente.empresa.id)
+    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))

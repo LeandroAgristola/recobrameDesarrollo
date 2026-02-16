@@ -5,111 +5,59 @@
             <input type="hidden" name="tab" value="recobros">
 
             <div class="col-md-4">
-                <label class="small text-muted fw-bold mb-1">Buscar Recobro</label>
+                <label class="small fw-bold mb-1">Buscar Recobro</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
-                    <input type="text" name="r_q" value="{{ filtros_recobros.r_q }}" class="form-control border-start-0 ps-0" placeholder="Cliente o ID...">
+                    <span class="input-group-text bg-white"><i class="fa-solid fa-search text-muted"></i></span>
+                    <input type="text" name="r_q" value="{{ filtros_recobros.r_q }}" class="form-control" placeholder="Cliente, ID...">
                 </div>
             </div>
 
             <div class="col-md-3 col-6">
-                <label class="small text-muted fw-bold mb-1">Desde</label>
+                <label class="small fw-bold mb-1">Desde</label>
                 <input type="date" name="r_desde" value="{{ filtros_recobros.r_desde }}" class="form-control">
             </div>
 
             <div class="col-md-3 col-6">
-                <label class="small text-muted fw-bold mb-1">Hasta</label>
+                <label class="small fw-bold mb-1">Hasta</label>
                 <input type="date" name="r_hasta" value="{{ filtros_recobros.r_hasta }}" class="form-control">
             </div>
 
             <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">
-                    <i class="fa-solid fa-filter me-1"></i>Filtrar
-                </button>
-                {% if filtros_recobros.r_q or filtros_recobros.r_desde or filtros_recobros.r_hasta %}
-                <a href="?tab=recobros" class="btn btn-outline-secondary" title="Limpiar Filtros">
-                    <i class="fa-solid fa-xmark"></i>
-                </a>
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Filtrar</button>
+                
+                {% if filtros_recobros.r_q or filtros_recobros.r_desde %}
+                <a href="?tab=recobros" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark"></i></a>
                 {% endif %}
             </div>
         </form>
 
-        <div class="table-responsive rounded border" style="max_height: 500px; overflow-y: auto;">
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-muted small text-uppercase sticky-top">
+                <thead class="bg-light sticky-top">
                     <tr>
                         <th class="ps-3">Fecha</th>
-                        <th>Expediente / Deudor</th>
+                        <th>Expediente</th>
                         <th>Método</th>
                         <th class="text-end">Monto</th>
-                        <th class="text-center">Comprobante</th>
-                        <th class="text-center">Acciones</th>
+                        <th class="text-center">Comp.</th>
+                        <th class="text-center">Acción</th>
                     </tr>
                 </thead>
-                <tbody class="small">
+                <tbody>
                     {% for pago in recobros %}
                     <tr>
-                        <td class="ps-3 fw-medium text-muted">
-                            {{ pago.fecha_pago|date:"d/m/Y" }}
-                        </td>
-                        
-                        <td>
-                            <div class="d-flex flex-column">
-                                <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="fw-bold text-decoration-none text-dark">
-                                    {{ pago.expediente.deudor_nombre }}
-                                </a>
-                                <span class="text-muted small">
-                                    <i class="fa-solid fa-phone me-1" style="font-size: 0.7rem;"></i>{{ pago.expediente.deudor_telefono }}
-                                    <span class="mx-1">|</span> 
-                                    ID: {{ pago.expediente.numero_expediente }}
-                                </span>
-                            </div>
-                        </td>
-
-                        <td>
-                            <span class="badge bg-light text-dark border fw-normal">
-                                {{ pago.metodo_pago }}
-                            </span>
-                        </td>
-
-                        <td class="text-end">
-                            <span class="fw-bold text-success fs-6">+{{ pago.monto }} €</span>
-                        </td>
-
-                        <td class="text-center">
-                            {% if pago.comprobante %}
-                            <a href="{{ pago.comprobante.url }}" target="_blank" class="btn btn-sm btn-outline-primary border-0 bg-primary bg-opacity-10 text-primary" title="Ver Comprobante">
-                                <i class="fa-solid fa-paperclip"></i> Ver
-                            </a>
-                            {% else %}
-                            <span class="text-muted opacity-50"><i class="fa-solid fa-ban"></i></span>
-                            {% endif %}
-                        </td>
-                        
-                        <td class="text-center">
-                            <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="btn btn-sm btn-light border" title="Ir al Expediente">
-                                <i class="fa-solid fa-arrow-right"></i>
-                            </a>
-                        </td>
+                        <td class="ps-3">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                        <td>{{ pago.expediente.deudor_nombre }}</td>
+                        <td>{{ pago.metodo_pago }}</td>
+                        <td class="text-end fw-bold text-success">{{ pago.monto }}€</td>
+                        <td class="text-center">{% if pago.comprobante %}<i class="fa-solid fa-paperclip"></i>{% endif %}</td>
+                        <td class="text-center"><a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="btn btn-sm btn-light"><i class="fa-solid fa-eye"></i></a></td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-5">
-                            <div class="text-muted opacity-50 mb-2">
-                                <i class="fa-solid fa-magnifying-glass fs-1"></i>
-                            </div>
-                            <p class="text-muted fw-bold mb-0">No se encontraron cobros registrados.</p>
-                            <small>Intenta cambiar los filtros de búsqueda.</small>
-                        </td>
-                    </tr>
+                    <tr><td colspan="6" class="text-center text-muted">Sin resultados.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        
-        <div class="text-end mt-2">
-            <small class="text-muted fst-italic">Mostrando {{ recobros.count }} registros</small>
-        </div>
-
     </div>
 </div>

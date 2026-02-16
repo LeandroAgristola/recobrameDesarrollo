@@ -310,6 +310,11 @@ label { font-weight: 500; color: #0a2c46; }
     min-width: 100%;
 }
 
+.table-crm thead.sticky-top,
+.sticky-top {
+    z-index: 100 !important; /* Siempre menor al 1000 de la sidebar */
+}
+
 .table-crm th, 
 .table-crm td {
     /* Evita que el contenido empuje los bordes de la celda */

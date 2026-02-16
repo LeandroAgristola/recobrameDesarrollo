@@ -1,6 +1,50 @@
 {% load static %}
 
 <div class="crm-table-container border shadow-sm">
+
+  <div class="container-fluid py-4">
+            <div class="col-md-5 col-lg-5">
+                <div class="d-flex w-100 align-items-center">
+                    
+                    <div class="d-flex flex-grow-1">
+                        <div class="search-box w-100 position-relative">
+                            <i class="fa-solid fa-search search-icon"></i>
+                            <input type="text" id="globalSearch" value="{{ q }}" 
+                                class="form-control ps-5" placeholder="Nombre, Tel o ID..."
+                                style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
+                                onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
+                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
+                            {% if hay_filtros_impagos %}
+                                <i class="fa-solid fa-check"></i> {% else %}
+                                Buscar
+                            {% endif %}
+                        </button>
+                    </div>
+
+                    <div class="d-flex ms-2 gap-1">
+                        {% if hay_filtros_impagos %}
+                            <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-danger shadow-sm" title="Limpiar y Cerrar Filtros">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        {% else %}
+                            <button type="button" id="btnToggleFiltros" class="btn btn-outline-primary shadow-sm" 
+                                    onclick="toggleFiltros()" title="Mostrar filtros por columna">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                            
+                            <button type="button" id="btnAplicarCheck" class="btn btn-outline-success shadow-sm" 
+                                    onclick="aplicarFiltrosJS()" style="display: none;">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+    </div>     
+
     <table class="table table-hover align-middle mb-0 table-crm">
         <thead class="bg-light shadow-sm sticky-top" style="z-index: 100;">
             <tr class="text-center small text-uppercase text-muted">
@@ -17,7 +61,7 @@
                 <th class="col-comentario" style="min-width: 160px;">Comentario</th>
                 <th class="col-estado">Estado</th>
                 <th class="col-monto text-center text-danger fw-bold">Deuda</th>
-                
+                <th class="col-monto text-center text-success">Pagado</th>
                 {% for i in "12345" %}
                 <th class="col-tic text-center text-muted small">W{{forloop.counter}}</th>
                 <th class="col-tic text-center text-muted small">L{{forloop.counter}}</th>
@@ -33,7 +77,7 @@
             </tr>
 
             <tr id="fila-filtros" class="bg-white border-bottom shadow-sm" 
-                style="display: {% if request.GET %}table-row{% else %}none{% endif %};">
+                style="display: {% if hay_filtros_impagos %}table-row{% else %}none{% endif %};">
                 <td class="col-agente">
                     <select name="f_agente" class="form-select form-select-sm filtro-columna">
                         <option value="">Todos</option>
@@ -79,6 +123,7 @@
                         {% for cod, text in impagos.0.CAUSAS_IMPAGO %}<option value="{{ cod }}" {% if request.GET.f_estado == cod %}selected{% endif %}>{{ text }}</option>{% endfor %}
                     </select>
                 </td>
+                <td class="col-monto text-center text-muted small">N/A</td>
                 <td class="col-monto text-center text-muted small">N/A</td>
 
                 <td class="col-tic text-center"><input type="checkbox" name="f_w1" class="filtro-columna form-check-input" {% if request.GET.f_w1 == 'true' %}checked{% endif %}></td>
@@ -183,9 +228,11 @@
                         {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
                     </span>
                 </td>
-
-                <td class="col-monto text-center fw-bold text-danger" style="font-size: 1.1em;">
-                    {{ exp.monto_actual }}€
+                <td class="col-monto text-center fw-bold text-danger">
+                    {{ exp.monto_actual }} €
+                </td>
+                <td class="col-monto text-center fw-bold text-success">
+                    {{ exp.monto_recuperado|default:"0.00" }} €
                 </td>
                 
                 {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
@@ -222,7 +269,7 @@
                                 data-bs-target="#modalDocs{{ exp.id }}">
                             <i class="fa-solid fa-folder-open"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary btn-action-crm" 
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm" 
                                 data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 
                                 title="Editar Cliente">
                             <i class="fa-solid fa-pen-to-square"></i>
