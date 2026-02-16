@@ -1,13 +1,8 @@
-# crm/models.py
 from django.db import models
-from empresas.models import Empresa
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # Se usa para calcular fechas
+from empresas.models import Empresa, OPCIONES_IMPAGOS # Importamos todo junto aquí
 
 class CRMConfig(models.Model):
     empresa = models.OneToOneField(Empresa, on_delete=models.CASCADE, related_name='crm_config')
@@ -55,7 +50,6 @@ class Expediente(models.Model):
     agente = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cartera')
     
     # Datos Deudor
-    # Agregamos blank=True para que el formulario permita enviarlo vacío y la vista lo calcule
     numero_expediente = models.CharField(max_length=100, unique=True, blank=True)
     deudor_nombre = models.CharField(max_length=255)
     deudor_dni = models.CharField(max_length=20, blank=True, null=True)
@@ -65,7 +59,7 @@ class Expediente(models.Model):
     fecha_cesion = models.DateField(null=True, blank=True)
     
     # Datos Financieros
-    tipo_producto = models.CharField(max_length=50)
+    tipo_producto = models.CharField(max_length=50, choices=OPCIONES_IMPAGOS, blank=True, null=True)
     monto_original = models.DecimalField(max_digits=12, decimal_places=2)
     monto_actual = models.DecimalField(max_digits=12, decimal_places=2)
     monto_recuperado = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
@@ -81,13 +75,12 @@ class Expediente(models.Model):
     comentarios = models.TextField(blank=True, null=True)
     activo = models.BooleanField(default=True)
     comentario_estandar = models.CharField(max_length=50, choices=OPCIONES_COMENTARIO, blank=True, null=True)
-    fecha_pago_promesa = models.DateField(null=True, blank=True) # Para la lógica de "PAGARA"
+    fecha_pago_promesa = models.DateField(null=True, blank=True)
     fecha_eliminacion = models.DateTimeField(null=True, blank=True)
     motivo_eliminacion = models.TextField(blank=True, null=True)
     comprobante = models.FileField(upload_to='crm/pagos/', null=True, blank=True)
     
     # Tics Seguimiento
-    # Almacenamos: boolean para UI, fecha de acción, y estado (causa_impago) en ese momento
     
     # W1
     w1 = models.BooleanField(default=False)
@@ -139,39 +132,58 @@ class Expediente(models.Model):
     fecha_ll5 = models.DateTimeField(null=True, blank=True)
     estado_ll5 = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
 
-    # ASNEF / BURO
-    buro_enviado = models.BooleanField(default=False)
-    buro_recibido = models.BooleanField(default=False)
-    asnef_inscrito = models.BooleanField(default=False)
-    llamada_seguimiento_asnef = models.BooleanField(default=False)
+     # --- 6. GESTIÓN BURÓ / ASNEF ---
 
-    def eliminar_logico(self, motivo=None): # <--- Actualizamos esto
+    # A. Buró Enviado (BE)
+    buro_enviado = models.BooleanField(default=False)
+    fecha_buro_enviado = models.DateTimeField(null=True, blank=True)
+
+    # B. Buró Recibido (BR)
+    buro_recibido = models.BooleanField(default=False)
+    fecha_buro_recibido = models.DateTimeField(null=True, blank=True)
+
+    # C. Llamada Seguimiento Buró (LLB)
+    llamada_seguimiento_buro = models.BooleanField(default=False)
+    fecha_llamada_seguimiento_buro = models.DateTimeField(null=True, blank=True)
+    estado_llamada_seguimiento_buro = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
+
+    # D. Inscripción ASNEF
+    asnef_inscrito = models.BooleanField(default=False)
+    fecha_asnef_inscrito = models.DateTimeField(null=True, blank=True)
+
+    # E. Llamada Salida ASNEF (LLA)
+    llamada_seguimiento_asnef = models.BooleanField(default=False)
+    fecha_llamada_seguimiento_asnef = models.DateTimeField(null=True, blank=True)
+    estado_llamada_seguimiento_asnef = models.CharField(max_length=50, choices=CAUSAS_IMPAGO, blank=True, null=True)
+
+    def eliminar_logico(self, motivo=None):
             self.activo = False
             self.fecha_eliminacion = timezone.now()
             if motivo:
-                self.motivo_eliminacion = motivo # Guardamos el motivo
+                self.motivo_eliminacion = motivo
             self.save()
 
     def restaurar(self):
             self.activo = True
             self.fecha_eliminacion = None
-            self.motivo_eliminacion = None # <--- Limpiamos el motivo al restaurar
+            self.motivo_eliminacion = None
             self.save()
 
     def __str__(self):
         return f"{self.numero_expediente} - {self.deudor_nombre}"
     
-    # Propiedad para obtener la última fecha de gestión automáticamente
     @property
     def ultimo_mensaje_fecha(self):
+        # NOTA: Agregué los nuevos campos (LLB y LLA) al cálculo
         fechas = [
             self.fecha_w1, self.fecha_ll1, 
             self.fecha_w2, self.fecha_ll2, 
             self.fecha_w3, self.fecha_ll3, 
             self.fecha_w4, self.fecha_ll4, 
-            self.fecha_w5, self.fecha_ll5
+            self.fecha_w5, self.fecha_ll5,
+            self.fecha_llamada_seguimiento_buro, # LLB
+            self.fecha_llamada_seguimiento_asnef # LLA
         ]
-        # Filtramos las que no son None
         fechas_reales = [f for f in fechas if f is not None]
         if fechas_reales:
             return max(fechas_reales)
@@ -182,7 +194,7 @@ class Expediente(models.Model):
         if self.fecha_impago:
             delta = timezone.now().date() - self.fecha_impago
             return delta.days
-        return 0 # Si no hay fecha, retornamos 0 días
+        return 0
 
     @property
     def deuda_pendiente(self):
@@ -193,12 +205,11 @@ class Expediente(models.Model):
         """Calcula cuándo termina de pagar basándose en la fecha de compra y cuotas totales"""
         if not self.fecha_compra or not self.cuotas_totales:
             return None
-        from dateutil.relativedelta import relativedelta
+        # AQUÍ QUITAMOS EL IMPORT INTERNO PORQUE YA LO PUSIMOS ARRIBA
         return self.fecha_compra + relativedelta(months=self.cuotas_totales)
 
     @property
     def cuotas_pagadas_estimadas(self):
-        """Calcula cuántas cuotas ha cubierto con el monto recuperado"""
         if self.monto_original <= 0 or self.cuotas_totales <= 0:
             return 0
         valor_cuota = float(self.monto_original) / self.cuotas_totales
@@ -206,44 +217,27 @@ class Expediente(models.Model):
 
     @property
     def cuotas_restantes(self):
-        """Cuotas que faltan para completar el plan (pagadas vs totales)"""
         return max(0, self.cuotas_totales - self.cuotas_pagadas_estimadas)
 
     @property
     def deuda_total_sistema(self):
-        """
-        Deuda total absoluta: 
-        Lo que debería haber pagado a fecha de hoy (impagas) + lo que falta por vencer (deuda futura)
-        Es simplemente: Monto Original - Monto Recuperado
-        """
         return float(self.monto_original) - float(self.monto_recuperado)
     
     @property
     def veces_en_impago(self):
-        """
-        Cuenta cuántas veces ha figurado este nombre en la base de datos
-        para la misma empresa (incluyendo registros actuales, pagados o en papelera).
-        """
         return Expediente.objects.filter(
             empresa=self.empresa,
             deudor_nombre__iexact=self.deudor_nombre
         ).count()
 
-    def __str__(self):
-        return f"{self.numero_expediente} - {self.deudor_nombre}"
-
 
 class RegistroPago(models.Model):
     expediente = models.ForeignKey(Expediente, on_delete=models.CASCADE, related_name='pagos')
     monto = models.DecimalField(max_digits=12, decimal_places=2)
-    # Cambiamos a DateField para facilitar el input de "Fecha", o lo dejamos DateTime si prefieres hora
     fecha_pago = models.DateField(default=timezone.now) 
-    metodo_pago = models.CharField(max_length=100, default='TRANSFERENCIA') # Un default ayuda
+    metodo_pago = models.CharField(max_length=100, default='TRANSFERENCIA')
     comprobante = models.FileField(upload_to='pagos/comprobantes/', null=True, blank=True)
-    
-    # NUEVO CAMPO NECESARIO PARA QUE NO FALLE 'EMPRESAS'
     comision = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -266,4 +260,3 @@ class DocumentoExpediente(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.expediente.deudor_nombre}"
-

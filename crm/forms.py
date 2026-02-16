@@ -69,24 +69,22 @@ class PagoForm(forms.ModelForm):
 
     # === NUEVA VALIDACIÓN PARA MÉTODOS DE PAGO ===
     def clean_metodo_pago(self):
-        metodo = self.cleaned_data.get('metodo_pago')
-        
-        if self.expediente:
-            # 1. Reglas para CEDIDOS
-            if self.expediente.estado == 'CEDIDO':
-                if metodo not in ['TRANSFERENCIA', 'SEQURA_PASS']:
-                    raise forms.ValidationError(
-                        f"El método '{metodo}' no está admitido para expedientes en estado Cedido."
-                    )
+            metodo = self.cleaned_data.get('metodo_pago')
             
-            # 2. Reglas para IMPAGOS (Solo Transferencia o los configurados en la Empresa)
-            else:
-                if metodo != 'TRANSFERENCIA':
-                    tipos_admitidos = self.expediente.empresa.tipos_impagos or ""
-                    
-                    if metodo not in tipos_admitidos:
-                        raise forms.ValidationError(
-                            f"La empresa no tiene habilitado el método de pago: {metodo}."
-                        )
-                        
-        return metodo
+            if self.expediente:
+                # Ahora 'TRANSFERENCIA' es un código válido del sistema, 
+                # pero lo mantenemos hardcodeado aquí como permitido SIEMPRE,
+                # porque es el método de pago universal por defecto.
+                permitidos = ['TRANSFERENCIA']
+                
+                if self.expediente.tipo_producto:
+                    permitidos.append(self.expediente.tipo_producto)
+                
+                if metodo not in permitidos:
+                    # Como ya arreglamos el modelo, esto mostrará el nombre bonito
+                    nombre_metodo = self.expediente.get_tipo_producto_display()
+                    raise forms.ValidationError(
+                        f"Método inválido. Solo se admite 'Transferencia' o '{nombre_metodo}'."
+                    )
+                            
+            return metodo

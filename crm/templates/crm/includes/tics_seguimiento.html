@@ -1,69 +1,106 @@
+{% load static %}
+
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W1" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w1|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_w1_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W1" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w1|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_w1_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.w1 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w1')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión L1" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll1|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_ll1_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Llamada 1" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll1|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_ll1_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.ll1 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll1')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W2" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w2|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_w2_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W2" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w2|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_w2_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.w2 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w2')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión L2" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll2|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_ll2_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Llamada 2" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll2|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_ll2_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.ll2 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll2')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W3" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w3|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_w3_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W3" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w3|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_w3_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.w3 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w3')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión L3" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll3|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_ll3_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Llamada 3" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll3|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_ll3_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.ll3 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll3')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W4" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w4|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_w4_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W4" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w4|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_w4_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.w4 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w4')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión L4" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll4|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_ll4_display|default:'-' }}">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Llamada 4" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll4|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_ll4_display|default:'-' }}">
         <input class="form-check-input" type="checkbox" {% if exp.ll4 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll4')">
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión W5" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w5|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_w5_display|default:'-' }}">
-        <input class="form-check-input" type="checkbox" {% if exp.w5 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'w5')">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="W5 (Abogado)" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_w5|date:'d/m/y'|default:'-' }}">
+        <input class="form-check-input" type="checkbox" {% if exp.w5 %}checked{% endif %} disabled>
     </div>
 </td>
 
 <td class="col-tic text-center">
-    <div data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Gestión L5" 
-         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll5|date:'d/m/y H:i'|default:'-' }}<br><strong>Estado:</strong> {{ exp.get_estado_ll5_display|default:'-' }}">
-        <input class="form-check-input" type="checkbox" {% if exp.ll5 %}checked{% endif %} onclick="manejarTick(this, {{ exp.id }}, 'll5')">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Llamada 5 (Agente)" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_ll5|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_ll5_display|default:'-' }}">
+        <input class="form-check-input" type="checkbox" {% if exp.ll5 %}checked{% endif %} onclick="abrirModalEstadoTick('ll5', {{ exp.id }})">
+    </div>
+</td>
+
+<td class="col-tic text-center">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Buró Enviado" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_buro_enviado|date:'d/m/y'|default:'-' }}">
+        <i class="fa-solid fa-paper-plane {% if exp.buro_enviado %}text-primary{% else %}text-muted opacity-25{% endif %}"></i>
+    </div>
+</td>
+
+<td class="col-tic text-center">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Buró Recibido" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_buro_recibido|date:'d/m/y'|default:'-' }}">
+        <i class="fa-solid fa-file-import {% if exp.buro_recibido %}text-success{% else %}text-muted opacity-25{% endif %}"></i>
+    </div>
+</td>
+
+<td class="col-tic text-center">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Seguimiento Buró" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_llamada_seguimiento_buro|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_llamada_seguimiento_buro_display|default:'-' }}">
+        <input class="form-check-input" type="checkbox" {% if exp.llamada_seguimiento_buro %}checked{% endif %} onclick="abrirModalEstadoTick('llamada_seguimiento_buro', {{ exp.id }})">
+    </div>
+</td>
+
+<td class="col-tic text-center">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Inscripción ASNEF" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_asnef_inscrito|date:'d/m/y'|default:'-' }}">
+        <i class="fa-solid fa-triangle-exclamation {% if exp.asnef_inscrito %}text-danger{% else %}text-muted opacity-25{% endif %}"></i>
+    </div>
+</td>
+
+<td class="col-tic text-center">
+    <div data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-title="Llamada ASNEF" 
+         data-bs-content="<strong>Fecha:</strong> {{ exp.fecha_llamada_seguimiento_asnef|date:'d/m/y'|default:'-' }}<br><strong>Est:</strong> {{ exp.get_estado_llamada_seguimiento_asnef_display|default:'-' }}">
+        <input class="form-check-input" type="checkbox" {% if exp.llamada_seguimiento_asnef %}checked{% endif %} onclick="abrirModalEstadoTick('llamada_seguimiento_asnef', {{ exp.id }})">
     </div>
 </td>

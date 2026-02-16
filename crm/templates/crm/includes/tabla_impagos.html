@@ -45,139 +45,48 @@
             </div>
     </div>     
 
-    <table class="table table-hover align-middle mb-0 table-crm">
-        <thead class="bg-light shadow-sm sticky-top" style="z-index: 100;">
+<table class="table table-hover align-middle mb-0 table-crm" id="tablaExpedientes">
+        
+        <thead class="bg-light sticky-top" style="z-index: 100;">
             <tr class="text-center small text-uppercase text-muted">
                 <th class="col-agente">Agente</th>
                 <th class="col-id">ID</th>
                 <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
                 <th class="col-tel">Teléfono</th>
+                
                 <th class="col-tipo">Tipo</th>
-                <th class="col-monto text-center">Total</th>
+                <th class="col-monto text-center">Total Orig.</th>
                 <th class="col-cuota text-center">Cuotas</th>
                 <th class="col-fecha text-center">F. Compra</th>
                 <th class="col-fecha text-center">F. Impago</th>
                 <th class="col-dias text-center">Días</th>
-                <th class="col-comentario" style="min-width: 160px;">Comentario</th>
+                
+                <th class="col-comentario">Comentario</th>
                 <th class="col-estado">Estado</th>
-                <th class="col-monto text-center text-danger fw-bold">Deuda</th>
+                <th class="col-monto text-center text-danger">Deuda</th>
                 <th class="col-monto text-center text-success">Pagado</th>
-                {% for i in "12345" %}
-                <th class="col-tic text-center text-muted small">W{{forloop.counter}}</th>
-                <th class="col-tic text-center text-muted small">L{{forloop.counter}}</th>
-                {% endfor %}
-                
-                <th class="col-asnef text-center small">BE</th>
-                <th class="col-asnef text-center small">BR</th>
-                <th class="col-asnef text-center small">AS</th>
-                <th class="col-asnef text-center small">LS</th>
-                <th class="col-fecha text-center">Ult. Msj</th>
-                <th class="col-fecha text-center">F. Pago</th>
-                <th class="col-acciones text-center">Acciones</th>
+
+                <th class="col-tic text-center">W1</th>
+                <th class="col-tic text-center">L1</th>
+                <th class="col-tic text-center">W2</th>
+                <th class="col-tic text-center">L2</th>
+                <th class="col-tic text-center">W3</th>
+                <th class="col-tic text-center">L3</th>
+                <th class="col-tic text-center">W4</th>
+                <th class="col-tic text-center">L4</th>
+                <th class="col-tic text-center">W5</th>   <th class="col-tic text-center">L5</th>   <th class="col-tic text-center">BE</th>   <th class="col-tic text-center">BR</th>   <th class="col-tic text-center">LLB</th>  <th class="col-tic text-center">ASNEF</th>
+                <th class="col-tic text-center">LLA</th>  <th class="col-fecha text-center">Último Msj</th>
+                <th class="col-fecha text-center">F. Pago/Prom.</th>
+                <th class="col-acciones text-center" style="min-width: 150px;">Acciones</th>
             </tr>
-
-            <tr id="fila-filtros" class="bg-white border-bottom shadow-sm" 
-                style="display: {% if hay_filtros_impagos %}table-row{% else %}none{% endif %};">
-                <td class="col-agente">
-                    <select name="f_agente" class="form-select form-select-sm filtro-columna">
-                        <option value="">Todos</option>
-                        {% for a in agentes_disponibles %}<option value="{{ a.id }}" {% if request.GET.f_agente == a.id|stringformat:"i" %}selected{% endif %}>{{ a.username }}</option>{% endfor %}
-                    </select>
-                </td>
-                <td class="col-id"></td>
-                <td class="col-nombre"></td>
-                <td class="col-tel"><input type="text" name="f_tel" value="{{ request.GET.f_tel }}" class="form-control form-control-sm filtro-columna text-center" placeholder="Tel..."></td>
-                <td class="col-tipo">
-                    <select name="f_tipo" class="form-select form-select-sm filtro-columna">
-                        <option value="">-</option>
-                        {% for tipo in tipos_producto %}<option value="{{ tipo }}" {% if request.GET.f_tipo == tipo %}selected{% endif %}>{{ tipo }}</option>{% endfor %}
-                    </select>
-                </td>
-                <td class="col-monto"><input type="number" name="f_monto" value="{{ request.GET.f_monto }}" class="form-control form-control-sm filtro-columna text-center"></td>
-                <td class="col-cuota"><input type="number" name="f_cuotas" value="{{ request.GET.f_cuotas }}" class="form-control form-control-sm filtro-columna text-center"></td>
-                
-                <td class="col-fecha">
-                    <div class="d-flex flex-column gap-1">
-                        <input type="date" name="f_compra_desde" value="{{ request.GET.f_compra_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                        <input type="date" name="f_compra_hasta" value="{{ request.GET.f_compra_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                    </div>
-                </td>
-
-                <td class="col-fecha">
-                    <div class="d-flex flex-column gap-1">
-                        <input type="date" name="f_impago_desde" value="{{ request.GET.f_impago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                        <input type="date" name="f_impago_hasta" value="{{ request.GET.f_impago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                    </div>
-                </td>
-
-                <td class="col-dias"><input type="number" name="f_dias_max" value="{{ request.GET.f_dias_max }}" class="form-control form-control-sm filtro-columna text-center" placeholder="<X"></td>
-                <td class="col-comentario">
-                    <select name="f_comentario" class="form-select form-select-sm filtro-columna">
-                        <option value="">-</option>
-                        {% for cod, text in impagos.0.OPCIONES_COMENTARIO %}<option value="{{ cod }}" {% if request.GET.f_comentario == cod %}selected{% endif %}>{{ text }}</option>{% endfor %}
-                    </select>
-                </td>
-                <td class="col-estado">
-                    <select name="f_estado" class="form-select form-select-sm filtro-columna">
-                        <option value="">-</option>
-                        {% for cod, text in impagos.0.CAUSAS_IMPAGO %}<option value="{{ cod }}" {% if request.GET.f_estado == cod %}selected{% endif %}>{{ text }}</option>{% endfor %}
-                    </select>
-                </td>
-                <td class="col-monto text-center text-muted small">N/A</td>
-                <td class="col-monto text-center text-muted small">N/A</td>
-
-                <td class="col-tic text-center"><input type="checkbox" name="f_w1" class="filtro-columna form-check-input" {% if request.GET.f_w1 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_l1" class="filtro-columna form-check-input" {% if request.GET.f_l1 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_w2" class="filtro-columna form-check-input" {% if request.GET.f_w2 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_l2" class="filtro-columna form-check-input" {% if request.GET.f_l2 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_w3" class="filtro-columna form-check-input" {% if request.GET.f_w3 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_l3" class="filtro-columna form-check-input" {% if request.GET.f_l3 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_w4" class="filtro-columna form-check-input" {% if request.GET.f_w4 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_l4" class="filtro-columna form-check-input" {% if request.GET.f_l4 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_w5" class="filtro-columna form-check-input" {% if request.GET.f_w5 == 'true' %}checked{% endif %}></td>
-                <td class="col-tic text-center"><input type="checkbox" name="f_l5" class="filtro-columna form-check-input" {% if request.GET.f_l5 == 'true' %}checked{% endif %}></td>
-
-                <td class="col-asnef text-center"><input type="checkbox" name="f_be" class="filtro-columna form-check-input" {% if request.GET.f_be == 'true' %}checked{% endif %}></td>
-                <td class="col-asnef text-center"><input type="checkbox" name="f_br" class="filtro-columna form-check-input" {% if request.GET.f_br == 'true' %}checked{% endif %}></td>
-                <td class="col-asnef text-center"><input type="checkbox" name="f_as" class="filtro-columna form-check-input" {% if request.GET.f_as == 'true' %}checked{% endif %}></td>
-                <td class="col-asnef text-center"><input type="checkbox" name="f_ls" class="filtro-columna form-check-input" {% if request.GET.f_ls == 'true' %}checked{% endif %}></td>
-
-                <td class="col-fecha">
-                    <div class="d-flex flex-column gap-1">
-                        <input type="date" name="f_msj_desde" value="{{ request.GET.f_msj_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                        <input type="date" name="f_msj_hasta" value="{{ request.GET.f_msj_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                    </div>
-                </td>
-
-                <td class="col-fecha">
-                    <div class="d-flex flex-column gap-1">
-                        <input type="date" name="f_pago_desde" value="{{ request.GET.f_pago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                        <input type="date" name="f_pago_hasta" value="{{ request.GET.f_pago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
-                    </div>
-                </td>
-
-                <td class="col-acciones text-center">
-                </td>
-            </tr>
-
         </thead>
-        
+
         <tbody>
-            {# 1. Capturamos la fecha de hoy en formato comparable #}
             {% now "Y-m-d" as hoy %}
 
-            {# --- INICIO DEL BUCLE ÚNICO --- #}
             {% for exp in impagos %}
-            
             <tr id="fila-exp-{{ exp.id }}" 
-                class="text-center 
-                {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}
-                    {% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}
-                        row-promesa-hoy
-                    {% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}
-                        row-promesa-vencida
-                    {% endif %}
-                {% endif %}">
+                class="text-center {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}{% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}row-promesa-hoy{% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}row-promesa-vencida{% endif %}{% endif %}">
                 
                 <td class="col-agente">
                     <select class="form-select form-select-sm fw-bold small text-muted"
@@ -212,15 +121,28 @@
                     {% endif %}
                 </td>
 
-                <td class="col-comentario">
-                    <select class="form-select form-select-sm small text-muted" 
-                            onchange="actualizarComentario(this, {{ exp.id }})"
-                            style="border: 1px solid #dee2e6;">
-                        <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -</option>
-                        {% for val, text in exp.OPCIONES_COMENTARIO %}
-                        <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
-                        {% endfor %}
-                    </select>
+                <td class="col-comentario" style="min-width: 200px;"> 
+                    
+                    <div class="d-flex w-100 gap-1 align-items-center">
+                        
+                        <select class="form-select form-select-sm small text-muted text-truncate flex-grow-1" 
+                                onchange="actualizarComentario(this, {{ exp.id }})"
+                                style="border: 1px solid #dee2e6;">
+                            <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -</option>
+                            {% for val, text in exp.OPCIONES_COMENTARIO %}
+                            <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <button type="button" 
+                                class="btn btn-sm {% if exp.comentarios %}btn-warning text-dark border-warning{% else %}btn-outline-secondary border-0{% endif %}" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalNota-{{ exp.id }}"
+                                style="width: 32px; height: 31px; display: flex; align-items: center; justify-content: center;"
+                                title="{% if exp.comentarios %}Ver Nota{% else %}Agregar Nota{% endif %}">
+                            <i class="fa-regular fa-comment-dots"></i>
+                        </button>
+                    </div>
                 </td>
 
                 <td class="col-estado">
@@ -228,20 +150,12 @@
                         {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
                     </span>
                 </td>
-                <td class="col-monto text-center fw-bold text-danger">
-                    {{ exp.monto_actual }} €
-                </td>
-                <td class="col-monto text-center fw-bold text-success">
-                    {{ exp.monto_recuperado|default:"0.00" }} €
-                </td>
+                
+                <td class="col-monto text-center fw-bold text-danger">{{ exp.monto_actual }} €</td>
+                <td class="col-monto text-center fw-bold text-success">{{ exp.monto_recuperado|default:"0.00" }} €</td>
                 
                 {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
 
-                <td class="col-asnef text-center"><input type="checkbox" {% if exp.buro_enviado %}checked{% endif %} disabled></td>
-                <td class="col-asnef text-center"><input type="checkbox" {% if exp.buro_recibido %}checked{% endif %} disabled></td>
-                <td class="col-asnef text-center"><input type="checkbox" {% if exp.asnef_inscrito %}checked{% endif %} disabled></td>
-                <td class="col-asnef text-center"><input type="checkbox" {% if exp.llamada_seguimiento_asnef %}checked{% endif %} disabled></td>
-                
                 <td class="col-fecha text-center small text-muted">
                     <span id="fecha-ult-{{ exp.id }}">
                         {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
@@ -286,82 +200,36 @@
                 </td>
             </tr>
 
-            {# --- ZONA DE MODALES (DENTRO DEL BUCLE) --- #}
+            <div class="modal fade" id="modalNota-{{ exp.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-warning bg-opacity-10">
+                            <h6 class="modal-title fw-bold text-dark">
+                                <i class="fa-regular fa-comment-dots me-2"></i>Nota Interna
+                            </h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="{% url 'crm:guardar_comentario_libre' exp.id %}" method="POST">
+                            {% csrf_token %}
+                            <div class="modal-body">
+                                <div class="mb-2">
+                                    <label class="form-label small text-muted">Cliente: <strong>{{ exp.deudor_nombre }}</strong></label>
+                                    <textarea name="comentarios" class="form-control" rows="5" 
+                                            placeholder="Escribe aquí detalles importantes sobre la gestión...">{{ exp.comentarios|default:'' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer py-2">
+                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cerrar</button>
+                                <button type="submit" class="btn btn-sm btn-primary fw-bold">Guardar Nota</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
             {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
-            
             {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
-
-            <div class="modal fade" id="modalPapelera{{ exp.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow">
-                        <form action="{% url 'crm:eliminar_expediente' exp.id %}" method="post">
-                            {% csrf_token %}
-                            <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
-                                <h6 class="modal-title text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Mover a Papelera</h6>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body text-start">
-                                <p class="mb-2">¿Deseas desactivar el expediente de <strong>{{ exp.deudor_nombre }}</strong>?</p>
-                                <label class="form-label small fw-bold text-muted">Motivo de eliminación (Obligatorio):</label>
-                                <textarea name="motivo_eliminacion" class="form-control" rows="2" required placeholder="Ej: Error de carga, duplicado, etc..."></textarea>
-                            </div>
-                            <div class="modal-footer border-top-0 pt-0">
-                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Confirmar Baja</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="modalDocs{{ exp.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow">
-                        <form action="{% url 'crm:subir_documento_crm' exp.id %}" method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="modal-header bg-secondary text-white py-2">
-                                <h6 class="modal-title fw-bold">Documentación: {{ exp.deudor_nombre }}</h6>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-muted">Archivos guardados:</label>
-                                    <ul class="list-group list-group-flush border rounded">
-                                        {% for doc in exp.documentos.all %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center py-1 small">
-                                            <span><i class="fa-solid fa-file-pdf me-2"></i>{{ doc.nombre_archivo|truncatechars:30 }}</span>
-                                            <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-link btn-sm p-0"><i class="fa-solid fa-download"></i></a>
-                                        </li>
-                                        {% empty %}
-                                        <li class="list-group-item small text-muted text-center">Sin documentos</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                                <hr>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-muted">Tipo de documento:</label>
-                                    <select name="tipo_documento" class="form-select form-select-sm" required>
-                                        <option value="CONTRATO">Contrato de Cesión</option>
-                                        <option value="OTRO" selected>Otra Documentación</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-muted">Seleccionar archivo:</label>
-                                    <input type="file" name="archivo" class="form-control form-control-sm" required>
-                                </div>
-                            </div>
-                            <div class="modal-footer bg-light py-2">
-                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                <button type="submit" class="btn btn-sm btn-primary">Subir Documento</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            {% endfor %} 
-            {# --- FIN DEL BUCLE ÚNICO --- #}
+            {% endfor %}
         </tbody>
     </table>
 </div>
@@ -394,3 +262,4 @@
         </div>
     </div>
 </div>
+

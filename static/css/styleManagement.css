@@ -407,11 +407,18 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
    LÓGICA DE IMPRESIÓN PARA FICHAS DE CLIENTE (CORREGIDA)
    ========================================================================== */
 @media print {
-    /* 1. Ocultamos la sidebar por su clase real y otros elementos molestos */
+    /* 1. CONFIGURACIÓN DE PÁGINA: TABLOIDE HORIZONTAL */
+    @page {
+        size: tabloid landscape; /* Define tamaño Tabloide y orientación Horizontal */
+        margin: 10mm; /* Márgenes pequeños para aprovechar la hoja */
+    }
+
+    /* 2. OCULTAR ELEMENTOS INNECESARIOS */
     .sidebar, 
     .navbar, 
     .breadcrumb, 
     .btn, 
+    .btn-close, /* Ocultamos la X de los modales si aparecen */
     .btn-action-crm,
     .nav-tabs, 
     .toast-container,
@@ -420,32 +427,55 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
         display: none !important;
     }
 
-    /* 2. Ajustamos el contenedor principal (.main-content) */
-    /* Quitamos el margen de 60px que dejas para la sidebar y usamos todo el ancho */
+    /* 3. AJUSTES DEL CUERPO Y CONTENEDOR */
+    body {
+        background-color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        
+        /* TRUCO: Reducir un poco el zoom para que entre más info sin romperse */
+        zoom: 85%; 
+        font-size: 10pt; /* Letra un poco más compacta */
+    }
+
     .main-content {
         margin-left: 0 !important;
         padding: 0 !important;
         width: 100% !important;
     }
 
-    /* 3. Ajustamos el contenedor flex para que no cause problemas de ancho */
     .admin-wrapper {
         display: block !important;
     }
 
-    /* 4. Asegurar legibilidad de las tarjetas */
+    /* 4. AJUSTE DE TARJETAS Y SALTOS DE PÁGINA */
     .card {
-        border: 1px solid #dee2e6 !important;
+        border: 1px solid #000 !important; /* Borde negro para mejor contraste impreso */
         box-shadow: none !important;
-        break-inside: avoid;
+        break-inside: avoid; /* Evita que una tarjeta se corte a la mitad entre dos hojas */
         margin-bottom: 1rem !important;
     }
 
-    /* 5. Forzar la impresión de colores para que las barras y badges se vean */
-    body {
-        background-color: white !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+    /* 5. FORZAR COLUMNAS BOOTSTRAP (GRID) */
+    /* Esto es vital: evita que la columna derecha se caiga abajo de la izquierda al imprimir */
+    .row {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    /* Forzamos los anchos de tus columnas específicas del detalle */
+    .col-lg-4 {
+        width: 33% !important;
+        flex: 0 0 33% !important;
+    }
+    .col-lg-8 {
+        width: 67% !important;
+        flex: 0 0 67% !important;
+    }
+    
+    /* Ajuste para que los textos largos no corten la hoja */
+    pre, blockquote {
+        page-break-inside: avoid;
     }
 }
 

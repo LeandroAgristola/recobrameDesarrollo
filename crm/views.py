@@ -372,6 +372,24 @@ def actualizar_comentario_estandar(request):
 
 @login_required
 @require_POST
+def guardar_comentario_libre(request, expediente_id):
+    # Buscamos el expediente asegurando que pertenezca a una empresa del usuario (seguridad)
+    expediente = get_object_or_404(Expediente, id=expediente_id)
+    
+    # Obtenemos el texto del textarea
+    comentario = request.POST.get('comentarios', '').strip()
+    
+    # Guardamos
+    expediente.comentarios = comentario
+    expediente.save()
+    
+    messages.success(request, "Nota guardada correctamente.")
+    
+    # Redirigimos a la página anterior (el dashboard)
+    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+
+@login_required
+@require_POST
 def actualizar_agente(request):
     if not request.user.is_staff:
         return JsonResponse({'status': 'error', 'msg': 'No autorizado'}, status=403)

@@ -63,35 +63,12 @@
                                 
                                 <option value="TRANSFERENCIA" selected>Transferencia Bancaria</option>
                                 
-                                {% if exp.estado == 'CEDIDO' %}
-                                    <option value="SEQURA_PASS">SeQura Pass</option>
-                                    
-                                {% else %}
-                                    {% if 'SEQURA_HOTMART' in exp.empresa.tipos_impagos %}
-                                        <option value="SEQURA_HOTMART">SeQura Hotmart</option>
-                                    {% endif %}
-                                    
-                                    {% if 'SEQURA_MANUAL' in exp.empresa.tipos_impagos %}
-                                        <option value="SEQURA_MANUAL">SeQura Manual</option>
-                                    {% endif %}
-                                    
-                                    {% if 'SEQURA_COPECART' in exp.empresa.tipos_impagos %}
-                                        <option value="SEQURA_COPECART">SeQura Copecart</option>
-                                    {% endif %}
-                                    
-                                    {% if 'SEQURA_PASS' in exp.empresa.tipos_impagos %}
-                                        <option value="SEQURA_PASS">SeQura Pass</option>
-                                    {% endif %}
-                                    
-                                    {% if 'AUTO_STRIPE' in exp.empresa.tipos_impagos %}
-                                        <option value="AUTO_STRIPE">Auto Stripe</option>
-                                    {% endif %}
-                                    
-                                    {% if 'AUTOFINANCIACION' in exp.empresa.tipos_impagos %}
-                                        <option value="AUTOFINANCIACION">Autofinanciación</option>
-                                    {% endif %}
-                                    
+                                {% if exp.tipo_producto and exp.tipo_producto != 'TRANSFERENCIA' %}
+                                    <option value="{{ exp.tipo_producto }}">
+                                        {{ exp.get_tipo_producto_display }}
+                                    </option>
                                 {% endif %}
+                                
                             </select>
                         </div>
                         <div class="col-12">

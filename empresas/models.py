@@ -11,6 +11,8 @@ OPCIONES_IMPAGOS = [
     ('SEQURA_PASS', 'SeQura Pass'),
     ('AUTO_STRIPE', 'Auto Stripe'),
     ('AUTOFINANCIACION', 'Autofinanciación'),
+    ('TRANSFERENCIA', 'Transferencia'), # este es un metodo para que aparezca como forma de pago.
+
 ]
 
 class Empresa(models.Model):
