@@ -1,0 +1,22 @@
+<div class="modal fade" id="modalPapelera{{ exp.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'crm:eliminar_expediente' exp.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
+                    <h6 class="modal-title text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Mover a Papelera</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p class="mb-2">¿Deseas desactivar el expediente de <strong>{{ exp.deudor_nombre }}</strong>?</p>
+                    <label class="form-label small fw-bold text-muted">Motivo de eliminación (Obligatorio):</label>
+                    <textarea name="motivo_eliminacion" class="form-control" rows="2" required placeholder="Ej: Error de carga, duplicado, etc..."></textarea>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-warning fw-bold">Confirmar Baja</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

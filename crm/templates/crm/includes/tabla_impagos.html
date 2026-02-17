@@ -200,66 +200,18 @@
                 </td>
             </tr>
 
-            <div class="modal fade" id="modalNota-{{ exp.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow">
-                        <div class="modal-header bg-warning bg-opacity-10">
-                            <h6 class="modal-title fw-bold text-dark">
-                                <i class="fa-regular fa-comment-dots me-2"></i>Nota Interna
-                            </h6>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <form action="{% url 'crm:guardar_comentario_libre' exp.id %}" method="POST">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <div class="mb-2">
-                                    <label class="form-label small text-muted">Cliente: <strong>{{ exp.deudor_nombre }}</strong></label>
-                                    <textarea name="comentarios" class="form-control" rows="5" 
-                                            placeholder="Escribe aquí detalles importantes sobre la gestión...">{{ exp.comentarios|default:'' }}</textarea>
-                                </div>
-                            </div>
-                            <div class="modal-footer py-2">
-                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cerrar</button>
-                                <button type="submit" class="btn btn-sm btn-primary fw-bold">Guardar Nota</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
 
+            {% include 'crm/includes/modal_nota_interna.html' with exp=exp %}
+            {% include 'crm/includes/modal_documentacion.html' with exp=exp %}
             {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
             {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
+            {% include 'crm/includes/modal_desactivar.html' with exp=exp %}
+
             {% endfor %}
+
         </tbody>
     </table>
 </div>
 
-<div class="modal fade" id="modalEstadoTick" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-primary text-white py-2">
-                <h6 class="modal-title fw-bold mb-0">Resultado de la Gestión</h6>
-            </div>
-            <div class="modal-body p-3 bg-light">
-                <div class="mb-2">
-                    <label class="form-label small fw-bold text-muted mb-1">¿Qué ocurrió?</label>
-                    <select id="selectEstadoTick" class="form-select form-select-sm">
-                        <option value="" selected disabled>Seleccionar resultado...</option>
-                        {% for codigo, nombre in impagos.0.CAUSAS_IMPAGO %}
-                        <option value="{{ codigo }}">{{ nombre }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div id="divFechaPromesa" class="d-none">
-                    <label class="form-label small fw-bold text-success mb-1">Fecha de Compromiso</label>
-                    <input type="date" id="inputFechaPromesa" class="form-control form-control-sm border-success">
-                </div>
-            </div>
-            <div class="modal-footer p-2 bg-white">
-                <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal" onclick="cancelarEstadoTick()">Cancelar</button>
-                <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" onclick="confirmarEstadoTick()">Guardar</button>
-            </div>
-        </div>
-    </div>
-</div>
+
 

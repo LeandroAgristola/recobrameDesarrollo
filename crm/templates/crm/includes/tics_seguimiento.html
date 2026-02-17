@@ -104,3 +104,33 @@
         <input class="form-check-input" type="checkbox" {% if exp.llamada_seguimiento_asnef %}checked{% endif %} onclick="abrirModalEstadoTick('llamada_seguimiento_asnef', {{ exp.id }})">
     </div>
 </td>
+
+
+<div class="modal fade" id="modalEstadoTick" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title fw-bold mb-0">Resultado de la Gestión</h6>
+            </div>
+            <div class="modal-body p-3 bg-light">
+                <div class="mb-2">
+                    <label class="form-label small fw-bold text-muted mb-1">¿Qué ocurrió?</label>
+                    <select id="selectEstadoTick" class="form-select form-select-sm">
+                        <option value="" selected disabled>Seleccionar resultado...</option>
+                        {% for codigo, nombre in impagos.0.CAUSAS_IMPAGO %}
+                        <option value="{{ codigo }}">{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="divFechaPromesa" class="d-none">
+                    <label class="form-label small fw-bold text-success mb-1">Fecha de Compromiso</label>
+                    <input type="date" id="inputFechaPromesa" class="form-control form-control-sm border-success">
+                </div>
+            </div>
+            <div class="modal-footer p-2 bg-white">
+                <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal" onclick="cancelarEstadoTick()">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" onclick="confirmarEstadoTick()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
