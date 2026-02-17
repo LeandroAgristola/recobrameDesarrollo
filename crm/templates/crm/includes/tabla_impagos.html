@@ -325,8 +325,17 @@
             {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
             {% include 'crm/includes/modal_desactivar.html' with exp=exp %}
 
+            {% empty %}
+            <tr>
+                <td colspan="11" class="text-center py-5">
+                    <div class="text-success opacity-50 mb-3">
+                        <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
+                    <small class="text-muted">Ingresa nuevos registros para comenzar la gestión de expedientes.</small>
+                </td>
+            </tr>
             {% endfor %}
-
         </tbody>
     </table>
 </div>

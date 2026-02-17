@@ -229,11 +229,17 @@ class Expediente(models.Model):
             empresa=self.empresa,
             deudor_nombre__iexact=self.deudor_nombre
         ).count()
-
+    
+    def get_descuento_acumulado(self):
+        """Suma el campo 'descuento' de todos los pagos registrados"""
+        from django.db.models import Sum
+        total = self.pagos.aggregate(total=Sum('descuento'))['total']
+        return total or 0.00
 
 class RegistroPago(models.Model):
     expediente = models.ForeignKey(Expediente, on_delete=models.CASCADE, related_name='pagos')
     monto = models.DecimalField(max_digits=12, decimal_places=2)
+    descuento = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     fecha_pago = models.DateField(default=timezone.now) 
     metodo_pago = models.CharField(max_length=100, default='TRANSFERENCIA')
     comprobante = models.FileField(upload_to='pagos/comprobantes/', null=True, blank=True)

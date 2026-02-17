@@ -1,14 +1,13 @@
 
 CRM
 
-REG_Recobros:
-    Agregar acciones en el listado de Ha pagado
-        Editar (se actualiza la deuda), eliminar (se restaura la deuda)
-      agrgar al filtro de dias en impago un rango
 
-Agregar opcion de refinanciar (ver en detalle)
+agregar descuento en la seccion de detalle del cliente
+
+
+
 Validacion de duplicados (si es q esta refinancioado)
-agregar la opcion de agregar descuentos
+Agregar fecha de cierre en ha pagado
 
 agregar la opcion de directamente cargar todos los impagos en Cedidos
 Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
@@ -21,13 +20,12 @@ cuando el impago tiene mas de 67 dias tiene q darnos la opcion de mover al CRM d
     El sistema muestra una alerta en la fila y al cargar en documentos el contrato de cesion automaticamente lo mueve al CRM de Cedidos
 
 
-
 Vista de listado de empresa:
     Calcualar correctamente las comisiones
     Agregar metodos de pago
 
-
-Cambiar filtro de fechas para que sea un calendario por rangos
+Mejorar filtros
+Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Recobros)
 
 
 
@@ -69,3 +67,8 @@ ASNEF  (Trae la información desde Asnef)
 LLS (llamada de seguimiento para salir de ASNEF)
 
 Desbloquear tics de seguimiento a medida que los abogados realizan acciones 
+
+
+
+
+Agregar opcion de refinanciar (ver en detalle)

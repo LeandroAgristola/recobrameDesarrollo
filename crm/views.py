@@ -10,6 +10,8 @@ import json
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from decimal import Decimal
+from django.db.models import Sum
+
 from empresas.models import Empresa
 from .models import Expediente, RegistroPago, DocumentoExpediente
 from .forms import ExpedienteForm, PagoForm
@@ -19,55 +21,66 @@ from .forms import ExpedienteForm, PagoForm
 # ¡IMPORTANTE: SIN @login_required AQUÍ!
 def calcular_deuda_actualizada(expediente):
     """
-    Calcula la deuda real.
-    - Si tiene fechas y cuotas: Calcula mora cronológica.
-    - Si NO tiene fechas (Deuda Simple): Es (Total - Pagado).
+    Calcula la deuda real:
+    - Resta pagos recuperados
+    - Resta descuentos acumulados
+    - Soporta deuda simple y deuda con calendario
     """
-    # 1. Aseguramos valores numéricos base
+
+    # 1. Valores base
     monto_original = float(expediente.monto_original) if expediente.monto_original else 0.0
     monto_recuperado = float(expediente.monto_recuperado) if expediente.monto_recuperado else 0.0
 
-    # 2. LÓGICA DE DEUDA SIMPLE (Si falta fecha de impago O no hay plan de cuotas)
-    if not expediente.fecha_impago or not expediente.cuotas_totales:
-        # En este caso, la deuda es todo lo que falta pagar, sin calendario.
-        deuda_real = monto_original - monto_recuperado
-        return max(0.0, deuda_real)
+    # 2. NUEVO: descuentos acumulados
+    total_descuentos = expediente.pagos.aggregate(
+        total=Sum('descuento')
+    )['total'] or 0.0
+    total_descuentos = float(total_descuentos)
 
     # -----------------------------------------------------------
-    # 3. LÓGICA DE CALENDARIO (Solo si tenemos fecha y cuotas)
+    # 3. DEUDA SIMPLE (sin fecha de impago o sin plan de cuotas)
     # -----------------------------------------------------------
-    
+    if not expediente.fecha_impago or not expediente.cuotas_totales:
+        deuda = monto_original - (monto_recuperado + total_descuentos)
+        return max(0.0, deuda)
+
+    # -----------------------------------------------------------
+    # 4. DEUDA CON CALENDARIO
+    # -----------------------------------------------------------
     hoy = timezone.now().date()
     impago = expediente.fecha_impago
 
-    # Si la fecha de impago es futura, teóricamente no debe nada HOY
+    # Si la fecha de impago es futura, no hay deuda hoy
     if impago > hoy:
         return 0.0
 
-    # Calcular valor de la cuota
-    # (Ya validamos arriba que cuotas_totales existe, pero evitamos división por 0 por seguridad)
     if expediente.cuotas_totales <= 0:
-        return max(0.0, monto_original - monto_recuperado)
-        
+        deuda = monto_original - (monto_recuperado + total_descuentos)
+        return max(0.0, deuda)
+
+    # Valor de cuota
     valor_cuota = monto_original / expediente.cuotas_totales
 
-    # Calcular cuántas cuotas han vencido
+    # Meses transcurridos
     meses_diferencia = (hoy.year - impago.year) * 12 + (hoy.month - impago.month)
-    
     if hoy.day >= impago.day:
         meses_diferencia += 1
-    
+
     cuotas_vencidas = max(1, meses_diferencia)
     cuotas_vencidas = min(cuotas_vencidas, expediente.cuotas_totales)
 
-    # Deuda teórica acumulada
+    # Deuda acumulada
     deuda_teorica = valor_cuota * cuotas_vencidas
 
-    # Restamos lo pagado
-    deuda_real = deuda_teorica - monto_recuperado
+    # Deuda final
+    deuda_real = deuda_teorica - monto_recuperado - total_descuentos
 
     return max(0.0, deuda_real)
 
+@login_required
+def lista_crm(request):
+    empresas = Empresa.objects.filter(is_active=True) 
+    return render(request, 'crm/lista_crm.html', {'empresas': empresas})
 
 # --- BÚSQUEDA AJAX PARA AUTOCOMPLETADO ---
 @login_required
@@ -304,12 +317,6 @@ def eliminar_permanente_expediente(request, exp_id):
         messages.success(request, f"El expediente de {nombre} ha sido eliminado definitivamente.")
     return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
-@login_required
-def lista_crm(request):
-    empresas = Empresa.objects.filter(is_active=True) 
-    return render(request, 'crm/lista_crm.html', {'empresas': empresas})
-
-
 # --- API / JSON ENDPOINTS ---
 @login_required
 @require_POST
@@ -521,42 +528,105 @@ def lista_recobros(request):
 @require_POST
 def registrar_pago(request, expediente_id):
     expediente = get_object_or_404(Expediente, pk=expediente_id)
-    
-    # Pasamos el expediente al form para la validación
+    # Django captura 'monto' y 'descuento' automáticamente aquí
     form = PagoForm(request.POST, request.FILES, expediente=expediente)
-    
+
     if form.is_valid():
         try:
             pago = form.save(commit=False)
             pago.expediente = expediente
-            pago.comision = Decimal(str(pago.monto)) * Decimal('0.10') # 10% ejemplo
-            pago.save()
+            pago.comision = Decimal(str(pago.monto)) * Decimal('0.10')
+            pago.save() # Guarda monto, descuento, fecha, etc.
 
-            # Actualizar lo recuperado
+            # 1. Actualizar lo recuperado
             recuperado_anterior = expediente.monto_recuperado or Decimal('0.00')
-            nuevo_recuperado = recuperado_anterior + pago.monto
-            expediente.monto_recuperado = nuevo_recuperado
-
-            # Recalcular deuda actual
+            expediente.monto_recuperado = recuperado_anterior + pago.monto
+            
+            # 2. Recalcular deuda actual (Ya toma el descuento de la base de datos)
             nueva_deuda = calcular_deuda_actualizada(expediente)
             expediente.monto_actual = Decimal(str(nueva_deuda))
 
-            # Lógica de cierre si el total está pagado
-            if (expediente.monto_original - nuevo_recuperado) <= Decimal('1.00'):
+            # 3. Lógica de cierre limpia
+            if expediente.monto_actual <= Decimal('1.00'):
                 expediente.estado = 'PAGADO'
-                expediente.activo = False
-            
+                # IMPORTANTE: Se queda en True para verse en la pestaña "Pagados"
+                expediente.activo = True 
+            else:
+                expediente.estado = 'ACTIVO'
+                expediente.activo = True
+
             expediente.save()
-            messages.success(request, f"Pago de {pago.monto}€ registrado correctamente.")
-        
+
+            messages.success(
+                request, 
+                f"Pago registrado correctamente. Nuevo estado: {expediente.get_estado_display()}"
+            )
+
         except Exception as e:
             messages.error(request, f"Error al procesar el pago: {str(e)}")
+
     else:
-        # Mostramos los errores de validación del formulario (ej: monto superior a deuda)
         for error in form.non_field_errors():
             messages.error(request, error)
         for field, errors in form.errors.items():
-            for error in errors:
-                messages.error(request, f"{error}")
+            messages.error(request, f"{field}: {errors[0]}")
 
+    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+
+@login_required
+@require_POST
+def eliminar_pago(request, pago_id):
+    pago = get_object_or_404(RegistroPago, id=pago_id)
+    expediente = pago.expediente
+    
+    # 1. Eliminar el pago
+    pago.delete()
+    
+    # 2. Recalcular Monto Recuperado (Suma de los pagos restantes)
+    total_recuperado = expediente.pagos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+    expediente.monto_recuperado = total_recuperado
+    
+    # 3. Recalcular Deuda Actual (Ahora la función considera que hay menos descuentos)
+    expediente.monto_actual = Decimal(str(calcular_deuda_actualizada(expediente)))
+    
+    # 4. Actualizar Estado (Si estaba PAGADO, vuelve a ACTIVO)
+    if expediente.monto_actual > 0:
+        expediente.estado = 'ACTIVO'
+        expediente.activo = True
+        
+    expediente.save()
+    
+    messages.success(request, "Pago eliminado y deuda restaurada.")
+    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+
+
+@login_required
+@require_POST
+def editar_pago(request, pago_id):
+    pago = get_object_or_404(RegistroPago, id=pago_id)
+    expediente = pago.expediente
+    
+    # Obtenemos datos del formulario manual (o usa PagoForm si prefieres)
+    nuevo_monto = request.POST.get('monto')
+    nuevo_descuento = request.POST.get('descuento', 0)
+    
+    if nuevo_monto:
+        pago.monto = Decimal(nuevo_monto)
+        pago.descuento = Decimal(nuevo_descuento)
+        pago.save()
+        
+        # Recalcular todo el expediente
+        total_recuperado = expediente.pagos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        expediente.monto_recuperado = total_recuperado
+        expediente.monto_actual = Decimal(str(calcular_deuda_actualizada(expediente)))
+        
+        # Ajuste de estado
+        if expediente.monto_actual <= 0.5: # Margen pequeño
+             expediente.estado = 'PAGADO'
+        else:
+             expediente.estado = 'ACTIVO'
+             
+        expediente.save()
+        messages.success(request, "Pago actualizado correctamente.")
+        
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))

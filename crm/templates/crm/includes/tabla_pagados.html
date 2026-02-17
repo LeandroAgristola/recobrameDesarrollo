@@ -7,11 +7,12 @@
                 <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
                 <th class="col-tel">Teléfono</th>
                 <th class="col-tipo">Tipo</th>
+                
                 <th class="col-monto text-center">Total Orig.</th>
-                <th class="col-monto text-center text-success">Recuperado</th>
-                <th class="col-cuota text-center">Cuotas</th>
+                <th class="col-monto text-center text-success">Pagado Real</th>
+                <th class="col-monto text-center text-warning">Desc.</th> <th class="col-cuota text-center">Cuotas</th>
                 <th class="col-fecha text-center">F. Compra</th>
-                <th class="col-fecha text-center">F. Impago</th>
+                <th class="col-fecha text-center">F. Cierre</th> 
                 <th class="col-acciones text-center" style="min-width: 120px;">Acciones</th>
             </tr>
         </thead>
@@ -36,10 +37,23 @@
                 <td class="col-monto text-center fw-bold text-success">
                     <i class="fa-solid fa-check-circle me-1 small"></i>{{ exp.monto_recuperado|default:"0.00" }} €
                 </td>
+    
+
+                <td class="col-monto text-center fw-bold text-warning">
+                    {% with descuento=exp.get_descuento_acumulado %}
+                        {% if descuento > 0 %}-{{ descuento }} €
+                        {% else %}
+                            <span class="text-muted opacity-25">-</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
                 
                 <td class="col-cuota text-center small text-muted">{{ exp.cuotas_totales }}</td>
                 <td class="col-fecha text-center small text-muted">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
-                <td class="col-fecha text-center small text-muted">{{ exp.fecha_impago|date:"d/m/y"|default:"-" }}</td>
+                
+                <td class="col-fecha text-center small text-success fw-bold">
+                    {{ exp.ultimo_mensaje_fecha|date:"d/m/y"|default:"-" }}
+                </td>
                 
                 <td class="col-acciones bg-transparent">
                     <div class="d-flex gap-1 justify-content-center">
@@ -135,8 +149,7 @@
 
             {% empty %}
             <tr>
-                <td colspan="11" class="text-center py-5">
-                    <div class="text-success opacity-50 mb-3">
+                <td colspan="12" class="text-center py-5"> <div class="text-success opacity-50 mb-3">
                         <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
                     </div>
                     <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
