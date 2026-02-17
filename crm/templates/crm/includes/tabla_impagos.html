@@ -79,6 +79,124 @@
                 <th class="col-fecha text-center">F. Pago/Prom.</th>
                 <th class="col-acciones text-center" style="min-width: 150px;">Acciones</th>
             </tr>
+
+            <!-- FILA DE FILTROS -->
+
+<tr id="fila-filtros" class="bg-white border-bottom shadow-sm" 
+        style="display: {% if hay_filtros_impagos %}table-row{% else %}none{% endif %};">
+        
+        <td class="col-agente">
+            <select name="f_agente" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                <option value="">Todos</option>
+                {% for a in agentes_disponibles %}
+                    <option value="{{ a.id }}" {% if request.GET.f_agente == a.id|stringformat:"i" %}selected{% endif %}>{{ a.username }}</option>
+                {% endfor %}
+            </select>
+        </td>
+
+        <td class="col-id">
+            <input type="text" name="f_id" value="{{ request.GET.f_id }}" class="form-control form-control-sm filtro-columna" placeholder="ID..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+        </td>
+        <td class="col-nombre">
+            <input type="text" name="f_nombre" value="{{ request.GET.f_nombre }}" class="form-control form-control-sm filtro-columna" placeholder="Nombre..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+        </td>
+
+        <td class="col-tel">
+            <input type="text" name="f_tel" value="{{ request.GET.f_tel }}" class="form-control form-control-sm filtro-columna text-center" placeholder="Tel..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+        </td>
+
+        <td class="col-tipo">
+            <select name="f_tipo" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                <option value="">-</option>
+                {% for tipo in tipos_producto %}
+                    <option value="{{ tipo }}" {% if request.GET.f_tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                {% endfor %}
+            </select>
+        </td>
+
+        <td class="col-monto"><input type="number" name="f_monto" value="{{ request.GET.f_monto }}" class="form-control form-control-sm filtro-columna text-center" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
+        <td class="col-cuota"><input type="number" name="f_cuotas" value="{{ request.GET.f_cuotas }}" class="form-control form-control-sm filtro-columna text-center" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
+        
+        <td class="col-fecha">
+            <div class="d-flex flex-column gap-1">
+                <input type="date" name="f_compra_desde" value="{{ request.GET.f_compra_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                <input type="date" name="f_compra_hasta" value="{{ request.GET.f_compra_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+            </div>
+        </td>
+
+        <td class="col-fecha">
+            <div class="d-flex flex-column gap-1">
+                <input type="date" name="f_impago_desde" value="{{ request.GET.f_impago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                <input type="date" name="f_impago_hasta" value="{{ request.GET.f_impago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+            </div>
+        </td>
+
+        <td class="col-dias"><input type="number" name="f_dias_max" value="{{ request.GET.f_dias_max }}" class="form-control form-control-sm filtro-columna text-center" placeholder="<X" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
+        
+        <td class="col-comentario">
+            <select name="f_comentario" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                <option value="">-</option>
+                {% for cod, text in impagos.0.OPCIONES_COMENTARIO %}
+                    <option value="{{ cod }}" {% if request.GET.f_comentario == cod %}selected{% endif %}>{{ text }}</option>
+                {% endfor %}
+            </select>
+        </td>
+
+        <td class="col-estado">
+            <select name="f_estado" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                <option value="">-</option>
+                {% for cod, text in impagos.0.CAUSAS_IMPAGO %}
+                    <option value="{{ cod }}" {% if request.GET.f_estado == cod %}selected{% endif %}>{{ text }}</option>
+                {% endfor %}
+            </select>
+        </td>
+
+        <td class="col-monto text-center text-muted small">N/A</td>
+        <td class="col-monto text-center text-muted small">N/A</td>
+
+        <td class="col-tic text-center"><input type="checkbox" name="f_w1" class="filtro-columna form-check-input" {% if request.GET.f_w1 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        <td class="col-tic text-center"><input type="checkbox" name="f_l1" class="filtro-columna form-check-input" {% if request.GET.f_l1 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        
+        <td class="col-tic text-center"><input type="checkbox" name="f_w2" class="filtro-columna form-check-input" {% if request.GET.f_w2 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        <td class="col-tic text-center"><input type="checkbox" name="f_l2" class="filtro-columna form-check-input" {% if request.GET.f_l2 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        
+        <td class="col-tic text-center"><input type="checkbox" name="f_w3" class="filtro-columna form-check-input" {% if request.GET.f_w3 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        <td class="col-tic text-center"><input type="checkbox" name="f_l3" class="filtro-columna form-check-input" {% if request.GET.f_l3 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        
+        <td class="col-tic text-center"><input type="checkbox" name="f_w4" class="filtro-columna form-check-input" {% if request.GET.f_w4 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        <td class="col-tic text-center"><input type="checkbox" name="f_l4" class="filtro-columna form-check-input" {% if request.GET.f_l4 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        
+        <td class="col-tic text-center"><input type="checkbox" name="f_w5" class="filtro-columna form-check-input" {% if request.GET.f_w5 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        <td class="col-tic text-center"><input type="checkbox" name="f_l5" class="filtro-columna form-check-input" {% if request.GET.f_l5 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+
+        <td class="col-tic text-center"><input type="checkbox" name="f_be" class="filtro-columna form-check-input" {% if request.GET.f_be == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        <td class="col-tic text-center"><input type="checkbox" name="f_br" class="filtro-columna form-check-input" {% if request.GET.f_br == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        
+        <td class="col-tic text-center"><input type="checkbox" name="f_llb" class="filtro-columna form-check-input" {% if request.GET.f_llb == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        
+        <td class="col-tic text-center"><input type="checkbox" name="f_as" class="filtro-columna form-check-input" {% if request.GET.f_as == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+        
+        <td class="col-tic text-center"><input type="checkbox" name="f_lla" class="filtro-columna form-check-input" {% if request.GET.f_lla == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+
+        <td class="col-fecha">
+            <div class="d-flex flex-column gap-1">
+                <input type="date" name="f_msj_desde" value="{{ request.GET.f_msj_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                <input type="date" name="f_msj_hasta" value="{{ request.GET.f_msj_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+            </div>
+        </td>
+
+        <td class="col-fecha">
+            <div class="d-flex flex-column gap-1">
+                <input type="date" name="f_pago_desde" value="{{ request.GET.f_pago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                <input type="date" name="f_pago_hasta" value="{{ request.GET.f_pago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+            </div>
+        </td>
+
+        <td class="col-acciones text-center">
+            </td>
+    </tr>
+
+
         </thead>
 
         <tbody>

@@ -1,0 +1,396 @@
+{% load static %}
+
+<div class="crm-table-container border shadow-sm">
+
+  <div class="container-fluid py-4">
+            <div class="col-md-5 col-lg-5">
+                <div class="d-flex w-100 align-items-center">
+                    
+                    <div class="d-flex flex-grow-1">
+                        <div class="search-box w-100 position-relative">
+                            <i class="fa-solid fa-search search-icon"></i>
+                            <input type="text" id="globalSearch" value="{{ q }}" 
+                                class="form-control ps-5" placeholder="Nombre, Tel o ID..."
+                                style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
+                                onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+                        </div>
+                        <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
+                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
+                            {% if hay_filtros_impagos %}
+                                <i class="fa-solid fa-check"></i> {% else %}
+                                Buscar
+                            {% endif %}
+                        </button>
+                    </div>
+
+                    <div class="d-flex ms-2 gap-1">
+                        {% if hay_filtros_impagos %}
+                            <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-danger shadow-sm" title="Limpiar y Cerrar Filtros">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        {% else %}
+                            <button type="button" id="btnToggleFiltros" class="btn btn-outline-primary shadow-sm" 
+                                    onclick="toggleFiltros()" title="Mostrar filtros por columna">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                            
+                            <button type="button" id="btnAplicarCheck" class="btn btn-outline-success shadow-sm" 
+                                    onclick="aplicarFiltrosJS()" style="display: none;">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+    </div>     
+
+    <table class="table table-hover align-middle mb-0 table-crm">
+        <thead class="bg-light shadow-sm sticky-top" style="z-index: 100;">
+            <tr class="text-center small text-uppercase text-muted">
+                <th class="col-agente">Agente</th>
+                <th class="col-id">ID</th>
+                <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
+                <th class="col-tel">Teléfono</th>
+                <th class="col-tipo">Tipo</th>
+                <th class="col-monto text-center">Total</th>
+                <th class="col-cuota text-center">Cuotas</th>
+                <th class="col-fecha text-center">F. Compra</th>
+                <th class="col-fecha text-center">F. Impago</th>
+                <th class="col-dias text-center">Días</th>
+                <th class="col-comentario" style="min-width: 160px;">Comentario</th>
+                <th class="col-estado">Estado</th>
+                <th class="col-monto text-center text-danger fw-bold">Deuda</th>
+                <th class="col-monto text-center text-success">Pagado</th>
+                {% for i in "12345" %}
+                <th class="col-tic text-center text-muted small">W{{forloop.counter}}</th>
+                <th class="col-tic text-center text-muted small">L{{forloop.counter}}</th>
+                {% endfor %}
+                
+                <th class="col-asnef text-center small">BE</th>
+                <th class="col-asnef text-center small">BR</th>
+                <th class="col-asnef text-center small">AS</th>
+                <th class="col-asnef text-center small">LS</th>
+                <th class="col-fecha text-center">Ult. Msj</th>
+                <th class="col-fecha text-center">F. Pago</th>
+                <th class="col-acciones text-center">Acciones</th>
+            </tr>
+
+            <tr id="fila-filtros" class="bg-white border-bottom shadow-sm" 
+                style="display: {% if hay_filtros_impagos %}table-row{% else %}none{% endif %};">
+                <td class="col-agente">
+                    <select name="f_agente" class="form-select form-select-sm filtro-columna">
+                        <option value="">Todos</option>
+                        {% for a in agentes_disponibles %}<option value="{{ a.id }}" {% if request.GET.f_agente == a.id|stringformat:"i" %}selected{% endif %}>{{ a.username }}</option>{% endfor %}
+                    </select>
+                </td>
+                <td class="col-id"></td>
+                <td class="col-nombre"></td>
+                <td class="col-tel"><input type="text" name="f_tel" value="{{ request.GET.f_tel }}" class="form-control form-control-sm filtro-columna text-center" placeholder="Tel..."></td>
+                <td class="col-tipo">
+                    <select name="f_tipo" class="form-select form-select-sm filtro-columna">
+                        <option value="">-</option>
+                        {% for tipo in tipos_producto %}<option value="{{ tipo }}" {% if request.GET.f_tipo == tipo %}selected{% endif %}>{{ tipo }}</option>{% endfor %}
+                    </select>
+                </td>
+                <td class="col-monto"><input type="number" name="f_monto" value="{{ request.GET.f_monto }}" class="form-control form-control-sm filtro-columna text-center"></td>
+                <td class="col-cuota"><input type="number" name="f_cuotas" value="{{ request.GET.f_cuotas }}" class="form-control form-control-sm filtro-columna text-center"></td>
+                
+                <td class="col-fecha">
+                    <div class="d-flex flex-column gap-1">
+                        <input type="date" name="f_compra_desde" value="{{ request.GET.f_compra_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                        <input type="date" name="f_compra_hasta" value="{{ request.GET.f_compra_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                    </div>
+                </td>
+
+                <td class="col-fecha">
+                    <div class="d-flex flex-column gap-1">
+                        <input type="date" name="f_impago_desde" value="{{ request.GET.f_impago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                        <input type="date" name="f_impago_hasta" value="{{ request.GET.f_impago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                    </div>
+                </td>
+
+                <td class="col-dias"><input type="number" name="f_dias_max" value="{{ request.GET.f_dias_max }}" class="form-control form-control-sm filtro-columna text-center" placeholder="<X"></td>
+                <td class="col-comentario">
+                    <select name="f_comentario" class="form-select form-select-sm filtro-columna">
+                        <option value="">-</option>
+                        {% for cod, text in impagos.0.OPCIONES_COMENTARIO %}<option value="{{ cod }}" {% if request.GET.f_comentario == cod %}selected{% endif %}>{{ text }}</option>{% endfor %}
+                    </select>
+                </td>
+                <td class="col-estado">
+                    <select name="f_estado" class="form-select form-select-sm filtro-columna">
+                        <option value="">-</option>
+                        {% for cod, text in impagos.0.CAUSAS_IMPAGO %}<option value="{{ cod }}" {% if request.GET.f_estado == cod %}selected{% endif %}>{{ text }}</option>{% endfor %}
+                    </select>
+                </td>
+                <td class="col-monto text-center text-muted small">N/A</td>
+                <td class="col-monto text-center text-muted small">N/A</td>
+
+                <td class="col-tic text-center"><input type="checkbox" name="f_w1" class="filtro-columna form-check-input" {% if request.GET.f_w1 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_l1" class="filtro-columna form-check-input" {% if request.GET.f_l1 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_w2" class="filtro-columna form-check-input" {% if request.GET.f_w2 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_l2" class="filtro-columna form-check-input" {% if request.GET.f_l2 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_w3" class="filtro-columna form-check-input" {% if request.GET.f_w3 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_l3" class="filtro-columna form-check-input" {% if request.GET.f_l3 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_w4" class="filtro-columna form-check-input" {% if request.GET.f_w4 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_l4" class="filtro-columna form-check-input" {% if request.GET.f_l4 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_w5" class="filtro-columna form-check-input" {% if request.GET.f_w5 == 'true' %}checked{% endif %}></td>
+                <td class="col-tic text-center"><input type="checkbox" name="f_l5" class="filtro-columna form-check-input" {% if request.GET.f_l5 == 'true' %}checked{% endif %}></td>
+
+                <td class="col-asnef text-center"><input type="checkbox" name="f_be" class="filtro-columna form-check-input" {% if request.GET.f_be == 'true' %}checked{% endif %}></td>
+                <td class="col-asnef text-center"><input type="checkbox" name="f_br" class="filtro-columna form-check-input" {% if request.GET.f_br == 'true' %}checked{% endif %}></td>
+                <td class="col-asnef text-center"><input type="checkbox" name="f_as" class="filtro-columna form-check-input" {% if request.GET.f_as == 'true' %}checked{% endif %}></td>
+                <td class="col-asnef text-center"><input type="checkbox" name="f_ls" class="filtro-columna form-check-input" {% if request.GET.f_ls == 'true' %}checked{% endif %}></td>
+
+                <td class="col-fecha">
+                    <div class="d-flex flex-column gap-1">
+                        <input type="date" name="f_msj_desde" value="{{ request.GET.f_msj_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                        <input type="date" name="f_msj_hasta" value="{{ request.GET.f_msj_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                    </div>
+                </td>
+
+                <td class="col-fecha">
+                    <div class="d-flex flex-column gap-1">
+                        <input type="date" name="f_pago_desde" value="{{ request.GET.f_pago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                        <input type="date" name="f_pago_hasta" value="{{ request.GET.f_pago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;">
+                    </div>
+                </td>
+
+                <td class="col-acciones text-center">
+                </td>
+            </tr>
+
+        </thead>
+        
+        <tbody>
+            {# 1. Capturamos la fecha de hoy en formato comparable #}
+            {% now "Y-m-d" as hoy %}
+
+            {# --- INICIO DEL BUCLE ÚNICO --- #}
+            {% for exp in impagos %}
+            
+            <tr id="fila-exp-{{ exp.id }}" 
+                class="text-center 
+                {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}
+                    {% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}
+                        row-promesa-hoy
+                    {% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}
+                        row-promesa-vencida
+                    {% endif %}
+                {% endif %}">
+                
+                <td class="col-agente">
+                    <select class="form-select form-select-sm fw-bold small text-muted"
+                            onchange="cambiarAgente(this, {{ exp.id }})"
+                            style="cursor: pointer; border: 1px solid #dee2e6;"
+                            {% if not user.is_staff %}disabled{% endif %}>
+                        <option value="" {% if not exp.agente %}selected{% endif %}>- Sin Asignar -</option>
+                        {% for agente in agentes_disponibles %}
+                            <option value="{{ agente.id }}" {% if exp.agente and exp.agente.id == agente.id %}selected{% endif %}>
+                                {{ agente.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+
+                <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
+                <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
+                <td class="col-tel small">{{ exp.deudor_telefono }}</td>
+                <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
+                <td class="col-monto text-center small">{{ exp.monto_original }} €</td>
+                <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
+                <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
+                <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
+                
+                <td class="col-dias text-center">
+                    {% if exp.tiempo_en_impago > 0 %}
+                        <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                            {{ exp.tiempo_en_impago }}
+                        </span>
+                    {% else %}
+                        <span class="text-muted small">-</span>
+                    {% endif %}
+                </td>
+
+                <td class="col-comentario">
+                    <select class="form-select form-select-sm small text-muted" 
+                            onchange="actualizarComentario(this, {{ exp.id }})"
+                            style="border: 1px solid #dee2e6;">
+                        <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -</option>
+                        {% for val, text in exp.OPCIONES_COMENTARIO %}
+                        <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+
+                <td class="col-estado">
+                    <span id="estado-texto-{{ exp.id }}" class="badge bg-white text-dark border shadow-sm">
+                        {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
+                    </span>
+                </td>
+                <td class="col-monto text-center fw-bold text-danger">
+                    {{ exp.monto_actual }} €
+                </td>
+                <td class="col-monto text-center fw-bold text-success">
+                    {{ exp.monto_recuperado|default:"0.00" }} €
+                </td>
+                
+                {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
+
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.buro_enviado %}checked{% endif %} disabled></td>
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.buro_recibido %}checked{% endif %} disabled></td>
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.asnef_inscrito %}checked{% endif %} disabled></td>
+                <td class="col-asnef text-center"><input type="checkbox" {% if exp.llamada_seguimiento_asnef %}checked{% endif %} disabled></td>
+                
+                <td class="col-fecha text-center small text-muted">
+                    <span id="fecha-ult-{{ exp.id }}">
+                        {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
+                    </span>
+                </td>
+
+                <td class="col-fecha text-center small text-success fw-bold">
+                    <span id="fecha-pago-{{ exp.id }}">
+                        {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
+                            {{ exp.fecha_pago_promesa|date:"d/m/Y"|default:"-" }}
+                        {% else %}-{% endif %}
+                    </span>
+                </td>
+
+                <td class="col-acciones bg-white">
+                    <div class="d-flex gap-1 justify-content-center">
+                        <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" 
+                                title="Registrar Pago" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalPago-{{ exp.id }}">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
+                                title="Documentación" data-bs-toggle="modal" 
+                                data-bs-target="#modalDocs{{ exp.id }}">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm" 
+                                data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 
+                                title="Editar Cliente">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm" 
+                                title="Mover a Papelera" data-bs-toggle="modal" 
+                                data-bs-target="#modalPapelera{{ exp.id }}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+
+            {# --- ZONA DE MODALES (DENTRO DEL BUCLE) --- #}
+
+            {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
+            
+            {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
+
+            <div class="modal fade" id="modalPapelera{{ exp.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <form action="{% url 'crm:eliminar_expediente' exp.id %}" method="post">
+                            {% csrf_token %}
+                            <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
+                                <h6 class="modal-title text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Mover a Papelera</h6>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-start">
+                                <p class="mb-2">¿Deseas desactivar el expediente de <strong>{{ exp.deudor_nombre }}</strong>?</p>
+                                <label class="form-label small fw-bold text-muted">Motivo de eliminación (Obligatorio):</label>
+                                <textarea name="motivo_eliminacion" class="form-control" rows="2" required placeholder="Ej: Error de carga, duplicado, etc..."></textarea>
+                            </div>
+                            <div class="modal-footer border-top-0 pt-0">
+                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Confirmar Baja</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalDocs{{ exp.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <form action="{% url 'crm:subir_documento_crm' exp.id %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="modal-header bg-secondary text-white py-2">
+                                <h6 class="modal-title fw-bold">Documentación: {{ exp.deudor_nombre }}</h6>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Archivos guardados:</label>
+                                    <ul class="list-group list-group-flush border rounded">
+                                        {% for doc in exp.documentos.all %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center py-1 small">
+                                            <span><i class="fa-solid fa-file-pdf me-2"></i>{{ doc.nombre_archivo|truncatechars:30 }}</span>
+                                            <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-link btn-sm p-0"><i class="fa-solid fa-download"></i></a>
+                                        </li>
+                                        {% empty %}
+                                        <li class="list-group-item small text-muted text-center">Sin documentos</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <hr>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Tipo de documento:</label>
+                                    <select name="tipo_documento" class="form-select form-select-sm" required>
+                                        <option value="CONTRATO">Contrato de Cesión</option>
+                                        <option value="OTRO" selected>Otra Documentación</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Seleccionar archivo:</label>
+                                    <input type="file" name="archivo" class="form-control form-control-sm" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light py-2">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Subir Documento</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %} 
+            {# --- FIN DEL BUCLE ÚNICO --- #}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="modalEstadoTick" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title fw-bold mb-0">Resultado de la Gestión</h6>
+            </div>
+            <div class="modal-body p-3 bg-light">
+                <div class="mb-2">
+                    <label class="form-label small fw-bold text-muted mb-1">¿Qué ocurrió?</label>
+                    <select id="selectEstadoTick" class="form-select form-select-sm">
+                        <option value="" selected disabled>Seleccionar resultado...</option>
+                        {% for codigo, nombre in impagos.0.CAUSAS_IMPAGO %}
+                        <option value="{{ codigo }}">{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="divFechaPromesa" class="d-none">
+                    <label class="form-label small fw-bold text-success mb-1">Fecha de Compromiso</label>
+                    <input type="date" id="inputFechaPromesa" class="form-control form-control-sm border-success">
+                </div>
+            </div>
+            <div class="modal-footer p-2 bg-white">
+                <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal" onclick="cancelarEstadoTick()">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" onclick="confirmarEstadoTick()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>

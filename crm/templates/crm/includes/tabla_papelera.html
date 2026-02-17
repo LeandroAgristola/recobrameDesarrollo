@@ -38,33 +38,18 @@
                         </button>
                     </div>
 
-                    <div class="modal fade" id="modalBorrarTotal{{ exp.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content border-0 shadow">
-                                <form action="{% url 'crm:eliminar_permanente_expediente' exp.id %}" method="post">
-                                    {% csrf_token %}
-                                    <div class="modal-header bg-danger text-white border-bottom-0 py-2">
-                                        <h6 class="modal-title fw-bold">Eliminar Definitivamente</h6>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body text-start bg-light">
-                                        <p class="mb-0 text-danger fw-bold">⚠️ ¡Atención!</p>
-                                        <p class="small mb-2">Estás a punto de borrar el historial de <strong>{{ exp.deudor_nombre }}</strong> para siempre.</p>
-                                        <p class="small text-muted mb-0">Esta acción no se puede deshacer.</p>
-                                    </div>
-                                    <div class="modal-footer border-top-0 pt-2 bg-light">
-                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-sm btn-danger fw-bold">Si, eliminar para siempre</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                    {% include 'crm/includes/modal_eliminar.html' with exp=exp %}
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center py-4 text-muted">La papelera está vacía.</td>
+                <td colspan="11" class="text-center py-5">
+                    <div class="text-success opacity-50 mb-3">
+                        <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
+                    <small class="text-muted">Los expedientes cuya deuda llegue a cero aparecerán aquí automáticamente.</small>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
