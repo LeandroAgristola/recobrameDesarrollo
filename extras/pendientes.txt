@@ -1,14 +1,31 @@
 
 CRM
-Sacar del form de nuevo registro el tipo de financiación "transferencia"
-Permitir editar el tipo de credito al editar el cliente
 
-Agregar estado en el detalle de la persona "IMPAGO o CEDIDO"
+en la pestaña de cedidos si cambiamos el tipo de impaga a uno q no permita cedidos se tiene q mover de nuevo a la petaña de impagos
+Ajustar vista de "ha pagado" pagara agregar barra de busqueda
+
+
 Agregar 2 pestañas en REG recobros para individualizar los creditos Cedidos
-El boton de filtro en cesiones no hace nada
-
 Validacion de duplicados (si es q esta refinancioado)
 
+Mejorar filtros
+Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Recobros)
+
+En la vista de CRM no mostramos los datos reales
+
+
+Errores:
+CRM: 
+
+    El boton de filtro en cesiones no hace nada
+
+Vista de listado de empresa:
+
+    Calcualar correctamente las comisiones
+
+
+
+Carga masiva:
 
 agregar la opcion de directamente cargar todos los impagos en Cedidos
 Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
@@ -16,20 +33,17 @@ Cargar de reporte:
     opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
     opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
 
-Vista de listado de empresa:
-    Calcualar correctamente las comisiones
-    Agregar metodos de pago
 
-Mejorar filtros
-Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Recobros)
 
+manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
+Desbloquear tics de seguimiento a medida que los abogados realizan acciones 
+Agregar opcion de refinanciar (ver en detalle)
 
 
 Diseño:
 
 separar miles con .
 
-manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 
 
 Empresas: 
@@ -62,9 +76,3 @@ BR - Buro Recibido  (Trae la información desde Asnef)
 ASNEF  (Trae la información desde Asnef)
 LLS (llamada de seguimiento para salir de ASNEF)
 
-Desbloquear tics de seguimiento a medida que los abogados realizan acciones 
-
-
-
-
-Agregar opcion de refinanciar (ver en detalle)

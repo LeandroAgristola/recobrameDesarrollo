@@ -292,10 +292,10 @@
                 <div class="d-flex gap-1 justify-content-center">
                     
                     {% if exp.puede_ser_cedido %}
-                    <button type="button" class="btn btn-sm btn-outline-dark btn-action-crm shadow-sm" 
+                    <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm shadow-sm" 
                             title="Confirmar Cesión" data-bs-toggle="modal" 
                             data-bs-target="#modalCesion-{{ exp.id }}">
-                        <i class="fa-solid fa-file-signature text-warning"></i>
+                        <i class="fa-solid fa-triangle-exclamation"></i>
                     </button>
                     {% endif %}
 
@@ -305,7 +305,7 @@
                             data-bs-target="#modalPago-{{ exp.id }}">
                         <i class="fa-solid fa-sack-dollar"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
+                    <button type="button" class="btn btn-sm btn-outline-info btn-action-crm" 
                             title="Documentación" data-bs-toggle="modal" 
                             data-bs-target="#modalDocs{{ exp.id }}">
                         <i class="fa-solid fa-folder-open"></i>
