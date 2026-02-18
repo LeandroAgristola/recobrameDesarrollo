@@ -13,11 +13,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// 2. Función para mostrar/ocultar la fila de filtros en la tabla de Impagos
+// 2. Función para mostrar/ocultar la fila de filtros en la tabla ACTIVA
 function toggleFiltros() {
-    const fila = document.getElementById('fila-filtros');
-    const btnCheck = document.getElementById('btnAplicarCheck');
-    const btnFiltro = document.getElementById('btnToggleFiltros');
+    // 2.1 Detectar la pestaña activa
+    const activeTabPane = document.querySelector('.tab-pane.active');
+    if (!activeTabPane) return;
+
+    // 2.2 Buscar los elementos SOLO dentro de esa pestaña activa
+    // Usamos selectores genéricos para que funcione aunque los IDs se repitan en el HTML
+    const fila = activeTabPane.querySelector('tr[id^="fila-filtros"]'); 
+    const btnCheck = activeTabPane.querySelector('button[id^="btnAplicarCheck"]');
+    const btnFiltro = activeTabPane.querySelector('button[id^="btnToggleFiltros"]');
     
     if (fila) {
         if (fila.style.display === 'none' || fila.style.display === '') {
@@ -32,28 +38,51 @@ function toggleFiltros() {
     }
 }
 
-// 3. LA FUNCIÓN CLAVE: Aplicar Filtros de Impagos
+// 3. LA FUNCIÓN CLAVE: Aplicar Filtros Dinámicos (Impagos, Cedidos, Pagados)
 function aplicarFiltrosJS() {
-    const params = new URLSearchParams();
-    
-    // Capturar búsqueda global
-    const globalSearch = document.getElementById('globalSearch');
-    if (globalSearch && globalSearch.value.trim() !== '') {
-        params.append('q', globalSearch.value.trim());
+    // 3.1 Detectar cuál es la pestaña (tab) activa en este momento
+    const activeTabPane = document.querySelector('.tab-pane.active');
+    if (!activeTabPane) return;
+
+    // 3.2 Determinar el nombre de la pestaña basándose en el ID del contenedor
+    let tabName = 'impagos'; // Por defecto
+    if (activeTabPane.id.includes('cedido')) {
+        tabName = 'cedidos';
+    } else if (activeTabPane.id.includes('pagado')) {
+        tabName = 'ha-pagado';
     }
 
-    // Capturar todos los filtros de columna
-    document.querySelectorAll('.filtro-columna').forEach(input => {
+    let params = new URLSearchParams(window.location.search);
+
+    // 3.3 Limpiar parámetros anteriores (búsqueda, filtros y paginación)
+    // Esto evita que al buscar en Cedidos se arrastren filtros viejos de Impagos
+    const keysToDelete = [];
+    params.forEach((value, key) => {
+        if (key === 'q' || key.startsWith('f_') || key === 'tab' || key === 'page') {
+            keysToDelete.push(key);
+        }
+    });
+    keysToDelete.forEach(key => params.delete(key));
+
+    // 3.4 Leer el buscador global SOLO de la pestaña activa
+    const searchInput = activeTabPane.querySelector('.search-box input');
+    if (searchInput && searchInput.value.trim() !== '') {
+        params.set('q', searchInput.value.trim());
+    }
+
+    // 3.5 Leer los filtros de columna SOLO de la pestaña activa
+    const filtrosColumna = activeTabPane.querySelectorAll('.filtro-columna');
+    filtrosColumna.forEach(input => {
         if (input.type === 'checkbox') {
-            if (input.checked) params.append(input.name, 'true');
+            if (input.checked) params.set(input.name, 'true');
         } else if (input.value.trim() !== '') {
-            params.append(input.name, input.value.trim());
+            params.set(input.name, input.value.trim());
         }
     });
 
-    // VITAL: Decirle al sistema que se quede en la pestaña impagos
-    params.append('tab', 'impagos');
+    // 3.6 Fijar la pestaña actual para que Django recargue exactamente donde estamos
+    params.set('tab', tabName);
 
-    // Recargar con los nuevos parámetros
+    // 3.7 Redirigir con la URL estructurada
     window.location.search = params.toString();
 }

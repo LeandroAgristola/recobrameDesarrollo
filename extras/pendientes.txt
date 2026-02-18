@@ -2,7 +2,6 @@
 CRM
 
 en la pestaña de cedidos si cambiamos el tipo de impaga a uno q no permita cedidos se tiene q mover de nuevo a la petaña de impagos
-Ajustar vista de "ha pagado" pagara agregar barra de busqueda
 
 
 Agregar 2 pestañas en REG recobros para individualizar los creditos Cedidos
@@ -15,9 +14,6 @@ En la vista de CRM no mostramos los datos reales
 
 
 Errores:
-CRM: 
-
-    El boton de filtro en cesiones no hace nada
 
 Vista de listado de empresa:
 

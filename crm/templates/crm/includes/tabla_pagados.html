@@ -1,4 +1,39 @@
 <div class="crm-table-container border shadow-sm">
+    
+    <div class="container-fluid py-4">
+        <div class="col-md-5 col-lg-5">
+            <div class="d-flex w-100 align-items-center">
+                
+                <div class="d-flex flex-grow-1">
+                    <div class="search-box w-100 position-relative">
+                        <i class="fa-solid fa-search search-icon"></i>
+                        <input type="text" id="globalSearchPagados" value="{{ q }}" 
+                            class="form-control ps-5" placeholder="Nombre, Tel o ID..."
+                            style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
+                            onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+                    </div>
+                    <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
+                            style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
+                        {% if q %}
+                            <i class="fa-solid fa-check"></i> 
+                        {% else %}
+                            Buscar
+                        {% endif %}
+                    </button>
+                </div>
+
+                <div class="d-flex ms-2 gap-1">
+                    {% if q %}
+                        <a href="{% url 'crm:dashboard_crm' empresa.id %}?tab=ha-pagado" class="btn btn-danger shadow-sm" title="Limpiar Búsqueda">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div> 
+
     <table class="table table-hover align-middle mb-0 table-crm">
         <thead class="bg-light sticky-top" style="z-index: 100;">
             <tr class="text-center small text-uppercase text-muted">
@@ -10,7 +45,8 @@
                 
                 <th class="col-monto text-center">Total Orig.</th>
                 <th class="col-monto text-center text-success">Pagado Real</th>
-                <th class="col-monto text-center text-warning">Desc.</th> <th class="col-cuota text-center">Cuotas</th>
+                <th class="col-monto text-center text-warning">Desc.</th> 
+                <th class="col-cuota text-center">Cuotas</th>
                 <th class="col-fecha text-center">F. Compra</th>
                 <th class="col-fecha text-center">F. Cierre</th> 
                 <th class="col-acciones text-center" style="min-width: 120px;">Acciones</th>
@@ -149,7 +185,8 @@
 
             {% empty %}
             <tr>
-                <td colspan="12" class="text-center py-5"> <div class="text-success opacity-50 mb-3">
+                <td colspan="12" class="text-center py-5">
+                    <div class="text-success opacity-50 mb-3">
                         <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
                     </div>
                     <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
