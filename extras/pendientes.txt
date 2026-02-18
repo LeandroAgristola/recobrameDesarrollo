@@ -2,6 +2,9 @@
 CRM
 
 
+Agregar estado en el detalle de la persona "IMPAGO o CEDIDO"
+Sacar del form de nuevo registro el tipo de financiación "transferencia"
+Permitir editar el tipo de credito al editar el cliente
 Agregar 2 pestañas en REG recobros para individualizar los creditos Cedidos
 El boton de filtro en cesiones no hace nada
 

@@ -24,33 +24,39 @@ def calcular_deuda_actualizada(expediente):
     Calcula la deuda real:
     - Resta pagos recuperados
     - Resta descuentos acumulados
-    - Soporta deuda simple y deuda con calendario
+    - Soporta deuda simple, deuda con calendario y deuda cedida
     """
 
     # 1. Valores base
     monto_original = float(expediente.monto_original) if expediente.monto_original else 0.0
     monto_recuperado = float(expediente.monto_recuperado) if expediente.monto_recuperado else 0.0
 
-    # 2. NUEVO: descuentos acumulados
+    # 2. Descuentos acumulados
     total_descuentos = expediente.pagos.aggregate(
         total=Sum('descuento')
     )['total'] or 0.0
     total_descuentos = float(total_descuentos)
 
     # -----------------------------------------------------------
-    # 3. DEUDA SIMPLE (sin fecha de impago o sin plan de cuotas)
+    # 3. VENCIMIENTO ANTICIPADO → DEUDA CEDIDA
+    # -----------------------------------------------------------
+    if expediente.estado == 'CEDIDO':
+        deuda_total = monto_original - monto_recuperado - total_descuentos
+        return max(0.0, round(deuda_total, 2))
+
+    # -----------------------------------------------------------
+    # 4. DEUDA SIMPLE (sin fecha de impago o sin plan de cuotas)
     # -----------------------------------------------------------
     if not expediente.fecha_impago or not expediente.cuotas_totales:
         deuda = monto_original - (monto_recuperado + total_descuentos)
         return max(0.0, deuda)
 
     # -----------------------------------------------------------
-    # 4. DEUDA CON CALENDARIO
+    # 5. DEUDA CON CALENDARIO
     # -----------------------------------------------------------
     hoy = timezone.now().date()
     impago = expediente.fecha_impago
 
-    # Si la fecha de impago es futura, no hay deuda hoy
     if impago > hoy:
         return 0.0
 
@@ -58,21 +64,15 @@ def calcular_deuda_actualizada(expediente):
         deuda = monto_original - (monto_recuperado + total_descuentos)
         return max(0.0, deuda)
 
-    # Valor de cuota
     valor_cuota = monto_original / expediente.cuotas_totales
 
-    # Meses transcurridos
     meses_diferencia = (hoy.year - impago.year) * 12 + (hoy.month - impago.month)
     if hoy.day >= impago.day:
         meses_diferencia += 1
 
-    cuotas_vencidas = max(1, meses_diferencia)
-    cuotas_vencidas = min(cuotas_vencidas, expediente.cuotas_totales)
+    cuotas_vencidas = min(max(1, meses_diferencia), expediente.cuotas_totales)
 
-    # Deuda acumulada
     deuda_teorica = valor_cuota * cuotas_vencidas
-
-    # Deuda final
     deuda_real = deuda_teorica - monto_recuperado - total_descuentos
 
     return max(0.0, deuda_real)
@@ -646,13 +646,15 @@ def confirmar_cesion(request, exp_id):
     else:
         # Migramos oficialmente
         exp.estado = 'CEDIDO'
-        exp.activo = True  # IMPORTANTE: Se mantiene True para que aparezca en la pestaña "Cedidos"
+        exp.activo = True 
         
-        # Si tienes el campo fecha_cesion, lo registramos (útil para auditoría futura)
         if hasattr(exp, 'fecha_cesion'):
             exp.fecha_cesion = timezone.now().date()
             
+        # MAGIA AQUÍ: Al cambiar el estado a CEDIDO, forzamos el cálculo de "aceleración"
+        exp.monto_actual = Decimal(str(calcular_deuda_actualizada(exp)))
         exp.save()
-        messages.success(request, f"¡El expediente de {exp.deudor_nombre} fue movido a Cedidos exitosamente!")
+        
+        messages.success(request, f"¡Expediente movido a Cedidos y deuda total acelerada!")
 
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))

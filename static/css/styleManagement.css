@@ -410,7 +410,7 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
 }
 
 /* Efectos hover para ambos */
-.row-promesa-hoy:hover td { background-color: #ffeeb5 !important; }
+.row-promesa-hoy:hover td { background-color: #d7f6f8 !important; }
 .row-promesa-vencida:hover td { background-color: #f1b0b7 !important; }
 
 /* ==========================================================================

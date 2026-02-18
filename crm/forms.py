@@ -69,11 +69,22 @@ class PagoForm(forms.ModelForm):
                 raise forms.ValidationError(f"El monto excede la deuda actual ({self.expediente.monto_actual}€).")
         return monto
 
-    # Validamos que el método de pago sea 'Transferencia' o el tipo de producto del expediente
+    # Validamos el método de pago según el estado del expediente (Activo o Cedido)
     def clean_metodo_pago(self):
-            metodo = self.cleaned_data.get('metodo_pago')
+        metodo = self.cleaned_data.get('metodo_pago')
+        
+        if self.expediente:
+            # 1. REGLA PARA CEDIDOS (Aceleración de deuda)
+            if self.expediente.estado == 'CEDIDO':
+                permitidos = ['TRANSFERENCIA', 'SEQURA_PASS']
+                
+                if metodo not in permitidos:
+                    raise forms.ValidationError(
+                        "En fase de Cesión, solo se admite 'Transferencia' o 'SeQura Pass'."
+                    )
             
-            if self.expediente:
+            # 2. REGLA NORMAL PARA IMPAGOS ACTIVOS
+            else:
                 permitidos = ['TRANSFERENCIA']
                 
                 if self.expediente.tipo_producto:
@@ -84,8 +95,8 @@ class PagoForm(forms.ModelForm):
                     raise forms.ValidationError(
                         f"Método inválido. Solo se admite 'Transferencia' o '{nombre_metodo}'."
                     )
-                            
-            return metodo
+                        
+        return metodo
     
     #valor negativo o nulo se interpreta como sin descuento
     def clean_descuento(self):
