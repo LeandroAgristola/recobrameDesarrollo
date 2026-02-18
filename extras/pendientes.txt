@@ -2,12 +2,8 @@
 CRM
 
 
-agregar descuento en la seccion de detalle del cliente
-
-
-
 Validacion de duplicados (si es q esta refinancioado)
-Agregar fecha de cierre en ha pagado
+
 
 agregar la opcion de directamente cargar todos los impagos en Cedidos
 Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera

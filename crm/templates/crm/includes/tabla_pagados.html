@@ -52,7 +52,7 @@
                 <td class="col-fecha text-center small text-muted">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
                 
                 <td class="col-fecha text-center small text-success fw-bold">
-                    {{ exp.ultimo_mensaje_fecha|date:"d/m/y"|default:"-" }}
+                    {{ exp.pagos.first.fecha_pago|date:"d/m/y"|default:"-" }}
                 </td>
                 
                 <td class="col-acciones bg-transparent">

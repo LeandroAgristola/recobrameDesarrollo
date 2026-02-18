@@ -193,6 +193,7 @@
                                     <th>Fecha</th>
                                     <th>Monto</th>
                                     <th>Comprobante</th>
+                                    <th>Descuento</th>
                                     <th>Cargado por</th>
                                 </tr>
                             </thead>
@@ -209,6 +210,9 @@
                                         {% else %}
                                             <span class="text-muted small">Sin archivo</span>
                                         {% endif %}
+                                    </td>
+                                    <td class="fw-bold text-warning small">
+                                        {% if pago.descuento > 0 %}-{{ pago.descuento }}€{% else %}-{% endif %}
                                     </td>
                                     <td>{{ pago.cargado_por.username|default:"Sistema" }}</td>
                                 </tr>
