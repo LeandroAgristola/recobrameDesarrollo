@@ -2,6 +2,9 @@
 CRM
 
 
+Agregar 2 pestañas en REG recobros para individualizar los creditos Cedidos
+El boton de filtro en cesiones no hace nada
+
 Validacion de duplicados (si es q esta refinancioado)
 
 
@@ -10,10 +13,6 @@ Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
 Cargar de reporte:
     opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
     opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
-
-
-cuando el impago tiene mas de 67 dias tiene q darnos la opcion de mover al CRM de Cedidos agregando el contrato de Cesion 
-    El sistema muestra una alerta en la fila y al cargar en documentos el contrato de cesion automaticamente lo mueve al CRM de Cedidos
 
 
 Vista de listado de empresa:

@@ -12,12 +12,22 @@
                         <label class="form-label small fw-bold text-muted">Archivos guardados:</label>
                         <ul class="list-group list-group-flush border rounded">
                             {% for doc in exp.documentos.all %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-1 small">
-                                <span><i class="fa-solid fa-file-pdf me-2"></i>{{ doc.nombre_archivo|truncatechars:30 }}</span>
-                                <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-link btn-sm p-0"><i class="fa-solid fa-download"></i></a>
-                            </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center py-1 small doc-item-{{ doc.id }}">
+                                    <span class="text-truncate me-2" style="max-width: 200px;">
+                                        <i class="fa-solid fa-file-pdf text-danger me-2"></i>{{ doc.nombre_archivo }}
+                                    </span>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-sm btn-light p-0 px-2 border" title="Descargar">
+                                            <i class="fa-solid fa-download"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 p-0 px-2" title="Eliminar" 
+                                                onclick="eliminarDocumento({{ doc.id }}, '{% url 'crm:eliminar_documento_crm' doc.id %}')">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </li>
                             {% empty %}
-                            <li class="list-group-item small text-muted text-center">Sin documentos</li>
+                                <li class="list-group-item small text-muted text-center" id="empty-docs-{{ exp.id }}">Sin documentos</li>
                             {% endfor %}
                         </ul>
                     </div>

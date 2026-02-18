@@ -92,8 +92,10 @@
     </div>
 </div>
 
+
 {% include 'crm/includes/modal_nuevo_registro.html' %}
 {% include 'crm/includes/modal_confirmar_fecha.html' %}
+{% include 'crm/includes/modal_eliminar_doc.html' %}
 
 {% endblock %}
 
@@ -103,6 +105,7 @@
     <script src="{% static 'js/CRM/toggleFiltros.js' %}"></script>
     <script src="{% static 'js/CRM/crm_list.js' %}"></script> 
     <script src="{% static 'js/CRM/validarPago.js' %}"></script>
+    <script src="{% static 'js/CRM/eliminarDoc.js' %}"></script>
     
     <script>
         document.addEventListener("DOMContentLoaded", function() {

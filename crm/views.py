@@ -630,3 +630,29 @@ def editar_pago(request, pago_id):
         messages.success(request, "Pago actualizado correctamente.")
         
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+
+@login_required
+@require_POST
+def confirmar_cesion(request, exp_id):
+    exp = get_object_or_404(Expediente, id=exp_id)
+    
+    # Verificamos si falta algún requisito usando nuestra regla del modelo
+    errores = exp.faltantes_cesion
+    
+    if errores:
+        # Mostramos todos los requisitos faltantes al usuario
+        for error in errores:
+            messages.error(request, f"No se puede ceder: {error}")
+    else:
+        # Migramos oficialmente
+        exp.estado = 'CEDIDO'
+        exp.activo = True  # IMPORTANTE: Se mantiene True para que aparezca en la pestaña "Cedidos"
+        
+        # Si tienes el campo fecha_cesion, lo registramos (útil para auditoría futura)
+        if hasattr(exp, 'fecha_cesion'):
+            exp.fecha_cesion = timezone.now().date()
+            
+        exp.save()
+        messages.success(request, f"¡El expediente de {exp.deudor_nombre} fue movido a Cedidos exitosamente!")
+
+    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))

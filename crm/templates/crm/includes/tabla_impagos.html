@@ -47,297 +47,310 @@
 
 <table class="table table-hover align-middle mb-0 table-crm" id="tablaExpedientes">
         
-        <thead class="bg-light sticky-top" style="z-index: 100;">
-            <tr class="text-center small text-uppercase text-muted">
-                <th class="col-agente">Agente</th>
-                <th class="col-id">ID</th>
-                <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
-                <th class="col-tel">Teléfono</th>
-                
-                <th class="col-tipo">Tipo</th>
-                <th class="col-monto text-center">Total Orig.</th>
-                <th class="col-cuota text-center">Cuotas</th>
-                <th class="col-fecha text-center">F. Compra</th>
-                <th class="col-fecha text-center">F. Impago</th>
-                <th class="col-dias text-center">Días</th>
-                
-                <th class="col-comentario">Comentario</th>
-                <th class="col-estado">Estado</th>
-                <th class="col-monto text-center text-danger">Deuda</th>
-                <th class="col-monto text-center text-success">Pagado</th>
+    <thead class="bg-light sticky-top" style="z-index: 100;">
+        <tr class="text-center small text-uppercase text-muted">
+            <th class="col-agente">Agente</th>
+            <th class="col-id">ID</th>
+            <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
+            <th class="col-tel">Teléfono</th>
+            
+            <th class="col-tipo">Tipo</th>
+            <th class="col-monto text-center">V. Producto</th>
+            <th class="col-cuota text-center">Cuotas</th>
+            <th class="col-fecha text-center">F. Compra</th>
+            <th class="col-fecha text-center">F. Impago</th>
+            <th class="col-dias text-center">Días</th>
+            
+            <th class="col-comentario">Comentario</th>
+            <th class="col-estado">Estado</th>
+            <th class="col-monto text-center text-danger">Deuda</th>
+            <th class="col-monto text-center text-success">Pagado</th>
 
-                <th class="col-tic text-center">W1</th>
-                <th class="col-tic text-center">L1</th>
-                <th class="col-tic text-center">W2</th>
-                <th class="col-tic text-center">L2</th>
-                <th class="col-tic text-center">W3</th>
-                <th class="col-tic text-center">L3</th>
-                <th class="col-tic text-center">W4</th>
-                <th class="col-tic text-center">L4</th>
-                <th class="col-tic text-center">W5</th>   <th class="col-tic text-center">L5</th>   <th class="col-tic text-center">BE</th>   <th class="col-tic text-center">BR</th>   <th class="col-tic text-center">LLB</th>  <th class="col-tic text-center">ASNEF</th>
-                <th class="col-tic text-center">LLA</th>  <th class="col-fecha text-center">Último Msj</th>
-                <th class="col-fecha text-center">F. Pago/Prom.</th>
-                <th class="col-acciones text-center" style="min-width: 150px;">Acciones</th>
-            </tr>
+            <th class="col-tic text-center">W1</th>
+            <th class="col-tic text-center">L1</th>
+            <th class="col-tic text-center">W2</th>
+            <th class="col-tic text-center">L2</th>
+            <th class="col-tic text-center">W3</th>
+            <th class="col-tic text-center">L3</th>
+            <th class="col-tic text-center">W4</th>
+            <th class="col-tic text-center">L4</th>
+            <th class="col-tic text-center">W5</th>   <th class="col-tic text-center">L5</th>   <th class="col-tic text-center">BE</th>   <th class="col-tic text-center">BR</th>   <th class="col-tic text-center">LLB</th>  <th class="col-tic text-center">ASNEF</th>
+            <th class="col-tic text-center">LLA</th>  <th class="col-fecha text-center">Último Msj</th>
+            <th class="col-fecha text-center">F. Pago/Prom.</th>
+            <th class="col-acciones text-center" style="min-width: 150px;">Acciones</th>
+        </tr>
 
             <!-- FILA DE FILTROS -->
 
-<tr id="fila-filtros" class="bg-white border-bottom shadow-sm" 
-        style="display: {% if hay_filtros_impagos %}table-row{% else %}none{% endif %};">
-        
-        <td class="col-agente">
-            <select name="f_agente" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
-                <option value="">Todos</option>
-                {% for a in agentes_disponibles %}
-                    <option value="{{ a.id }}" {% if request.GET.f_agente == a.id|stringformat:"i" %}selected{% endif %}>{{ a.username }}</option>
-                {% endfor %}
-            </select>
-        </td>
-
-        <td class="col-id">
-            <input type="text" name="f_id" value="{{ request.GET.f_id }}" class="form-control form-control-sm filtro-columna" placeholder="ID..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
-        </td>
-        <td class="col-nombre">
-            <input type="text" name="f_nombre" value="{{ request.GET.f_nombre }}" class="form-control form-control-sm filtro-columna" placeholder="Nombre..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
-        </td>
-
-        <td class="col-tel">
-            <input type="text" name="f_tel" value="{{ request.GET.f_tel }}" class="form-control form-control-sm filtro-columna text-center" placeholder="Tel..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
-        </td>
-
-        <td class="col-tipo">
-            <select name="f_tipo" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
-                <option value="">-</option>
-                {% for tipo in tipos_producto %}
-                    <option value="{{ tipo }}" {% if request.GET.f_tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
-                {% endfor %}
-            </select>
-        </td>
-
-        <td class="col-monto"><input type="number" name="f_monto" value="{{ request.GET.f_monto }}" class="form-control form-control-sm filtro-columna text-center" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
-        <td class="col-cuota"><input type="number" name="f_cuotas" value="{{ request.GET.f_cuotas }}" class="form-control form-control-sm filtro-columna text-center" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
-        
-        <td class="col-fecha">
-            <div class="d-flex flex-column gap-1">
-                <input type="date" name="f_compra_desde" value="{{ request.GET.f_compra_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-                <input type="date" name="f_compra_hasta" value="{{ request.GET.f_compra_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-            </div>
-        </td>
-
-        <td class="col-fecha">
-            <div class="d-flex flex-column gap-1">
-                <input type="date" name="f_impago_desde" value="{{ request.GET.f_impago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-                <input type="date" name="f_impago_hasta" value="{{ request.GET.f_impago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-            </div>
-        </td>
-
-        <td class="col-dias"><input type="number" name="f_dias_max" value="{{ request.GET.f_dias_max }}" class="form-control form-control-sm filtro-columna text-center" placeholder="<X" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
-        
-        <td class="col-comentario">
-            <select name="f_comentario" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
-                <option value="">-</option>
-                {% for cod, text in impagos.0.OPCIONES_COMENTARIO %}
-                    <option value="{{ cod }}" {% if request.GET.f_comentario == cod %}selected{% endif %}>{{ text }}</option>
-                {% endfor %}
-            </select>
-        </td>
-
-        <td class="col-estado">
-            <select name="f_estado" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
-                <option value="">-</option>
-                {% for cod, text in impagos.0.CAUSAS_IMPAGO %}
-                    <option value="{{ cod }}" {% if request.GET.f_estado == cod %}selected{% endif %}>{{ text }}</option>
-                {% endfor %}
-            </select>
-        </td>
-
-        <td class="col-monto text-center text-muted small">N/A</td>
-        <td class="col-monto text-center text-muted small">N/A</td>
-
-        <td class="col-tic text-center"><input type="checkbox" name="f_w1" class="filtro-columna form-check-input" {% if request.GET.f_w1 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        <td class="col-tic text-center"><input type="checkbox" name="f_l1" class="filtro-columna form-check-input" {% if request.GET.f_l1 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        
-        <td class="col-tic text-center"><input type="checkbox" name="f_w2" class="filtro-columna form-check-input" {% if request.GET.f_w2 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        <td class="col-tic text-center"><input type="checkbox" name="f_l2" class="filtro-columna form-check-input" {% if request.GET.f_l2 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        
-        <td class="col-tic text-center"><input type="checkbox" name="f_w3" class="filtro-columna form-check-input" {% if request.GET.f_w3 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        <td class="col-tic text-center"><input type="checkbox" name="f_l3" class="filtro-columna form-check-input" {% if request.GET.f_l3 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        
-        <td class="col-tic text-center"><input type="checkbox" name="f_w4" class="filtro-columna form-check-input" {% if request.GET.f_w4 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        <td class="col-tic text-center"><input type="checkbox" name="f_l4" class="filtro-columna form-check-input" {% if request.GET.f_l4 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        
-        <td class="col-tic text-center"><input type="checkbox" name="f_w5" class="filtro-columna form-check-input" {% if request.GET.f_w5 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        <td class="col-tic text-center"><input type="checkbox" name="f_l5" class="filtro-columna form-check-input" {% if request.GET.f_l5 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-
-        <td class="col-tic text-center"><input type="checkbox" name="f_be" class="filtro-columna form-check-input" {% if request.GET.f_be == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        <td class="col-tic text-center"><input type="checkbox" name="f_br" class="filtro-columna form-check-input" {% if request.GET.f_br == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        
-        <td class="col-tic text-center"><input type="checkbox" name="f_llb" class="filtro-columna form-check-input" {% if request.GET.f_llb == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        
-        <td class="col-tic text-center"><input type="checkbox" name="f_as" class="filtro-columna form-check-input" {% if request.GET.f_as == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-        
-        <td class="col-tic text-center"><input type="checkbox" name="f_lla" class="filtro-columna form-check-input" {% if request.GET.f_lla == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
-
-        <td class="col-fecha">
-            <div class="d-flex flex-column gap-1">
-                <input type="date" name="f_msj_desde" value="{{ request.GET.f_msj_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-                <input type="date" name="f_msj_hasta" value="{{ request.GET.f_msj_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-            </div>
-        </td>
-
-        <td class="col-fecha">
-            <div class="d-flex flex-column gap-1">
-                <input type="date" name="f_pago_desde" value="{{ request.GET.f_pago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-                <input type="date" name="f_pago_hasta" value="{{ request.GET.f_pago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
-            </div>
-        </td>
-
-        <td class="col-acciones text-center">
+        <tr id="fila-filtros" class="bg-white border-bottom shadow-sm" 
+            style="display: {% if hay_filtros_impagos %}table-row{% else %}none{% endif %};">
+            
+            <td class="col-agente">
+                <select name="f_agente" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                    <option value="">Todos</option>
+                    {% for a in agentes_disponibles %}
+                        <option value="{{ a.id }}" {% if request.GET.f_agente == a.id|stringformat:"i" %}selected{% endif %}>{{ a.username }}</option>
+                    {% endfor %}
+                </select>
             </td>
-    </tr>
+
+            <td class="col-id">
+                <input type="text" name="f_id" value="{{ request.GET.f_id }}" class="form-control form-control-sm filtro-columna" placeholder="ID..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+            </td>
+            <td class="col-nombre">
+                <input type="text" name="f_nombre" value="{{ request.GET.f_nombre }}" class="form-control form-control-sm filtro-columna" placeholder="Nombre..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+            </td>
+
+            <td class="col-tel">
+                <input type="text" name="f_tel" value="{{ request.GET.f_tel }}" class="form-control form-control-sm filtro-columna text-center" placeholder="Tel..." onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
+            </td>
+
+            <td class="col-tipo">
+                <select name="f_tipo" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                    <option value="">-</option>
+                    {% for tipo in tipos_producto %}
+                        <option value="{{ tipo }}" {% if request.GET.f_tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+
+            <td class="col-monto"><input type="number" name="f_monto" value="{{ request.GET.f_monto }}" class="form-control form-control-sm filtro-columna text-center" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
+            <td class="col-cuota"><input type="number" name="f_cuotas" value="{{ request.GET.f_cuotas }}" class="form-control form-control-sm filtro-columna text-center" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
+            
+            <td class="col-fecha">
+                <div class="d-flex flex-column gap-1">
+                    <input type="date" name="f_compra_desde" value="{{ request.GET.f_compra_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                    <input type="date" name="f_compra_hasta" value="{{ request.GET.f_compra_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                </div>
+            </td>
+
+            <td class="col-fecha">
+                <div class="d-flex flex-column gap-1">
+                    <input type="date" name="f_impago_desde" value="{{ request.GET.f_impago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                    <input type="date" name="f_impago_hasta" value="{{ request.GET.f_impago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                </div>
+            </td>
+
+            <td class="col-dias"><input type="number" name="f_dias_max" value="{{ request.GET.f_dias_max }}" class="form-control form-control-sm filtro-columna text-center" placeholder="<X" onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()"></td>
+            
+            <td class="col-comentario">
+                <select name="f_comentario" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                    <option value="">-</option>
+                    {% for cod, text in impagos.0.OPCIONES_COMENTARIO %}
+                        <option value="{{ cod }}" {% if request.GET.f_comentario == cod %}selected{% endif %}>{{ text }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+
+            <td class="col-estado">
+                <select name="f_estado" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
+                    <option value="">-</option>
+                    {% for cod, text in impagos.0.CAUSAS_IMPAGO %}
+                        <option value="{{ cod }}" {% if request.GET.f_estado == cod %}selected{% endif %}>{{ text }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+
+            <td class="col-monto text-center text-muted small">N/A</td>
+            <td class="col-monto text-center text-muted small">N/A</td>
+
+            <td class="col-tic text-center"><input type="checkbox" name="f_w1" class="filtro-columna form-check-input" {% if request.GET.f_w1 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            <td class="col-tic text-center"><input type="checkbox" name="f_l1" class="filtro-columna form-check-input" {% if request.GET.f_l1 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            
+            <td class="col-tic text-center"><input type="checkbox" name="f_w2" class="filtro-columna form-check-input" {% if request.GET.f_w2 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            <td class="col-tic text-center"><input type="checkbox" name="f_l2" class="filtro-columna form-check-input" {% if request.GET.f_l2 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            
+            <td class="col-tic text-center"><input type="checkbox" name="f_w3" class="filtro-columna form-check-input" {% if request.GET.f_w3 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            <td class="col-tic text-center"><input type="checkbox" name="f_l3" class="filtro-columna form-check-input" {% if request.GET.f_l3 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            
+            <td class="col-tic text-center"><input type="checkbox" name="f_w4" class="filtro-columna form-check-input" {% if request.GET.f_w4 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            <td class="col-tic text-center"><input type="checkbox" name="f_l4" class="filtro-columna form-check-input" {% if request.GET.f_l4 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            
+            <td class="col-tic text-center"><input type="checkbox" name="f_w5" class="filtro-columna form-check-input" {% if request.GET.f_w5 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            <td class="col-tic text-center"><input type="checkbox" name="f_l5" class="filtro-columna form-check-input" {% if request.GET.f_l5 == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+
+            <td class="col-tic text-center"><input type="checkbox" name="f_be" class="filtro-columna form-check-input" {% if request.GET.f_be == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            <td class="col-tic text-center"><input type="checkbox" name="f_br" class="filtro-columna form-check-input" {% if request.GET.f_br == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            
+            <td class="col-tic text-center"><input type="checkbox" name="f_llb" class="filtro-columna form-check-input" {% if request.GET.f_llb == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            
+            <td class="col-tic text-center"><input type="checkbox" name="f_as" class="filtro-columna form-check-input" {% if request.GET.f_as == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+            
+            <td class="col-tic text-center"><input type="checkbox" name="f_lla" class="filtro-columna form-check-input" {% if request.GET.f_lla == 'true' %}checked{% endif %} onchange="aplicarFiltrosJS()"></td>
+
+            <td class="col-fecha">
+                <div class="d-flex flex-column gap-1">
+                    <input type="date" name="f_msj_desde" value="{{ request.GET.f_msj_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                    <input type="date" name="f_msj_hasta" value="{{ request.GET.f_msj_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                </div>
+            </td>
+
+            <td class="col-fecha">
+                <div class="d-flex flex-column gap-1">
+                    <input type="date" name="f_pago_desde" value="{{ request.GET.f_pago_desde }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                    <input type="date" name="f_pago_hasta" value="{{ request.GET.f_pago_hasta }}" class="form-control form-control-sm filtro-columna p-0" style="font-size: 0.65rem;" onchange="aplicarFiltrosJS()">
+                </div>
+            </td>
+
+            <td class="col-acciones text-center">
+                </td>
+        </tr>
 
 
-        </thead>
+    </thead>
 
-        <tbody>
-            {% now "Y-m-d" as hoy %}
+     <tbody>
+        {% now "Y-m-d" as hoy %}
 
-            {% for exp in impagos %}
-            <tr id="fila-exp-{{ exp.id }}" 
-                class="text-center {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}{% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}row-promesa-hoy{% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}row-promesa-vencida{% endif %}{% endif %}">
+        {% for exp in impagos %}
+        <tr id="fila-exp-{{ exp.id }}" 
+            class="text-center {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}{% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}row-promesa-hoy{% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}row-promesa-vencida{% endif %}{% endif %} {% if exp.puede_ser_cedido %}row-cedido{% endif %}">
+            
+            <td class="col-agente">
+                <select class="form-select form-select-sm fw-bold small text-muted"
+                        onchange="cambiarAgente(this, {{ exp.id }})"
+                        style="cursor: pointer; border: 1px solid #dee2e6;"
+                        {% if not user.is_staff %}disabled{% endif %}>
+                    <option value="" {% if not exp.agente %}selected{% endif %}>- Sin Asignar -</option>
+                    {% for agente in agentes_disponibles %}
+                        <option value="{{ agente.id }}" {% if exp.agente and exp.agente.id == agente.id %}selected{% endif %}>
+                            {{ agente.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+
+            <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
+            <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
+            <td class="col-tel small">{{ exp.deudor_telefono }}</td>
+            <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
+            <td class="col-monto text-center small">{{ exp.monto_original }} €</td>
+            <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
+            <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
+            <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
+            
+            <td class="col-dias text-center">
+                {% if exp.tiempo_en_impago > 0 %}
+                    <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                        {{ exp.tiempo_en_impago }}
+                    </span>
+                {% else %}
+                    <span class="text-muted small">-</span>
+                {% endif %}
+            </td>
+
+            <td class="col-comentario" style="min-width: 200px;"> 
                 
-                <td class="col-agente">
-                    <select class="form-select form-select-sm fw-bold small text-muted"
-                            onchange="cambiarAgente(this, {{ exp.id }})"
-                            style="cursor: pointer; border: 1px solid #dee2e6;"
-                            {% if not user.is_staff %}disabled{% endif %}>
-                        <option value="" {% if not exp.agente %}selected{% endif %}>- Sin Asignar -</option>
-                        {% for agente in agentes_disponibles %}
-                            <option value="{{ agente.id }}" {% if exp.agente and exp.agente.id == agente.id %}selected{% endif %}>
-                                {{ agente.username }}
-                            </option>
+                <div class="d-flex w-100 gap-1 align-items-center">
+                    
+                    <select class="form-select form-select-sm small text-muted text-truncate flex-grow-1" 
+                            onchange="actualizarComentario(this, {{ exp.id }})"
+                            style="border: 1px solid #dee2e6;">
+                        <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -</option>
+                        {% for val, text in exp.OPCIONES_COMENTARIO %}
+                        <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
                         {% endfor %}
                     </select>
-                </td>
 
-                <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
-                <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
-                <td class="col-tel small">{{ exp.deudor_telefono }}</td>
-                <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
-                <td class="col-monto text-center small">{{ exp.monto_original }} €</td>
-                <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
-                <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
-                <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
-                
-                <td class="col-dias text-center">
-                    {% if exp.tiempo_en_impago > 0 %}
-                        <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
-                            {{ exp.tiempo_en_impago }}
-                        </span>
-                    {% else %}
-                        <span class="text-muted small">-</span>
-                    {% endif %}
-                </td>
+                    <button type="button" 
+                            class="btn btn-sm {% if exp.comentarios %}btn-warning text-dark border-warning{% else %}btn-outline-secondary border-0{% endif %}" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalNota-{{ exp.id }}"
+                            style="width: 32px; height: 31px; display: flex; align-items: center; justify-content: center;"
+                            title="{% if exp.comentarios %}Ver Nota{% else %}Agregar Nota{% endif %}">
+                        <i class="fa-regular fa-comment-dots"></i>
+                    </button>
+                </div>
+            </td>
 
-                <td class="col-comentario" style="min-width: 200px;"> 
+            <td class="col-estado">
+                <span id="estado-texto-{{ exp.id }}" class="badge bg-white text-dark border shadow-sm">
+                    {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
+                </span>
+            </td>
+            
+            <td class="col-monto text-center fw-bold text-danger">{{ exp.monto_actual }} €</td>
+            <td class="col-monto text-center fw-bold text-success">{{ exp.monto_recuperado|default:"0.00" }} €</td>
+            
+            {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
+
+            <td class="col-fecha text-center small text-muted">
+                <span id="fecha-ult-{{ exp.id }}">
+                    {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
+                </span>
+            </td>
+
+            <td class="col-fecha text-center small text-success fw-bold">
+                <span id="fecha-pago-{{ exp.id }}">
+                    {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
+                        {{ exp.fecha_pago_promesa|date:"d/m/Y"|default:"-" }}
+                    {% else %}-{% endif %}
+                </span>
+            </td>
+
+            <td class="col-acciones bg-white">
+                <div class="d-flex gap-1 justify-content-center">
                     
-                    <div class="d-flex w-100 gap-1 align-items-center">
-                        
-                        <select class="form-select form-select-sm small text-muted text-truncate flex-grow-1" 
-                                onchange="actualizarComentario(this, {{ exp.id }})"
-                                style="border: 1px solid #dee2e6;">
-                            <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -</option>
-                            {% for val, text in exp.OPCIONES_COMENTARIO %}
-                            <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
-                            {% endfor %}
-                        </select>
+                    {% if exp.puede_ser_cedido %}
+                    <button type="button" class="btn btn-sm btn-outline-dark btn-action-crm shadow-sm" 
+                            title="Confirmar Cesión" data-bs-toggle="modal" 
+                            data-bs-target="#modalCesion-{{ exp.id }}">
+                        <i class="fa-solid fa-file-signature text-warning"></i>
+                    </button>
+                    {% endif %}
 
-                        <button type="button" 
-                                class="btn btn-sm {% if exp.comentarios %}btn-warning text-dark border-warning{% else %}btn-outline-secondary border-0{% endif %}" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalNota-{{ exp.id }}"
-                                style="width: 32px; height: 31px; display: flex; align-items: center; justify-content: center;"
-                                title="{% if exp.comentarios %}Ver Nota{% else %}Agregar Nota{% endif %}">
-                            <i class="fa-regular fa-comment-dots"></i>
-                        </button>
-                    </div>
-                </td>
-
-                <td class="col-estado">
-                    <span id="estado-texto-{{ exp.id }}" class="badge bg-white text-dark border shadow-sm">
-                        {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
-                    </span>
-                </td>
-                
-                <td class="col-monto text-center fw-bold text-danger">{{ exp.monto_actual }} €</td>
-                <td class="col-monto text-center fw-bold text-success">{{ exp.monto_recuperado|default:"0.00" }} €</td>
-                
-                {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
-
-                <td class="col-fecha text-center small text-muted">
-                    <span id="fecha-ult-{{ exp.id }}">
-                        {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
-                    </span>
-                </td>
-
-                <td class="col-fecha text-center small text-success fw-bold">
-                    <span id="fecha-pago-{{ exp.id }}">
-                        {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
-                            {{ exp.fecha_pago_promesa|date:"d/m/Y"|default:"-" }}
-                        {% else %}-{% endif %}
-                    </span>
-                </td>
-
-                <td class="col-acciones bg-white">
-                    <div class="d-flex gap-1 justify-content-center">
-                        <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" 
-                                title="Registrar Pago" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalPago-{{ exp.id }}">
-                            <i class="fa-solid fa-sack-dollar"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
-                                title="Documentación" data-bs-toggle="modal" 
-                                data-bs-target="#modalDocs{{ exp.id }}">
-                            <i class="fa-solid fa-folder-open"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm" 
-                                data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 
-                                title="Editar Cliente">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
-                            <i class="fa-solid fa-eye"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm" 
-                                title="Mover a Papelera" data-bs-toggle="modal" 
-                                data-bs-target="#modalPapelera{{ exp.id }}">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                    <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" 
+                            title="Registrar Pago" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalPago-{{ exp.id }}">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
+                            title="Documentación" data-bs-toggle="modal" 
+                            data-bs-target="#modalDocs{{ exp.id }}">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm" 
+                            data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 
+                            title="Editar Cliente">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm" 
+                            title="Mover a Papelera" data-bs-toggle="modal" 
+                            data-bs-target="#modalPapelera{{ exp.id }}">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
 
 
-            {% include 'crm/includes/modal_nota_interna.html' with exp=exp %}
-            {% include 'crm/includes/modal_documentacion.html' with exp=exp %}
-            {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
-            {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
-            {% include 'crm/includes/modal_desactivar.html' with exp=exp %}
+        {% include 'crm/includes/modal_nota_interna.html' with exp=exp %}
+        {% include 'crm/includes/modal_documentacion.html' with exp=exp %}
+        {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
+        {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
+        {% include 'crm/includes/modal_desactivar.html' with exp=exp %}
+        {% if exp.puede_ser_cedido %}
+            {% include 'crm/includes/modal_confirmar_cesion.html' with exp=exp %}
+        {% endif %}
 
-            {% empty %}
-            <tr>
-                <td colspan="11" class="text-center py-5">
-                    <div class="text-success opacity-50 mb-3">
-                        <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
-                    </div>
-                    <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
-                    <small class="text-muted">Ingresa nuevos registros para comenzar la gestión de expedientes.</small>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+        {% empty %}
+        <tr>
+            <td colspan="11" class="text-center py-5">
+                <div class="text-success opacity-50 mb-3">
+                    <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
+                </div>
+                <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
+                <small class="text-muted">Ingresa nuevos registros para comenzar la gestión de expedientes.</small>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 </div>
 
 

@@ -1,0 +1,54 @@
+
+<div class="modal fade" id="modalCesion-{{ exp.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            
+            {% if exp.tiene_contrato_cesion %}
+                <form action="{% url 'crm:confirmar_cesion' exp.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="modal-header bg-warning bg-opacity-25 border-bottom-0">
+                        <h6 class="modal-title fw-bold text-dark">
+                            <i class="fa-solid fa-file-signature me-2"></i>Confirmar Cesión
+                        </h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-start text-wrap text-break">
+                        <p class="mb-2">El expediente de <strong class="text-primary">{{ exp.deudor_nombre }}</strong> superó los 67 días de mora.</p>
+                        <p class="mb-3">¿Deseas migrarlo oficialmente a la pestaña de <strong>Cedidos</strong>?</p>
+                        <div class="alert alert-success py-2 small mb-0">
+                            <i class="fa-solid fa-check-circle me-1"></i> Contrato de Cesión verificado correctamente.
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-sm btn-warning fw-bold text-dark shadow-sm">Sí, Mover a Cedidos</button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="modal-header bg-danger bg-opacity-10 border-bottom-0">
+                    <h6 class="modal-title fw-bold text-danger">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Acción Requerida
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-start text-wrap text-break">
+                    <p class="mb-2">El expediente de <strong class="text-primary">{{ exp.deudor_nombre }}</strong> ya cumple los requisitos de mora, pero:</p>
+                    <div class="alert alert-danger py-2 small mb-0 mt-3 border-danger border-opacity-25">
+                        <div class="d-flex align-items-start">
+                            <i class="fa-solid fa-circle-xmark mt-1 me-2"></i>
+                            <span>Falta cargar el <strong>Contrato de Cesión</strong>. Es un requisito obligatorio para proceder.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm" 
+                            data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalDocs{{ exp.id }}">
+                        <i class="fa-solid fa-cloud-arrow-up me-1"></i> Ir a Cargar Contrato
+                    </button>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>

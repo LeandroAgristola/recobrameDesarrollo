@@ -235,6 +235,54 @@ class Expediente(models.Model):
         from django.db.models import Sum
         total = self.pagos.aggregate(total=Sum('descuento'))['total']
         return total or 0.00
+    
+    @property
+    def puede_ser_cedido(self):
+        """Condición visual para habilitar el botón de cesión"""
+        # 1. ¿La empresa tiene módulo de cedidos activo?
+        if not hasattr(self.empresa, 'crm_config') or not self.empresa.crm_config.tiene_cedidos:
+            return False
+            
+        # 2. CORRECCIÓN: ¿El producto específico admite cesión?
+        PRODUCTOS_CESIBLES = ['SEQURA_MANUAL', 'AUTOFINANCIACION', 'AUTOFINANCIADO']
+        if self.tipo_producto not in PRODUCTOS_CESIBLES:
+            return False
+            
+        # 3. Solo aplica a impagos activos
+        if self.estado != 'ACTIVO':
+            return False
+            
+        # 4. Superar 67 días de mora
+        dias_mora = (timezone.now().date() - self.fecha_impago).days if self.fecha_impago else 0
+        return dias_mora > 67
+
+    @property
+    def faltantes_cesion(self):
+        """Devuelve una lista con los errores si falta algún requisito estricto"""
+        errores = []
+        
+        if not hasattr(self.empresa, 'crm_config') or not self.empresa.crm_config.tiene_cedidos:
+            errores.append("La empresa no admite cesiones de cartera.")
+            
+        # CORRECCIÓN: Validar Producto
+        PRODUCTOS_CESIBLES = ['SEQURA_MANUAL', 'AUTOFINANCIACION', 'AUTOFINANCIADO']
+        if self.tipo_producto not in PRODUCTOS_CESIBLES:
+            errores.append(f"El producto '{self.get_tipo_producto_display()}' no es apto para cesiones.")
+            
+        dias_mora = (timezone.now().date() - self.fecha_impago).days if self.fecha_impago else 0
+        if dias_mora <= 67:
+            errores.append(f"El expediente debe superar los 67 días de mora (actual: {dias_mora} días).")
+            
+        # Validar Documentación individualizada
+        if not self.documentos.filter(tipo='CONTRATO').exists():
+            errores.append("Falta cargar el 'Contrato de Cesión' en la pestaña de documentos de este expediente.")
+            
+        return errores
+    
+    @property
+    def tiene_contrato_cesion(self):
+        """Devuelve True si el expediente ya tiene el contrato de cesión cargado."""
+        return self.documentos.filter(tipo='CONTRATO').exists()
 
 class RegistroPago(models.Model):
     expediente = models.ForeignKey(Expediente, on_delete=models.CASCADE, related_name='pagos')

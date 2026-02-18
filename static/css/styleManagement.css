@@ -385,10 +385,12 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
 
 /* 1. PAGOS PARA HOY (AMARILLO) */
 .row-promesa-hoy td {
-    background-color: #fff3cd !important;
+    
+    background-color: #d7f6f8 !important; 
 }
 .row-promesa-hoy {
-    border-left: 5px solid #ffc107 !important;
+    
+    border-left: 5px solid #6aeff8 !important; 
 }
 
 /* 2. PAGOS VENCIDOS (ROSADO) */
@@ -397,6 +399,14 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
 }
 .row-promesa-vencida {
     border-left: 5px solid #dc3545 !important; /* Borde rojo fuerte */
+}
+
+/* 2. PAGOS VENCIDOS (ROSADO) */
+.row-cedido td {
+    background-color: #fff3cd !important;
+}
+.row-cedido {
+    border-left: 5px solid #ffc107 !important;
 }
 
 /* Efectos hover para ambos */

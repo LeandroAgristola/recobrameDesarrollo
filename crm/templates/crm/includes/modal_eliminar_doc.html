@@ -1,0 +1,20 @@
+<div class="modal fade" id="modalConfirmarEliminarDoc" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger bg-opacity-10 border-bottom-0">
+                <h6 class="modal-title fw-bold text-danger">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Archivo
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center mt-2 pb-4">
+                <p class="mb-1">¿Estás seguro de que deseas eliminar este documento?</p>
+                <small class="text-muted">Esta acción es permanente y no se puede deshacer.</small>
+            </div>
+            <div class="modal-footer border-top-0 justify-content-center pt-0">
+                <button type="button" class="btn btn-sm btn-light px-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-danger fw-bold px-4 shadow-sm" onclick="ejecutarEliminacionDoc()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>

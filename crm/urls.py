@@ -17,12 +17,13 @@ urlpatterns = [
     
     path('buscar-antecedentes/', views.buscar_antecedentes_deudor, name='buscar_antecedentes'),
     path('expediente/editar/<int:exp_id>/', views.editar_expediente, name='editar_expediente'),
-    path('documento/eliminar/<int:doc_id>/', views.eliminar_documento_crm, name='eliminar_documento'),
+    path('documento/<int:doc_id>/eliminar/', views.eliminar_documento_crm, name='eliminar_documento_crm'),
     path('expediente/detalle/<int:exp_id>/', views.detalle_expediente, name='detalle_expediente'),
     
     path('registrar-pago/<int:expediente_id>/', views.registrar_pago, name='registrar_pago'),
     path('eliminar-pago/<int:pago_id>/', views.eliminar_pago, name='eliminar_pago'),
     path('editar-pago/<int:pago_id>/', views.editar_pago, name='editar_pago'),
 
+    path('expediente/<int:exp_id>/confirmar-cesion/', views.confirmar_cesion, name='confirmar_cesion'),
     path('guardar-comentario/<int:expediente_id>/', views.guardar_comentario_libre, name='guardar_comentario_libre'),
 ]

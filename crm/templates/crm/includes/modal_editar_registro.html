@@ -68,12 +68,13 @@
                             {% if exp.documentos.all %}
                                 <div class="list-group">
                                     {% for doc in exp.documentos.all %}
-                                        <div class="list-group-item d-flex justify-content-between align-items-center" id="doc-item-{{ doc.id }}">
+                                        <div class="list-group-item d-flex justify-content-between align-items-center doc-item-{{ doc.id }}">
                                             <div>
                                                 <i class="fa-solid fa-file-pdf text-danger me-2"></i>
                                                 <span class="small">{{ doc.nombre_archivo }}</span>
                                             </div>
-                                            <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="eliminarDocumento({{ doc.id }})">
+                                            <button type="button" class="btn btn-sm btn-outline-danger border-0" 
+                                                    onclick="eliminarDocumento({{ doc.id }}, '{% url 'crm:eliminar_documento_crm' doc.id %}')">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
                                         </div>
