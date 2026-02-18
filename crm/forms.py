@@ -31,12 +31,18 @@ class ExpedienteForm(forms.ModelForm):
         self.fields['fecha_compra'].required = False
         self.fields['fecha_impago'].required = False
 
-        if empresa:
-            tipos = EsquemaComision.objects.filter(empresa=empresa).values_list('tipo_producto', 'tipo_producto').distinct()
-            self.fields['tipo_producto'] = forms.ChoiceField(
-                choices=tipos, 
-                widget=forms.Select(attrs={'class': 'form-select'})
-            )
+        if empresa and empresa.tipos_impagos:
+            tipos = [t.strip() for t in empresa.tipos_impagos.split(',')]
+            
+            # NUEVO: Filtramos 'TRANSFERENCIA' para que no sea un método de financiación
+            tipos = [t for t in tipos if t != 'TRANSFERENCIA']
+
+            from empresas.models import OPCIONES_IMPAGOS
+            nombres_dict = dict(OPCIONES_IMPAGOS)
+            opciones = [(cod, nombres_dict.get(cod, cod)) for cod in tipos]
+            
+            self.fields['tipo_producto'].choices = opciones
+            
     # Validamos que la fecha de impago no sea anterior a la fecha de compra
     def clean(self):
         cleaned_data = super().clean()

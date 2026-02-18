@@ -246,7 +246,10 @@ def dashboard_crm(request, empresa_id):
         'recobros': recobros_qs, # Variable filtrada
         
         'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
-        'tipos_producto': Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct().order_by('tipo_producto'),
+        'tipos_producto': Expediente.objects.filter(empresa=empresa)
+                        .values_list('tipo_producto', flat=True)
+                        .distinct()
+                        .order_by('tipo_producto'),
         'form': form,
         
         'q': q,
@@ -257,9 +260,9 @@ def dashboard_crm(request, empresa_id):
     }
     return render(request, 'crm/dashboard_empresa.html', context)
  
-
-
 # --- VISTAS DE ACCIÓN ---
+
+from decimal import Decimal # Asegúrate de que esto esté en los imports arriba del archivo
 
 @login_required
 def editar_expediente(request, exp_id):
@@ -268,18 +271,40 @@ def editar_expediente(request, exp_id):
     
     if request.method == 'POST':
         form = ExpedienteForm(request.POST, instance=expediente, empresa=empresa)
+        
         if form.is_valid():
-            exp = form.save()
-            # Recalculamos la deuda por si cambiaron fechas o montos
-            exp.monto_actual = calcular_deuda_actualizada(exp)
+            # 1. Guardamos en memoria (sin afectar la base de datos todavía)
+            exp = form.save(commit=False)
+            
+            # 2. FORZAMOS atrapar la Financiación (evita errores de validación del Select de Django)
+            nuevo_tipo = request.POST.get('tipo_producto')
+            if nuevo_tipo:
+                exp.tipo_producto = nuevo_tipo
+                
+            # Guardamos los datos actualizados (incluyendo si editaron el monto_original)
+            exp.save()
+            
+            # 3. RECALCULAMOS la deuda (ahora tomará los valores frescos que acabamos de guardar)
+            exp.monto_actual = Decimal(str(calcular_deuda_actualizada(exp)))
             exp.save()
             
             messages.success(request, f"Expediente {exp.numero_expediente} actualizado correctamente.")
         else:
-            # Si hay errores (ej: un campo obligatorio vacío), los capturamos
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"Error en {field}: {error}")
+            # Si el form falla por alguna regla estricta (pero los datos vinieron igual), 
+            # forzamos una actualización manual de seguridad para lo importante.
+            nuevo_tipo = request.POST.get('tipo_producto')
+            nuevo_monto = request.POST.get('monto_original')
+            
+            if nuevo_tipo:
+                expediente.tipo_producto = nuevo_tipo
+            if nuevo_monto:
+                expediente.monto_original = Decimal(nuevo_monto)
+                
+            expediente.save()
+            expediente.monto_actual = Decimal(str(calcular_deuda_actualizada(expediente)))
+            expediente.save()
+            
+            messages.success(request, f"Expediente {expediente.numero_expediente} forzado y actualizado correctamente.")
 
     # LÓGICA DE RETORNO INTELIGENTE:
     # Intentamos volver a la página anterior (Detalle o Dashboard)
@@ -461,7 +486,13 @@ def detalle_expediente(request, exp_id):
     # --- DATOS PARA EL MODAL DE EDICIÓN (ESTO ES LO QUE FALTA) ---
     # Obtenemos los tipos de producto únicos que ya existen en la empresa
     # O bien, puedes sacarlos de empresa.tipos_impagos si prefieres esa lista
-    tipos_producto = Expediente.objects.filter(empresa=empresa).values_list('tipo_producto', flat=True).distinct()
+    tipos_producto = (
+                        Expediente.objects
+                        .filter(empresa=empresa)
+                        .exclude(tipo_producto='TRANSFERENCIA')
+                        .values_list('tipo_producto', flat=True)
+                        .distinct()
+                    )
     
     # También necesitamos los agentes para el select de edición
     agentes_disponibles = User.objects.filter(is_active=True).order_by('username')

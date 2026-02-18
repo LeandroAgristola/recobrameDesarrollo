@@ -1,10 +1,9 @@
 
 CRM
-
-
-Agregar estado en el detalle de la persona "IMPAGO o CEDIDO"
 Sacar del form de nuevo registro el tipo de financiación "transferencia"
 Permitir editar el tipo de credito al editar el cliente
+
+Agregar estado en el detalle de la persona "IMPAGO o CEDIDO"
 Agregar 2 pestañas en REG recobros para individualizar los creditos Cedidos
 El boton de filtro en cesiones no hace nada
 
@@ -16,7 +15,6 @@ Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
 Cargar de reporte:
     opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
     opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
-
 
 Vista de listado de empresa:
     Calcualar correctamente las comisiones
