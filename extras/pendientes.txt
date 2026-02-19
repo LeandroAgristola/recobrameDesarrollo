@@ -1,10 +1,8 @@
 
 CRM
 
+Testear que funcione el conteo de "veces en impago"
 
-guarda como fecha de cesion al moverlo a cedido
-
-Agregar 2 pestañas en REG recobros para individualizar los creditos Cedidos
 Validacion de duplicados (si es q esta refinancioado)
 
 Mejorar filtros
@@ -15,6 +13,8 @@ En la vista de CRM no mostramos los datos reales
 
 Errores:
 
+
+Ajustar ventanda de impresion 
 Vista de listado de empresa:
 
     Calcualar correctamente las comisiones

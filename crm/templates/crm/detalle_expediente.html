@@ -53,33 +53,63 @@
         <div class="col-lg-4">
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white fw-bold border-bottom py-3">
-                    <i class="fa-solid fa-address-card me-2 text-primary"></i>Datos del Deudor
+                    <i class="fa-solid fa-address-book  me-2 text-primary"></i>Datos del Deudor
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
                         <li class="mb-3">
-                            <label class="text-muted small d-block">DNI / NIE:</label>
-                            <span class="fw-bold">{{ exp.deudor_dni|default:"-" }}</span>
+                            <label class="text-muted small d-block"><i class="fa-solid fa-phone me-1"></i>Teléfono:
+                            <a href="tel:{{ exp.deudor_telefono }}" class="text-decoration-none fw-bold">{{ exp.deudor_telefono }}</a></label>
                         </li>
                         <li class="mb-3">
-                            <label class="text-muted small d-block">Teléfono:</label>
-                            <a href="tel:{{ exp.deudor_telefono }}" class="text-decoration-none fw-bold">
-                                <i class="fa-solid fa-phone me-1"></i>{{ exp.deudor_telefono }}
-                            </a>
+                            <label class="text-muted small d-block"><i class="fa-solid fa-id-card me-1"></i>DNI / NIE:
+                            <span class="fw-bold">{{ exp.deudor_dni|default:"-" }}</span></label>
                         </li>
                         <li class="mb-3">
-                            <label class="text-muted small d-block">Email:</label>
-                            <a href="mailto:{{ exp.deudor_email }}" class="text-decoration-none fw-bold">
-                                {{ exp.deudor_email|default:"-" }}
-                            </a>
+                            <label class="text-muted small d-block"><i class="fa-solid fa-envelope me-1"></i>Email:
+                            <a href="mailto:{{ exp.deudor_email }}" class="text-decoration-none fw-bold">{{ exp.deudor_email|default:"-" }}</a></label>
                         </li>
                         <li>
-                            <label class="text-muted small d-block">Dirección:</label>
-                            <span class="small">{{ exp.deudor_direccion|default:"No registrada" }}</span>
+                            <label class="text-muted small d-block"><i class="fa-solid fa-location-dot me-1"></i>Dirección:
+                            <span class="small">{{ exp.deudor_direccion|default:"No registrada" }}</span></label>
                         </li>
                     </ul>
                 </div>
             </div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm bg-light h-100">
+            <div class="card-body p-3">
+                <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Situación de Gestión</label>
+                <div class="h6 mb-0 fw-bold text-dark text-truncate">
+                    {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm bg-light h-100" style="min-height: 80px;">
+            <div class="card-body p-3">
+                <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Comentario de Seguimiento</label>
+                <div class="h6 mb-0 fw-semibold text-secondary">
+                    <i class="fa-solid fa-comment-medical text-primary me-1"></i>
+                    {% if exp.comentario_estandar %}
+                        {# Buscamos el texto amigable en la lista de opciones del modelo #}
+                        {% for val, text in exp.OPCIONES_COMENTARIO %}
+                            {% if val == exp.comentario_estandar %}
+                                {{ text }}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-muted fst-italic">Sin comentario estándar registrado</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             <div class="card shadow-sm border-warning border-opacity-25 bg-warning bg-opacity-10 mb-4">
                 <div class="card-header bg-transparent border-warning border-opacity-25 py-2 d-flex justify-content-between align-items-center">

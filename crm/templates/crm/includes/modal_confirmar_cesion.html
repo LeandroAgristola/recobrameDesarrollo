@@ -1,4 +1,3 @@
-
 <div class="modal fade" id="modalCesion-{{ exp.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -15,13 +14,22 @@
                     <div class="modal-body text-start text-wrap text-break">
                         <p class="mb-2">El expediente de <strong class="text-primary">{{ exp.deudor_nombre }}</strong> superó los 67 días de mora.</p>
                         <p class="mb-3">¿Deseas migrarlo oficialmente a la pestaña de <strong>Cedidos</strong>?</p>
-                        <div class="alert alert-success py-2 small mb-0">
+                        
+                        <div class="alert alert-success py-2 small mb-3">
                             <i class="fa-solid fa-check-circle me-1"></i> Contrato de Cesión verificado correctamente.
+                        </div>
+                        
+                        <div class="mb-2 p-3 bg-light rounded border">
+                            <label class="form-label small fw-bold text-dark mb-1">Fecha efectiva del Contrato de Cesión:</label>
+                            <input type="date" name="fecha_cesion" class="form-control form-control-sm border-warning shadow-sm" value="{% now 'Y-m-d' %}" required>
+                            <small class="text-muted d-block mt-2" style="font-size: 0.75rem;">
+                                <i class="fa-solid fa-circle-info text-primary me-1"></i>Esta fecha será vital para calcular los plazos legales de envío a ASNEF.
+                            </small>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0 pt-0">
                         <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-sm btn-warning fw-bold text-dark shadow-sm">Sí, Mover a Cedidos</button>
+                        <button type="submit" class="btn btn-sm btn-warning fw-bold shadow-sm">Confirmar Migración</button>
                     </div>
                 </form>
             {% else %}

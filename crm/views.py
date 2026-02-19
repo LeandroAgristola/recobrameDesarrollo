@@ -300,8 +300,6 @@ def dashboard_crm(request, empresa_id):
 
     return render(request, 'crm/dashboard_empresa.html', context)
 
-
- 
 # --- VISTAS DE ACCIÓN ---
 
 # Vista para editar un expediente, con lógica de validación y actualización de deuda, y redirección inteligente a la página anterior o al dashboard si no hay referer válido
@@ -411,24 +409,32 @@ def actualizar_seguimiento(request):
     if valor:
         setattr(exp, accion, True)
         setattr(exp, f'fecha_{accion}', timezone.now())
+        
         if nuevo_estado:
             exp.causa_impago = nuevo_estado
+            
             if hasattr(exp, f'estado_{accion}'):
                 setattr(exp, f'estado_{accion}', nuevo_estado)
+            
+            # --- LÓGICA DE LIMPIEZA DE FECHAS ---
             if nuevo_estado == 'PAGARA' and fecha_promesa:
                 exp.fecha_pago_promesa = fecha_promesa
+            else:
+                # Si el estado NO es PAGARA, borramos cualquier fecha de promesa previa
+                exp.fecha_pago_promesa = None
     else:
+        # Si desmarcan el tick, limpiamos todo lo relacionado a ese seguimiento
         setattr(exp, accion, False)
         setattr(exp, f'fecha_{accion}', None)
         if hasattr(exp, f'estado_{accion}'):
             setattr(exp, f'estado_{accion}', None)
-            
-    # RECALCULAR DEUDA AL ACTUALIZAR (Opcional, pero recomendado si pasa el tiempo)
-    # exp.monto_actual = calcular_deuda_actualizada(exp) # Descomentar si quieres actualización en tiempo real al tocar ticks
+        # Opcional: ¿Si desmarcan el tick también quieres borrar la promesa general?
+        # exp.fecha_pago_promesa = None 
 
     exp.save()
     exp.refresh_from_db()
 
+    # Preparar respuesta para el Frontend
     estado_tick_legible = None
     field_name = f'estado_{accion}'
     display_method = f'get_{field_name}_display'
@@ -440,7 +446,7 @@ def actualizar_seguimiento(request):
 
     return JsonResponse({
             'status': 'ok',
-            'fecha_ultimo': exp.ultimo_mensaje_fecha.strftime("%d/%m/%Y") if exp.ultimo_mensaje_fecha else "-",
+            'fecha_ultimo': exp.ultimo_mensaje_fecha.strftime("%d/%m/%Y") if hasattr(exp, 'ultimo_mensaje_fecha') and exp.ultimo_mensaje_fecha else "-",
             'estado_legible': exp.get_causa_impago_display() or "-",
             'estado_tick_legible': estado_tick_legible or "-",
             'fecha_promesa_legible': exp.fecha_pago_promesa.strftime("%d/%m") if exp.fecha_pago_promesa else "-"
@@ -740,13 +746,46 @@ def confirmar_cesion(request, exp_id):
         exp.estado = 'CEDIDO'
         exp.activo = True 
         
-        if hasattr(exp, 'fecha_cesion'):
+        # Atrapamos la fecha manual del formulario
+        fecha_cesion_str = request.POST.get('fecha_cesion')
+        if fecha_cesion_str:
+            exp.fecha_cesion = fecha_cesion_str
+        else:
+            # Respaldo de seguridad por si falla el formulario
             exp.fecha_cesion = timezone.now().date()
+
+        # ==========================================================
+        # NUEVA LÓGICA: REINICIO DE TICS Y COMPROMISOS (Borrón y cuenta nueva)
+        # ==========================================================
+        
+        # 1. Lista de todos los prefijos de tus secuencias
+        etapas_seguimiento = ['w1', 'll1', 'w2', 'll2', 'w3', 'll3', 'w4', 'll4', 'b1'] 
+        
+        for etapa in etapas_seguimiento:
+            # Borra el Checkbox (Pasa a False)
+            if hasattr(exp, etapa):
+                setattr(exp, etapa, False)
+            
+            # Borra la fecha de ese tic (Pasa a None)
+            if hasattr(exp, f'fecha_{etapa}'):
+                setattr(exp, f'fecha_{etapa}', None)
+                
+            # Borra el estado de resultado de ese tic (Pasa a None)
+            if hasattr(exp, f'estado_{etapa}'):
+                setattr(exp, f'estado_{etapa}', None)
+
+        # 2. Limpiamos cualquier compromiso de pago general (Ajusta el nombre si en tu modelo se llama distinto)
+        if hasattr(exp, 'fecha_compromiso'):
+            exp.fecha_compromiso = None
+        if hasattr(exp, 'causa_impago'):
+            exp.causa_impago = None # Reseteamos el estado general del cliente
+            
+        # ==========================================================
             
         # MAGIA AQUÍ: Al cambiar el estado a CEDIDO, forzamos el cálculo de "aceleración"
         exp.monto_actual = Decimal(str(calcular_deuda_actualizada(exp)))
-        exp.save()
         
-        messages.success(request, f"¡Expediente movido a Cedidos y deuda total acelerada!")
-
+        exp.save()
+        messages.success(request, f"Expediente movido a Cedidos con fecha de cesión: {exp.fecha_cesion}. Secuencias reiniciadas.")
+        
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
