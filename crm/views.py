@@ -265,6 +265,7 @@ def dashboard_crm(request, empresa_id):
 from decimal import Decimal # Asegúrate de que esto esté en los imports arriba del archivo
 
 @login_required
+@require_POST
 def editar_expediente(request, exp_id):
     expediente = get_object_or_404(Expediente, id=exp_id)
     empresa = expediente.empresa
@@ -276,22 +277,27 @@ def editar_expediente(request, exp_id):
             # 1. Guardamos en memoria (sin afectar la base de datos todavía)
             exp = form.save(commit=False)
             
-            # 2. FORZAMOS atrapar la Financiación (evita errores de validación del Select de Django)
+            # 2. FORZAMOS atrapar la Financiación (evita errores de validación)
             nuevo_tipo = request.POST.get('tipo_producto')
             if nuevo_tipo:
                 exp.tipo_producto = nuevo_tipo
                 
-            # Guardamos los datos actualizados (incluyendo si editaron el monto_original)
+            # 3. LÓGICA DE REVERSIÓN DE CESIÓN
+            # Si el estado actual es CEDIDO, validamos si los nuevos datos aún lo permiten
+            if exp.estado == 'CEDIDO' and exp.faltantes_cesion:
+                exp.estado = 'ACTIVO'
+                messages.warning(request, f"El expediente {exp.numero_expediente} volvió a Impagos porque el nuevo método de financiación no admite cesión.")
+                
+            # Guardamos los datos base actualizados
             exp.save()
             
-            # 3. RECALCULAMOS la deuda (ahora tomará los valores frescos que acabamos de guardar)
+            # 4. RECALCULAMOS la deuda (Tomará en cuenta si volvió a ACTIVO o sigue CEDIDO)
             exp.monto_actual = Decimal(str(calcular_deuda_actualizada(exp)))
             exp.save()
             
             messages.success(request, f"Expediente {exp.numero_expediente} actualizado correctamente.")
         else:
-            # Si el form falla por alguna regla estricta (pero los datos vinieron igual), 
-            # forzamos una actualización manual de seguridad para lo importante.
+            # LÓGICA DE RESPALDO SI EL FORM FALLA EN VALIDACIÓN ESTRICTA
             nuevo_tipo = request.POST.get('tipo_producto')
             nuevo_monto = request.POST.get('monto_original')
             
@@ -300,6 +306,11 @@ def editar_expediente(request, exp_id):
             if nuevo_monto:
                 expediente.monto_original = Decimal(nuevo_monto)
                 
+            # También verificamos reversión en el respaldo
+            if expediente.estado == 'CEDIDO' and expediente.faltantes_cesion:
+                expediente.estado = 'ACTIVO'
+                messages.warning(request, f"El expediente {expediente.numero_expediente} volvió a Impagos porque el nuevo método de financiación no admite cesión.")
+                
             expediente.save()
             expediente.monto_actual = Decimal(str(calcular_deuda_actualizada(expediente)))
             expediente.save()
@@ -307,12 +318,10 @@ def editar_expediente(request, exp_id):
             messages.success(request, f"Expediente {expediente.numero_expediente} forzado y actualizado correctamente.")
 
     # LÓGICA DE RETORNO INTELIGENTE:
-    # Intentamos volver a la página anterior (Detalle o Dashboard)
     referer = request.META.get('HTTP_REFERER')
     if referer:
         return redirect(referer)
     
-    # Si por algún motivo no hay referer, volvemos al dashboard por defecto
     return redirect('crm:dashboard_crm', empresa_id=empresa.id)
 
 @login_required
@@ -460,7 +469,6 @@ def subir_documento_crm(request, exp_id):
         messages.error(request, "No se seleccionó ningún archivo.")
         
     return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
-
 
 
 @login_required

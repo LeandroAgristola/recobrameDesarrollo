@@ -1,8 +1,8 @@
 
 CRM
 
-en la pestaña de cedidos si cambiamos el tipo de impaga a uno q no permita cedidos se tiene q mover de nuevo a la petaña de impagos
 
+guarda como fecha de cesion al moverlo a cedido
 
 Agregar 2 pestañas en REG recobros para individualizar los creditos Cedidos
 Validacion de duplicados (si es q esta refinancioado)
