@@ -199,7 +199,11 @@
                 </select>
             </td>
 
-            <td class="col-id small fw-bold text-primary">{{ exp.numero_expediente }}</td>
+            <td class="col-id small fw-bold text-primary">
+                    <a href="{% url 'crm:detalle_expediente' exp.id %}" class="fw-bold text-decoration-none">
+                        {{ exp.numero_expediente }}
+                    </a>
+            </td>
             <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
             <td class="col-tel small">{{ exp.deudor_telefono }}</td>
             <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>

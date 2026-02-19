@@ -23,95 +23,88 @@
             </div>
 
             <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Filtrar</button>
-                
-                {% if filtros_recobros.r_q or filtros_recobros.r_desde %}
-                <a href="?tab=recobros" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark"></i></a>
+                <button type="submit" class="btn btn-primary fw-bold w-100 shadow-sm">
+                    <i class="fa-solid fa-filter me-1"></i> Filtrar
+                </button>
+                {% if filtros_recobros.r_q or filtros_recobros.r_desde or filtros_recobros.r_hasta %}
+                <a href="{% url 'crm:dashboard_crm' empresa.id %}?tab=recobros" class="btn btn-danger shadow-sm" title="Limpiar">
+                    <i class="fa-solid fa-trash-can"></i>
+                </a>
                 {% endif %}
             </div>
         </form>
 
-        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th class="ps-3">Fecha</th>
-                        <th>Expediente</th>
-                        <th>Método</th>
-                        <th class="text-end">Monto</th>
-                        <th class="text-end">Descuento</th> <th class="text-center">Comp.</th>
-                        <th class="text-end pe-3">Acciones</th> </tr>
-                </thead>
-                <tbody>
-                    {% for pago in recobros %}
-                    <tr>
-                        <td class="ps-3 small">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
-                        <td class="small fw-bold">{{ pago.expediente.deudor_nombre }}</td>
-                        <td class="small">{{ pago.metodo_pago }}</td>
-                        
-                        <td class="text-end fw-bold text-success small">+{{ pago.monto }}€</td>
-                        
-                        <td class="text-end fw-bold text-warning small">
-                            {% if pago.descuento > 0 %}-{{ pago.descuento }}€{% else %}-{% endif %}
-                        </td>
-                        
-                        <td class="text-center">
-                            {% if pago.comprobante %}
-                                <a href="{{ pago.comprobante.url }}" target="_blank" class="text-secondary"><i class="fa-solid fa-paperclip"></i></a>
-                            {% endif %}
-                        </td>
-                        
-                        <td class="text-end pe-3">
-                            <div class="btn-group">
-                                <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="btn btn-sm btn-outline-secondary border-0" title="Ver Expediente">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                
-                                <button type="button" class="btn btn-sm btn-outline-primary border-0" 
-                                        data-bs-toggle="modal" data-bs-target="#modalEditarPago-{{ pago.id }}" title="Editar Pago">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                
-                                <button type="button" class="btn btn-sm btn-outline-danger border-0" 
-                                        data-bs-toggle="modal" data-bs-target="#modalEliminarPago-{{ pago.id }}" title="Eliminar Pago">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
+        {% if empresa.crm_config.tiene_cedidos %}
+        <div class="mb-3">
+            <ul class="nav nav-pills" id="pills-recobros-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active btn-sm px-4 border" data-bs-toggle="pill" data-bs-target="#pills-recobros-impagos" type="button">
+                        <i class="fa-solid fa-file-circle-exclamation me-2"></i>Recobros de Impagos
+                        <span class="badge bg-white text-dark ms-2 border">{{ recobros_impagos.count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item ms-2" role="presentation">
+                    <button class="nav-link btn-sm px-4 border" data-bs-toggle="pill" data-bs-target="#pills-recobros-cedidos" type="button">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>Recobros de Cedidos
+                        <span class="badge bg-white text-dark ms-2 border">{{ recobros_cedidos.count }}</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
 
-                            <div class="modal fade" id="modalEditarPago-{{ pago.id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-sm modal-dialog-centered">
-                                    <div class="modal-content text-start">
-                                        <div class="modal-header py-2 bg-light">
-                                            <h6 class="modal-title fw-bold">Editar Pago</h6>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="pills-recobros-impagos" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="text-muted small text-uppercase">
+                                <th>Fecha</th>
+                                <th>Expediente</th>
+                                <th>Deudor</th>
+                                <th>Método</th>
+                                <th class="text-end">Descuento</th>
+                                <th class="text-end text-success">Monto Real</th>
+                                <th class="text-center">Comp.</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pago in recobros_impagos %}
+                            <tr>
+                                <td class="small">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                                <td>
+                                    <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="fw-bold text-decoration-none">
+                                        {{ pago.expediente.numero_expediente }}
+                                    </a>
+                                </td>
+                                <td class="fw-bold">{{ pago.expediente.deudor_nombre }}</td>
+                                <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">{{ pago.get_metodo_pago_display|default:pago.metodo_pago }}</span></td>
+                                <td class="text-end text-warning small fw-bold">{% if pago.descuento > 0 %}-{{ pago.descuento }}€{% else %}-{% endif %}</td>
+                                <td class="text-end text-success fw-bold">+{{ pago.monto }}€</td>
+                                <td class="text-center">
+                                    {% if pago.comprobante %}
+                                        <a href="{{ pago.comprobante.url }}" target="_blank" class="btn btn-sm btn-outline-info border-0"><i class="fa-solid fa-file-invoice"></i></a>
+                                    {% else %}
+                                        <span class="text-muted small">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalEliminarPago{{ pago.id }}"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            
+                            <div class="modal fade" id="modalEliminarPago{{ pago.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-danger bg-opacity-10 border-bottom-0">
+                                            <h6 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Pago</h6>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
-                                        <form action="{% url 'crm:editar_pago' pago.id %}" method="POST">
-                                            {% csrf_token %}
-                                            <div class="modal-body">
-                                                <label class="small fw-bold text-muted">Monto Pagado (€)</label>
-                                                <input type="number" step="0.01" name="monto" value="{{ pago.monto|stringformat:'.2f' }}" class="form-control form-control-sm mb-2" required>
-                                                
-                                                <label class="small fw-bold text-muted">Descuento Aplicado (€)</label>
-                                                <input type="number" step="0.01" name="descuento" value="{{ pago.descuento|stringformat:'.2f' }}" class="form-control form-control-sm border-warning">
-                                            </div>
-                                            <div class="modal-footer py-1">
-                                                <button type="submit" class="btn btn-sm btn-primary w-100">Guardar Cambios</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal fade" id="modalEliminarPago-{{ pago.id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-sm modal-dialog-centered">
-                                    <div class="modal-content text-start">
-                                        <div class="modal-header py-2 bg-danger text-white">
-                                            <h6 class="modal-title fw-bold">Eliminar Pago</h6>
-                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <p class="small mb-1">¿Estás seguro? Se restaurará la deuda de:</p>
-                                            <h5 class="fw-bold text-danger">{{ pago.monto }}€</h5>
+                                        <div class="modal-body text-center mt-2 pb-4">
+                                            <p class="mb-1">¿Estás seguro de eliminar este pago?</p>
+                                            <small class="text-muted d-block">La deuda del expediente volverá a aumentar.</small>
+                                            <h5 class="mt-3 fw-bold text-danger">{{ pago.monto }}€</h5>
                                         </div>
                                         <div class="modal-footer py-1 justify-content-center">
                                             <form action="{% url 'crm:eliminar_pago' pago.id %}" method="POST">
@@ -122,21 +115,91 @@
                                     </div>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="11" class="text-center py-5">
-                            <div class="text-success opacity-50 mb-3">
-                                <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="text-success opacity-50 mb-3"><i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i></div>
+                                    <h6 class="fw-bold text-muted mb-0">No hay pagos registrados.</h6>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% if empresa.crm_config.tiene_cedidos %}
+            <div class="tab-pane fade" id="pills-recobros-cedidos" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr class="text-muted small text-uppercase">
+                                <th>Fecha</th>
+                                <th>Expediente</th>
+                                <th>Deudor</th>
+                                <th>Método</th>
+                                <th class="text-end text-success">Monto Real</th>
+                                <th class="text-center">Comp.</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pago in recobros_cedidos %}
+                            <tr class="table-warning" style="--bs-table-bg-type: solid; --bs-table-bg: rgba(255, 193, 7, 0.05);">
+                                <td class="small">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                                <td>
+                                    <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="fw-bold text-warning text-decoration-none">
+                                        {{ pago.expediente.numero_expediente }}
+                                    </a>
+                                </td>
+                                <td class="fw-bold">{{ pago.expediente.deudor_nombre }}</td>
+                                <td><span class="badge bg-white text-dark border">{{ pago.get_metodo_pago_display|default:pago.metodo_pago }}</span></td>
+                                <td class="text-end text-success fw-bold">+{{ pago.monto }}€</td>
+                                <td class="text-center">
+                                    {% if pago.comprobante %}
+                                        <a href="{{ pago.comprobante.url }}" target="_blank" class="btn btn-sm btn-outline-info border-0"><i class="fa-solid fa-file-invoice"></i></a>
+                                    {% else %}
+                                        <span class="text-muted small">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalEliminarPagoCedido{{ pago.id }}"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            
+                            <div class="modal fade" id="modalEliminarPagoCedido{{ pago.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-danger bg-opacity-10 border-bottom-0">
+                                            <h6 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Pago (Cedido)</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-center mt-2 pb-4">
+                                            <p class="mb-1">¿Estás seguro de eliminar este pago?</p>
+                                            <h5 class="mt-3 fw-bold text-danger">{{ pago.monto }}€</h5>
+                                        </div>
+                                        <div class="modal-footer py-1 justify-content-center">
+                                            <form action="{% url 'crm:eliminar_pago' pago.id %}" method="POST">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-danger fw-bold">Sí, Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
-                            <small class="text-muted">Los pagos realizados aparecerán aquí automáticamente.</small>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-warning opacity-50 mb-3"><i class="fa-solid fa-file-signature" style="font-size: 3rem;"></i></div>
+                                    <h6 class="fw-bold text-muted mb-0">No hay pagos registrados en cedidos.</h6>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

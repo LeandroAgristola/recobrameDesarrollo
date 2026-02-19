@@ -82,7 +82,7 @@ def lista_crm(request):
     empresas = Empresa.objects.filter(is_active=True) 
     return render(request, 'crm/lista_crm.html', {'empresas': empresas})
 
-# --- BÚSQUEDA AJAX PARA AUTOCOMPLETADO ---
+# --- VISTA DE BÚSQUEDA DE ANTECEDENTES (AJAX) ---
 @login_required
 def buscar_antecedentes_deudor(request):
     try:
@@ -113,7 +113,6 @@ def buscar_antecedentes_deudor(request):
         print(f"Error en buscar_antecedentes: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-
 # --- VISTA PRINCIPAL (DASHBOARD) ---
 @login_required
 def dashboard_crm(request, empresa_id):
@@ -122,37 +121,35 @@ def dashboard_crm(request, empresa_id):
     # --- 1. LÓGICA DE EXPEDIENTES ---
     expedientes_qs = Expediente.objects.filter(empresa=empresa).order_by('numero_expediente')
     
-    # Actualización automática de deuda (Solo activos)
+    # Actualización automática de deuda (Solo activos ACTIVO)
     for exp in expedientes_qs.filter(activo=True, estado='ACTIVO'):
         try:
             nueva_deuda = calcular_deuda_actualizada(exp)
-            if exp.monto_actual is None or abs(float(exp.monto_actual) - nueva_deuda) > 0.01: 
+            if exp.monto_actual is None or abs(float(exp.monto_actual) - nueva_deuda) > 0.01:
                 exp.monto_actual = Decimal(str(nueva_deuda))
                 exp.save(update_fields=['monto_actual'])
         except Exception:
             continue
 
     # --- 2. PROCESAMIENTO DEL FORMULARIO DE ALTA (POST) ---
-    form = ExpedienteForm(empresa=empresa) 
+    form = ExpedienteForm(empresa=empresa)
+
     if request.method == 'POST' and 'nuevo_expediente' in request.POST:
-        form = ExpedienteForm(request.POST, request.FILES, empresa=empresa) 
+        form = ExpedienteForm(request.POST, request.FILES, empresa=empresa)
+
         if form.is_valid():
             nuevo_exp = form.save(commit=False)
-            nuevo_exp.empresa = empresa 
-            
-            # --- NUEVA LÓGICA DE ID SEGURO ---
-            # Agregamos el ID de la empresa al prefijo para evitar colisiones entre empresas
+            nuevo_exp.empresa = empresa
+
             prefix = f"{empresa.nombre[:3].upper()}{empresa.id}"
             count = Expediente.objects.filter(empresa=empresa).count() + 1
             nuevo_numero = f"{prefix}-{count:06d}"
 
-            # Bucle de seguridad: Si por alguna razón (borrados, concurrencia) ese número ya existe, pasa al siguiente
             while Expediente.objects.filter(numero_expediente=nuevo_numero).exists():
                 count += 1
                 nuevo_numero = f"{prefix}-{count:06d}"
-                
+
             nuevo_exp.numero_expediente = nuevo_numero
-            # ---------------------------------
 
             try:
                 nuevo_exp.monto_actual = Decimal(str(calcular_deuda_actualizada(nuevo_exp)))
@@ -164,106 +161,150 @@ def dashboard_crm(request, empresa_id):
             nuevo_exp.activo = True
             nuevo_exp.save()
             form.save_m2m()
-            
+
             messages.success(request, f"Expediente {nuevo_exp.numero_expediente} creado correctamente.")
             return redirect('crm:dashboard_crm', empresa_id=empresa.id)
         else:
             messages.error(request, "Error al crear expediente. Revisa los campos.")
 
-    # --- 3. LÓGICA DE FILTROS IMPAGOS (GET) ---
-    qs_filtrado = expedientes_qs 
+    # --- 3. FILTROS IMPAGOS ---
+    qs_filtrado = expedientes_qs
     q = request.GET.get('q', '')
 
     if q:
         qs_filtrado = qs_filtrado.filter(
-            Q(deudor_nombre__icontains=q) | 
+            Q(deudor_nombre__icontains=q) |
             Q(numero_expediente__icontains=q) |
             Q(deudor_dni__icontains=q) |
             Q(deudor_email__icontains=q) |
             Q(deudor_telefono__icontains=q)
         )
 
-    # Filtros por columna (f_*)
+    # Filtros por columna
     f_agente = request.GET.get('f_agente')
     if f_agente: qs_filtrado = qs_filtrado.filter(agente_id=f_agente)
+
     f_tel = request.GET.get('f_tel')
     if f_tel: qs_filtrado = qs_filtrado.filter(deudor_telefono__icontains=f_tel)
+
     f_tipo = request.GET.get('f_tipo')
     if f_tipo: qs_filtrado = qs_filtrado.filter(tipo_producto__icontains=f_tipo)
+
     f_monto = request.GET.get('f_monto')
     if f_monto: qs_filtrado = qs_filtrado.filter(monto_original=f_monto)
+
     f_cuotas = request.GET.get('f_cuotas')
     if f_cuotas: qs_filtrado = qs_filtrado.filter(cuotas_totales=f_cuotas)
+
     f_estado = request.GET.get('f_estado')
     if f_estado: qs_filtrado = qs_filtrado.filter(causa_impago=f_estado)
+
     f_comentario = request.GET.get('f_comentario')
     if f_comentario: qs_filtrado = qs_filtrado.filter(comentario_estandar=f_comentario)
-    
-    # Filtros de fechas (f_*)
+
+    # Filtros fechas
     f_compra_desde = request.GET.get('f_compra_desde')
     f_compra_hasta = request.GET.get('f_compra_hasta')
     if f_compra_desde: qs_filtrado = qs_filtrado.filter(fecha_compra__gte=f_compra_desde)
     if f_compra_hasta: qs_filtrado = qs_filtrado.filter(fecha_compra__lte=f_compra_hasta)
-    
+
     f_impago_desde = request.GET.get('f_impago_desde')
     f_impago_hasta = request.GET.get('f_impago_hasta')
     if f_impago_desde: qs_filtrado = qs_filtrado.filter(fecha_impago__gte=f_impago_desde)
     if f_impago_hasta: qs_filtrado = qs_filtrado.filter(fecha_impago__lte=f_impago_hasta)
 
-    # --- 4. LÓGICA DE FILTROS RECOBROS ---
-    recobros_qs = RegistroPago.objects.filter(expediente__empresa=empresa).select_related('expediente').order_by('-fecha_pago')
+    # --- BASE ACTIVA PARA TABS ---
+    base_qs = qs_filtrado.filter(activo=True)
+
+    impagos = base_qs.filter(estado='ACTIVO')
+    cedidos = base_qs.filter(estado='CEDIDO')
+
+    # --- PAGADOS SEPARADOS ---
+    pagados_base = base_qs.filter(estado='PAGADO')
+    pagados_impagos = pagados_base.filter(fecha_cesion__isnull=True)
+    pagados_cedidos = pagados_base.filter(fecha_cesion__isnull=False)
+
+    # --- PAPELERA SEPARADA ---
+    papelera_base = expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion')
+    papelera_impagos = papelera_base.filter(fecha_cesion__isnull=True)
+    papelera_cedidos = papelera_base.filter(fecha_cesion__isnull=False)
+
+    # --- 4. FILTROS RECOBROS ---
+    # PRIMERO: Creamos la consulta base de recobros
+    recobros_qs = RegistroPago.objects.filter(
+        expediente__empresa=empresa
+    ).select_related('expediente').order_by('-fecha_pago')
 
     r_q = request.GET.get('r_q', '')
     r_desde = request.GET.get('r_desde')
     r_hasta = request.GET.get('r_hasta')
 
+    # SEGUNDO: Aplicamos las búsquedas y fechas (si las hay)
     if r_q:
         recobros_qs = recobros_qs.filter(
             Q(expediente__deudor_nombre__icontains=r_q) |
             Q(expediente__numero_expediente__icontains=r_q) |
             Q(monto__icontains=r_q)
         )
+
     if r_desde: recobros_qs = recobros_qs.filter(fecha_pago__gte=r_desde)
     if r_hasta: recobros_qs = recobros_qs.filter(fecha_pago__lte=r_hasta)
 
-    # --- 5. DETERMINAR ESTADO DE LA UI (VITAL) ---
+    # TERCERO: Dividimos la consulta para las sub-pestañas "Pills"
+    recobros_impagos = recobros_qs.filter(expediente__fecha_cesion__isnull=True)
+    recobros_cedidos = recobros_qs.filter(expediente__fecha_cesion__isnull=False)
+
+    # --- 5. UI ---
     tab_activa = request.GET.get('tab', 'impagos')
-    # Si hay filtros de recobros, la pestaña activa debe ser recobros
     if r_q or r_desde or r_hasta:
         tab_activa = 'recobros'
 
-    # DETERMINAMOS SI SE DEBE MOSTRAR LA FILA DE FILTROS DE IMPAGOS
-    # Solo si el usuario está filtrando específicamente por esa pestaña
+
     hay_filtros_impagos = any(key.startswith('f_') for key in request.GET) or (q != '')
 
     context = {
         'empresa': empresa,
-        'impagos': qs_filtrado.filter(activo=True, estado='ACTIVO'),
-        'cedidos': qs_filtrado.filter(activo=True, estado='CEDIDO'),
-        'pagados': qs_filtrado.filter(activo=True, estado='PAGADO'),
-        'papelera': expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion'),
-        
-        'recobros': recobros_qs, # Variable filtrada
-        
+
+        # Tabs principales
+        'impagos': impagos,
+        'cedidos': cedidos,
+
+        # Pagados separados
+        'pagados_impagos': pagados_impagos,
+        'pagados_cedidos': pagados_cedidos,
+
+        # Papelera separada
+        'papelera_impagos': papelera_impagos,
+        'papelera_cedidos': papelera_cedidos,
+
+        # Recobros filtrados
+        'recobros_impagos': recobros_impagos,
+        'recobros_cedidos': recobros_cedidos,
+
+        'recobros': recobros_qs,
+
         'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
         'tipos_producto': Expediente.objects.filter(empresa=empresa)
                         .values_list('tipo_producto', flat=True)
                         .distinct()
                         .order_by('tipo_producto'),
+
         'form': form,
-        
+
         'q': q,
         'filtros_recobros': {'r_q': r_q, 'r_desde': r_desde, 'r_hasta': r_hasta},
         'tab_activa': tab_activa,
         'hay_filtros_impagos': hay_filtros_impagos,
         'filtros': request.GET
     }
+
     return render(request, 'crm/dashboard_empresa.html', context)
+
+
  
 # --- VISTAS DE ACCIÓN ---
 
-from decimal import Decimal # Asegúrate de que esto esté en los imports arriba del archivo
-
+# Vista para editar un expediente, con lógica de validación y actualización de deuda, y redirección inteligente a la página anterior o al dashboard si no hay referer válido
 @login_required
 @require_POST
 def editar_expediente(request, exp_id):
@@ -324,6 +365,7 @@ def editar_expediente(request, exp_id):
     
     return redirect('crm:dashboard_crm', empresa_id=empresa.id)
 
+# Vista para eliminar un expediente (eliminación lógica), con mensaje de advertencia y redirección inteligente a la página anterior o al dashboard si no hay referer válido
 @login_required
 def eliminar_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
@@ -334,6 +376,7 @@ def eliminar_expediente(request, exp_id):
         messages.warning(request, f"Expediente movido a la papelera.")
     return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
+# Vista para restaurar un expediente desde la papelera, con mensaje de éxito
 @login_required
 def restaurar_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
@@ -341,6 +384,7 @@ def restaurar_expediente(request, exp_id):
     messages.success(request, f"Expediente de {exp.deudor_nombre} restaurado.")
     return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
 
+# Vista para eliminar definitivamente un expediente desde la papelera, con confirmación y mensaje de éxito
 @login_required
 def eliminar_permanente_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
@@ -351,7 +395,7 @@ def eliminar_permanente_expediente(request, exp_id):
         messages.success(request, f"El expediente de {nombre} ha sido eliminado definitivamente.")
     return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
-# --- API / JSON ENDPOINTS ---
+# Vista para actualizar el estado de seguimiento (ticks) de forma rápida sin recargar toda la página
 @login_required
 @require_POST
 def actualizar_seguimiento(request):
@@ -402,6 +446,7 @@ def actualizar_seguimiento(request):
             'fecha_promesa_legible': exp.fecha_pago_promesa.strftime("%d/%m") if exp.fecha_pago_promesa else "-"
         })
 
+# Esta vista es para actualizar el comentario estándar (dropdown) de forma rápida sin recargar toda la página
 @login_required
 @require_POST
 def actualizar_comentario_estandar(request):
@@ -411,6 +456,7 @@ def actualizar_comentario_estandar(request):
     exp.save()
     return JsonResponse({'status': 'ok'})
 
+# Esta vista es para actualizar el comentario libre (textarea) de forma rápida sin recargar toda la página
 @login_required
 @require_POST
 def guardar_comentario_libre(request, expediente_id):
@@ -429,6 +475,7 @@ def guardar_comentario_libre(request, expediente_id):
     # Redirigimos a la página anterior (el dashboard)
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
 
+# Esta vista es para actualizar el agente asignado de forma rápida sin recargar toda la página
 @login_required
 @require_POST
 def actualizar_agente(request):
@@ -450,6 +497,7 @@ def actualizar_agente(request):
     exp.save()
     return JsonResponse({'status': 'ok', 'agente_nombre': nombre_agente})
 
+# Vistas para subir y eliminar documentos relacionados a un expediente
 @login_required
 @require_POST
 def subir_documento_crm(request, exp_id):
@@ -470,7 +518,7 @@ def subir_documento_crm(request, exp_id):
         
     return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
 
-
+# Vista para eliminar un documento específico (AJAX)
 @login_required
 @require_POST
 def eliminar_documento_crm(request, doc_id):
@@ -481,6 +529,7 @@ def eliminar_documento_crm(request, doc_id):
     
     return JsonResponse({'status': 'ok', 'message': f"Documento {nombre} eliminado."})
 
+# Vista de detalle del expediente, donde se muestran los datos completos, pagos realizados, y el formulario para registrar un nuevo pago
 @login_required
 def detalle_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
@@ -526,6 +575,7 @@ def detalle_expediente(request, exp_id):
     }
     return render(request, 'crm/detalle_expediente.html', context)
 
+# Vista para listar todos los recobros realizados, con filtros de búsqueda y paginación
 @login_required
 def lista_recobros(request):
     # Obtener todos los pagos ordenados por fecha
@@ -563,6 +613,7 @@ def lista_recobros(request):
         'filtros': request.GET
     })
 
+# Vistas para registrar, editar y eliminar pagos, con lógica de actualización de deuda y estado del expediente
 @login_required
 @require_POST
 def registrar_pago(request, expediente_id):
@@ -612,6 +663,7 @@ def registrar_pago(request, expediente_id):
 
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
 
+# Vistas para editar y eliminar pagos, con lógica de actualización de deuda y estado del expediente
 @login_required
 @require_POST
 def eliminar_pago(request, pago_id):
@@ -638,7 +690,7 @@ def eliminar_pago(request, pago_id):
     messages.success(request, "Pago eliminado y deuda restaurada.")
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
 
-
+# Vista para editar un pago existente, permitiendo modificar monto y descuento, y luego recalculando la deuda y estado del expediente
 @login_required
 @require_POST
 def editar_pago(request, pago_id):
@@ -670,6 +722,7 @@ def editar_pago(request, pago_id):
         
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
 
+# Vista para confirmar la cesión de un expediente, verificando que cumpla con los requisitos y luego actualizando su estado a CEDIDO, con lógica de aceleración de deuda
 @login_required
 @require_POST
 def confirmar_cesion(request, exp_id):

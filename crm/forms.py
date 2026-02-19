@@ -61,6 +61,7 @@ class PagoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.expediente = kwargs.pop('expediente', None)
         super().__init__(*args, **kwargs)
+        self.fields['descuento'].required = False
 
     class Meta:
         model = RegistroPago

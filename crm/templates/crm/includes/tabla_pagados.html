@@ -1,9 +1,8 @@
-<div class="crm-table-container border shadow-sm">
+<div class="crm-table-container border shadow-sm pb-3">
     
-    <div class="container-fluid py-4">
+    <div class="container-fluid py-4 pb-2">
         <div class="col-md-5 col-lg-5">
             <div class="d-flex w-100 align-items-center">
-                
                 <div class="d-flex flex-grow-1">
                     <div class="search-box w-100 position-relative">
                         <i class="fa-solid fa-search search-icon"></i>
@@ -14,14 +13,9 @@
                     </div>
                     <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
                             style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
-                        {% if q %}
-                            <i class="fa-solid fa-check"></i> 
-                        {% else %}
-                            Buscar
-                        {% endif %}
+                        {% if q %}<i class="fa-solid fa-check"></i>{% else %}Buscar{% endif %}
                     </button>
                 </div>
-
                 <div class="d-flex ms-2 gap-1">
                     {% if q %}
                         <a href="{% url 'crm:dashboard_crm' empresa.id %}?tab=ha-pagado" class="btn btn-danger shadow-sm" title="Limpiar Búsqueda">
@@ -29,171 +23,110 @@
                         </a>
                     {% endif %}
                 </div>
-
             </div>
         </div>
     </div> 
 
-    <table class="table table-hover align-middle mb-0 table-crm">
-        <thead class="bg-light sticky-top" style="z-index: 100;">
-            <tr class="text-center small text-uppercase text-muted">
-                <th class="col-agente">Agente</th>
-                <th class="col-id">ID</th>
-                <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
-                <th class="col-tel">Teléfono</th>
-                <th class="col-tipo">Tipo</th>
-                
-                <th class="col-monto text-center">Total Orig.</th>
-                <th class="col-monto text-center text-success">Pagado Real</th>
-                <th class="col-monto text-center text-warning">Desc.</th> 
-                <th class="col-cuota text-center">Cuotas</th>
-                <th class="col-fecha text-center">F. Compra</th>
-                <th class="col-fecha text-center">F. Cierre</th> 
-                <th class="col-acciones text-center" style="min-width: 120px;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for exp in pagados %}
-            <tr id="fila-pagado-{{ exp.id }}" class="text-center table-success table-striped align-middle" style="--bs-table-bg-type: solid; --bs-table-bg: rgba(25, 135, 84, 0.05);">
-                
-                <td class="col-agente text-muted small fw-medium">
-                    {{ exp.agente.username|default:"- Sin Asignar -" }}
-                </td>
+    {% if empresa.crm_config.tiene_cedidos %}
+    <div class="px-3 mb-3">
+        <ul class="nav nav-pills" id="pills-pagados-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active btn-sm px-4 border" data-bs-toggle="pill" data-bs-target="#pills-pagados-impagos" type="button">
+                    <i class="fa-solid fa-file-circle-exclamation me-2"></i>Impagos
+                    <span class="badge bg-white text-dark ms-2 border">{{ pagados_impagos.count }}</span>
+                </button>
+            </li>
+            <li class="nav-item ms-2" role="presentation">
+                <button class="nav-link btn-sm px-4 border" data-bs-toggle="pill" data-bs-target="#pills-pagados-cedidos" type="button">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>Cedidos
+                    <span class="badge bg-white text-dark ms-2 border">{{ pagados_cedidos.count }}</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+    {% endif %}
 
-                <td class="col-id small fw-bold text-success">{{ exp.numero_expediente }}</td>
-                <td class="col-nombre fw-bold text-dark">{{ exp.deudor_nombre }}</td>
-                <td class="col-tel small text-muted">{{ exp.deudor_telefono }}</td>
-                
-                <td class="col-tipo">
-                    <span class="badge bg-white text-success border border-success border-opacity-25">{{ exp.tipo_producto }}</span>
-                </td>
-                
-                <td class="col-monto text-center small text-muted text-decoration-line-through">{{ exp.monto_original }} €</td>
-                
-                <td class="col-monto text-center fw-bold text-success">
-                    <i class="fa-solid fa-check-circle me-1 small"></i>{{ exp.monto_recuperado|default:"0.00" }} €
-                </td>
-    
-
-                <td class="col-monto text-center fw-bold text-warning">
-                    {% with descuento=exp.get_descuento_acumulado %}
-                        {% if descuento > 0 %}-{{ descuento }} €
-                        {% else %}
-                            <span class="text-muted opacity-25">-</span>
-                        {% endif %}
-                    {% endwith %}
-                </td>
-                
-                <td class="col-cuota text-center small text-muted">{{ exp.cuotas_totales }}</td>
-                <td class="col-fecha text-center small text-muted">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
-                
-                <td class="col-fecha text-center small text-success fw-bold">
-                    {{ exp.pagos.first.fecha_pago|date:"d/m/y"|default:"-" }}
-                </td>
-                
-                <td class="col-acciones bg-transparent">
-                    <div class="d-flex gap-1 justify-content-center">
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="pills-pagados-impagos" role="tabpanel">
+            <table class="table table-hover align-middle mb-0 table-crm">
+                <thead class="bg-light sticky-top" style="z-index: 100;">
+                    <tr class="text-center small text-uppercase text-muted">
+                        <th class="col-agente">Agente</th>
+                        <th class="col-id">ID</th>
+                        <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
+                        <th class="col-monto text-center">Total Orig.</th>
+                        <th class="col-monto text-center text-success">Pagado Real</th>
+                        <th class="col-monto text-center text-warning">Desc.</th> 
+                        <th class="col-fecha text-center">F. Cierre</th> 
+                        <th class="col-acciones text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in pagados_impagos %}
+                        <tr id="fila-pagado-{{ exp.id }}" class="text-center table-success table-striped align-middle" style="--bs-table-bg-type: solid; --bs-table-bg: rgba(25, 135, 84, 0.05);">
+                            <td class="col-agente text-muted small fw-medium">{{ exp.agente.username|default:"- Sin Asignar -" }}</td>
+                            <td class="col-id small fw-bold text-success">{{ exp.numero_expediente }}</td>
+                            <td class="col-nombre fw-bold text-dark">{{ exp.deudor_nombre }}</td>
+                            <td class="col-monto text-center small text-muted text-decoration-line-through">{{ exp.monto_original }} €</td>
+                            <td class="col-monto text-center fw-bold text-success"><i class="fa-solid fa-check-circle me-1 small"></i>{{ exp.monto_recuperado|default:"0.00" }} €</td>
+                            <td class="col-monto text-center fw-bold text-warning">
+                                {% with descuento=exp.get_descuento_acumulado %}{% if descuento > 0 %}-{{ descuento }} €{% else %}-{% endif %}{% endwith %}
+                            </td>
+                            <td class="col-fecha text-center small text-success fw-bold">{{ exp.pagos.first.fecha_pago|date:"d/m/y"|default:"-" }}</td>
+                            <td class="col-acciones bg-transparent">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <button type="button" class="btn btn-sm btn-outline-warning" title="Documentación" data-bs-toggle="modal" data-bs-target="#modalDocsPagados{{ exp.id }}"><i class="fa-solid fa-folder-open"></i></button>
+                                    <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary" title="Ver Detalle"><i class="fa-solid fa-eye"></i></a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Mover a Papelera" data-bs-toggle="modal" data-bs-target="#modalPapeleraPagados{{ exp.id }}"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
                         
-                        <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm" 
-                                title="Documentación" data-bs-toggle="modal" 
-                                data-bs-target="#modalDocsPagados{{ exp.id }}">
-                            <i class="fa-solid fa-folder-open"></i>
-                        </button>
-                        
-                        <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
-                            <i class="fa-solid fa-eye"></i>
-                        </a>
+                        {% empty %}
+                        <tr><td colspan="8" class="text-center py-5"><div class="text-success opacity-50 mb-3"><i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i></div><h6 class="fw-bold text-muted mb-0">No hay impagos recuperados.</h6></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm" 
-                                title="Mover a Papelera" data-bs-toggle="modal" 
-                                data-bs-target="#modalPapeleraPagados{{ exp.id }}">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-
-            <div class="modal fade" id="modalDocsPagados{{ exp.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow">
-                        <form action="{% url 'crm:subir_documento_crm' exp.id %}" method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <input type="hidden" name="tab" value="ha-pagado">
-                            <div class="modal-header bg-secondary text-white py-2">
-                                <h6 class="modal-title fw-bold">Documentos (Pagado): {{ exp.deudor_nombre }}</h6>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-muted">Archivos guardados:</label>
-                                    <ul class="list-group list-group-flush border rounded">
-                                        {% for doc in exp.documentos.all %}
-                                        <li class="list-group-item d-flex justify-content-between align-items-center py-1 small">
-                                            <span><i class="fa-solid fa-file-pdf me-2 text-danger"></i>{{ doc.nombre_archivo|truncatechars:30 }}</span>
-                                            <a href="{{ doc.archivo.url }}" target="_blank" class="btn btn-link btn-sm p-0"><i class="fa-solid fa-download"></i></a>
-                                        </li>
-                                        {% empty %}
-                                        <li class="list-group-item small text-muted text-center">Sin documentos</li>
-                                        {% endfor %}
-                                    </ul>
+        {% if empresa.crm_config.tiene_cedidos %}
+        <div class="tab-pane fade" id="pills-pagados-cedidos" role="tabpanel">
+            <table class="table table-hover align-middle mb-0 table-crm">
+                <thead class="bg-light sticky-top" style="z-index: 100;">
+                    <tr class="text-center small text-uppercase text-muted">
+                        <th class="col-agente">Agente</th>
+                        <th class="col-id">ID</th>
+                        <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
+                        <th class="col-monto text-center">Monto Acelerado</th>
+                        <th class="col-monto text-center text-success">Pagado Real</th>
+                        <th class="col-fecha text-center">F. Cesión</th>
+                        <th class="col-fecha text-center">F. Cierre</th> 
+                        <th class="col-acciones text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in pagados_cedidos %}
+                        <tr id="fila-pagado-ced-{{ exp.id }}" class="text-center table-warning table-striped align-middle" style="--bs-table-bg-type: solid; --bs-table-bg: rgba(255, 193, 7, 0.05);">
+                            <td class="col-agente text-muted small fw-medium">{{ exp.agente.username|default:"- Sin Asignar -" }}</td>
+                            <td class="col-id small fw-bold text-warning">{{ exp.numero_expediente }}</td>
+                            <td class="col-nombre fw-bold text-dark">{{ exp.deudor_nombre }}</td>
+                            <td class="col-monto text-center small text-muted">{{ exp.monto_original }} €</td>
+                            <td class="col-monto text-center fw-bold text-success"><i class="fa-solid fa-check-circle me-1 small"></i>{{ exp.monto_recuperado|default:"0.00" }} €</td>
+                            <td class="col-fecha text-center small text-muted">{{ exp.fecha_cesion|date:"d/m/y"|default:"-" }}</td>
+                            <td class="col-fecha text-center small text-success fw-bold">{{ exp.pagos.first.fecha_pago|date:"d/m/y"|default:"-" }}</td>
+                            <td class="col-acciones bg-transparent">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalDocsPagados{{ exp.id }}"><i class="fa-solid fa-folder-open"></i></button>
+                                    <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-eye"></i></a>
                                 </div>
-                                <hr>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-muted">Añadir justificante de cierre u otro:</label>
-                                    <select name="tipo_documento" class="form-select form-select-sm mb-2" required>
-                                        <option value="OTRO" selected>Justificante / Otros</option>
-                                        <option value="CONTRATO">Contrato de Cesión</option>
-                                    </select>
-                                    <input type="file" name="archivo" class="form-control form-control-sm" required>
-                                </div>
-                            </div>
-                            <div class="modal-footer bg-light py-2">
-                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                                <button type="submit" class="btn btn-sm btn-primary">Subir Documento</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="modalPapeleraPagados{{ exp.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow">
-                        <form action="{% url 'crm:eliminar_expediente' exp.id %}" method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="tab" value="ha-pagado">
-                            <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
-                                <h6 class="modal-title text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Ocultar Expediente Pagado</h6>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body text-start">
-                                <p class="mb-2">¿Deseas mover a la papelera el expediente de <strong>{{ exp.deudor_nombre }}</strong>?</p>
-                                <div class="alert alert-info py-2 small">
-                                    <i class="fa-solid fa-info-circle me-1"></i> Esto no borrará sus pagos registrados, pero lo quitará de esta vista.
-                                </div>
-                                <label class="form-label small fw-bold text-muted">Motivo de eliminación:</label>
-                                <textarea name="motivo_eliminacion" class="form-control" rows="2" required placeholder="Ej: Depuración, expediente antiguo..."></textarea>
-                            </div>
-                            <div class="modal-footer border-top-0 pt-0">
-                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-sm btn-warning fw-bold">Confirmar Baja</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            {% empty %}
-            <tr>
-                <td colspan="12" class="text-center py-5">
-                    <div class="text-success opacity-50 mb-3">
-                        <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
-                    </div>
-                    <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
-                    <small class="text-muted">Los expedientes cuya deuda llegue a cero aparecerán aquí automáticamente.</small>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" class="text-center py-5"><div class="text-warning opacity-50 mb-3"><i class="fa-solid fa-file-signature" style="font-size: 3rem;"></i></div><h6 class="fw-bold text-muted mb-0">No hay cedidos recuperados.</h6></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
 </div>
