@@ -284,6 +284,11 @@ class Expediente(models.Model):
         """Devuelve True si el expediente ya tiene el contrato de cesión cargado."""
         return self.documentos.filter(tipo='CONTRATO').exists()
 
+    @property
+    def user(self):
+        """Redirige las peticiones de .user a .agente para evitar errores de atributos"""
+        return self.agente
+
 class RegistroPago(models.Model):
     expediente = models.ForeignKey(Expediente, on_delete=models.CASCADE, related_name='pagos')
     monto = models.DecimalField(max_digits=12, decimal_places=2)

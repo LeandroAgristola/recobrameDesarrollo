@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db.models import Q 
 from django.utils import timezone
+from datetime import timedelta
 from datetime import date
 from django.contrib.auth.decorators import login_required 
 from django.views.decorators.http import require_POST    
@@ -10,9 +11,10 @@ import json
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from decimal import Decimal
-from django.db.models import Sum
+from django.db.models import F, Sum
 
-from empresas.models import Empresa
+
+from empresas.models import Empresa,EsquemaComision
 from .models import Expediente, RegistroPago, DocumentoExpediente
 from .forms import ExpedienteForm, PagoForm
 
@@ -79,8 +81,54 @@ def calcular_deuda_actualizada(expediente):
 
 @login_required
 def lista_crm(request):
-    empresas = Empresa.objects.filter(is_active=True) 
-    return render(request, 'crm/lista_crm.html', {'empresas': empresas})
+    # 1. Base de empresas (Añadimos order_by para que la paginación sea consistente)
+    empresas_list = Empresa.objects.filter(is_active=True).order_by('nombre')
+    
+    # Si hay búsqueda desde el formulario, filtramos antes de paginar
+    busqueda = request.GET.get('busqueda', '')
+    if busqueda:
+        empresas_list = empresas_list.filter(nombre__icontains=busqueda)
+
+    # 2. Configurar la paginación (12 por página)
+    paginator = Paginator(empresas_list, 12)
+    page_number = request.GET.get('page')
+    empresas_paginadas = paginator.get_page(page_number)
+    
+    hoy = timezone.now().date()
+    limite_dias = hoy - timedelta(days=2)
+
+    # 3. LA OPTIMIZACIÓN: Solo iteramos y calculamos sobre las 12 empresas de esta página
+    for empresa in empresas_paginadas:
+        qs_agente = Expediente.objects.filter(
+            empresa=empresa, 
+            activo=True, 
+            agente=request.user,
+            estado__in=['ACTIVO', 'CEDIDO']
+        )
+        
+        empresa.total_impagos = qs_agente.filter(estado='ACTIVO').count()
+        empresa.total_cedidos = qs_agente.filter(estado='CEDIDO').count()
+
+        empresa.acuerdos_en_fecha = qs_agente.filter(causa_impago='PAGARA', fecha_pago_promesa__gte=hoy).count()
+        empresa.acuerdos_vencidos = qs_agente.filter(causa_impago='PAGARA', fecha_pago_promesa__lt=hoy).count()
+
+        empresa.secuencias_desactualizadas = qs_agente.exclude(
+            causa_impago='PAGARA'
+        ).filter(
+            w5=False
+        ).exclude(
+            Q(fecha_w1__gte=limite_dias) | Q(fecha_ll1__gte=limite_dias) |
+            Q(fecha_w2__gte=limite_dias) | Q(fecha_ll2__gte=limite_dias) |
+            Q(fecha_w3__gte=limite_dias) | Q(fecha_ll3__gte=limite_dias) |
+            Q(fecha_w4__gte=limite_dias) | Q(fecha_ll4__gte=limite_dias)
+        ).count()
+
+    context = {
+        'empresas': empresas_paginadas, # Pasamos el objeto paginado
+        'total_empresas': empresas_list.count(), # Pasamos el total real para el encabezado
+        'filtros': request.GET,
+    }
+    return render(request, 'crm/lista_crm.html', context)
 
 # --- VISTA DE BÚSQUEDA DE ANTECEDENTES (AJAX) ---
 @login_required
@@ -624,6 +672,67 @@ def lista_recobros(request):
         'filtros': request.GET
     })
 
+# --- VISTA CRÍTICA: CÁLCULO DE COMISIÓN DINÁMICA CON LÓGICA RETROACTIVA ---
+@login_required
+def calcular_comision_exacta(expediente, monto_pago):
+    from .models import RegistroPago
+    from empresas.models import EsquemaComision
+    
+    if not monto_pago or monto_pago <= 0:
+        return Decimal('0.00')
+
+    empresa = expediente.empresa
+    tipo_caso_actual = 'CEDIDO' if expediente.estado == 'CEDIDO' else 'IMPAGO'
+    producto_actual = getattr(expediente, 'tipo_producto', 'TODOS')
+
+    # Buscamos la regla
+    esquema = EsquemaComision.objects.filter(
+        empresa=empresa,
+        tipo_caso=tipo_caso_actual,
+        tipo_producto=producto_actual
+    ).first() or EsquemaComision.objects.filter(
+        empresa=empresa,
+        tipo_caso=tipo_caso_actual,
+        tipo_producto='TODOS'
+    ).first()
+
+    if not esquema:
+        return Decimal('0.00')
+
+    factor_decimal = Decimal('0.00')
+
+    if esquema.modalidad == 'FIJO':
+        factor_decimal = (esquema.porcentaje_fijo or Decimal('0.00')) / Decimal('100.00')
+    
+    elif esquema.modalidad == 'TRAMOS':
+        hoy = timezone.now().date()
+        pagos_mes = RegistroPago.objects.filter(
+            expediente__empresa=empresa,
+            expediente__tipo_producto=producto_actual,
+            fecha_pago__year=hoy.year,
+            fecha_pago__month=hoy.month
+        )
+        
+        # Filtro de estado
+        if tipo_caso_actual == 'CEDIDO':
+            pagos_mes = pagos_mes.filter(expediente__estado='CEDIDO')
+        else:
+            pagos_mes = pagos_mes.exclude(expediente__estado='CEDIDO')
+
+        # Calculamos el total con el nuevo pago
+        acumulado = pagos_mes.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        total_con_nuevo = acumulado + Decimal(str(monto_pago))
+
+        # Buscamos tramo retroactivo
+        tramo = esquema.tramos.filter(monto_minimo__lte=total_con_nuevo).order_by('-monto_minimo').first()
+        
+        if tramo:
+            factor_decimal = tramo.porcentaje / Decimal('100.00')
+            # Actualización silenciosa de pagos anteriores para que no salte el error de 'user'
+            pagos_mes.update(comision=F('monto') * factor_decimal)
+
+    return Decimal(str(monto_pago)) * factor_decimal
+
 # Vistas para registrar, editar y eliminar pagos, con lógica de actualización de deuda y estado del expediente
 @login_required
 @require_POST
@@ -636,7 +745,11 @@ def registrar_pago(request, expediente_id):
         try:
             pago = form.save(commit=False)
             pago.expediente = expediente
-            pago.comision = Decimal(str(pago.monto)) * Decimal('0.10')
+            
+            # --- CORRECCIÓN CRÍTICA APLICADA AQUÍ ---
+            # Llamamos al motor de comisiones dinámico en lugar del 10% estático
+            pago.comision = calcular_comision_exacta(expediente, pago.monto)
+            
             pago.save() # Guarda monto, descuento, fecha, etc.
 
             # 1. Actualizar lo recuperado
@@ -650,7 +763,6 @@ def registrar_pago(request, expediente_id):
             # 3. Lógica de cierre limpia
             if expediente.monto_actual <= Decimal('1.00'):
                 expediente.estado = 'PAGADO'
-                # IMPORTANTE: Se queda en True para verse en la pestaña "Pagados"
                 expediente.activo = True 
             else:
                 expediente.estado = 'ACTIVO'
@@ -737,6 +849,7 @@ def editar_pago(request, pago_id):
 @login_required
 @require_POST
 def confirmar_cesion(request, exp_id):
+
     exp = get_object_or_404(Expediente, id=exp_id)
     
     # Verificamos si falta algún requisito usando nuestra regla del modelo
@@ -794,3 +907,75 @@ def confirmar_cesion(request, exp_id):
         messages.success(request, f"Expediente movido a Cedidos con fecha de cesión: {exp.fecha_cesion}. Secuencias reiniciadas.")
         
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+
+
+    if not monto_pago or monto_pago <= 0:
+        return Decimal('0.00')
+
+    empresa = expediente.empresa
+    tipo_caso_actual = 'CEDIDO' if expediente.estado == 'CEDIDO' else 'IMPAGO'
+    producto_actual = expediente.tipo_producto
+
+    # 1. Buscar la regla EXACTA
+    esquema = EsquemaComision.objects.filter(
+        empresa=empresa,
+        tipo_caso=tipo_caso_actual,
+        tipo_producto=producto_actual
+    ).first()
+
+    if not esquema:
+        return Decimal('0.00')
+
+    # 2. Si es FIJO
+    if esquema.modalidad == 'FIJO':
+        porcentaje = esquema.porcentaje_fijo or Decimal('0.00')
+        return (Decimal(str(monto_pago)) * porcentaje) / Decimal('100.00')
+
+    # 3. Si es TRAMOS (Escalonado) - AQUÍ ESTABA EL ERROR
+    elif esquema.modalidad == 'TRAMOS':
+        hoy = timezone.now().date()
+        
+        # EL SECRETO: Sumar SOLO los pagos de ESTE MES, de ESTA EMPRESA, de ESTE PRODUCTO y ESTE CASO
+        pagos_historicos = expediente.pagos.model.objects.filter(
+            expediente__empresa=empresa,
+            expediente__tipo_producto=producto_actual,
+            fecha_pago__year=hoy.year,
+            fecha_pago__month=hoy.month
+        )
+
+        if tipo_caso_actual == 'CEDIDO':
+            pagos_historicos = pagos_historicos.filter(expediente__estado='CEDIDO')
+        else:
+            pagos_historicos = pagos_historicos.exclude(expediente__estado='CEDIDO')
+
+        # Lo que se ha recuperado este mes ANTES de procesar este pago
+        acumulado_mes = pagos_historicos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+        
+        comision_total = Decimal('0.00')
+        monto_restante = Decimal(str(monto_pago))
+        inicio_evaluacion = acumulado_mes
+
+        # Recorremos los tramos ordenados de menor a mayor
+        tramos = esquema.tramos.all().order_by('monto_minimo')
+
+        for tramo in tramos:
+            if monto_restante <= Decimal('0.00'):
+                break
+                
+            if inicio_evaluacion < tramo.monto_maximo:
+                # Calculamos cuánto espacio queda en el escalón actual
+                espacio_disponible = tramo.monto_maximo - inicio_evaluacion
+                
+                # Tomamos lo que podamos procesar en este escalón
+                monto_a_procesar = min(monto_restante, espacio_disponible)
+                
+                # Sumamos la comisión de esta porción
+                comision_total += (monto_a_procesar * tramo.porcentaje) / Decimal('100.00')
+                
+                # Actualizamos variables para el siguiente escalón si sobra dinero
+                monto_restante -= monto_a_procesar
+                inicio_evaluacion += monto_a_procesar
+
+        return comision_total
+
+    return Decimal('0.00')

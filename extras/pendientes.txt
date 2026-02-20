@@ -2,12 +2,13 @@
 CRM
 
 
+Al configurar un tipo como cedido, debemos asignar tamb transferencias y sequra pass, mejorar esto
+
 Validacion de duplicados (si es q esta refinancioado)
 
 Mejorar filtros
-Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Recobros)
+    Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Recobros)
 
-En la vista de CRM no mostramos los datos reales
 
 
 Empresas: 
@@ -15,13 +16,10 @@ Empresas:
     agregar habiliatar Buro fax estandar
     Agregar costo de buro fax en el formulario de creacion y edicion 
     Mostrar msj de Asnef / Buro como "no habilitado" si no se encuentra habilitado o con las condiciones necesarias
+    Dale utilidad al a pestaña expedites de la visual de empresa
 
 
 Errores:
-
-Vista de listado de empresa:
-
-    Calcualar correctamente las comisiones
 
 
 
