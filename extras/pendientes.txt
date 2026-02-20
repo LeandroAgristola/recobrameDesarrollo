@@ -1,7 +1,6 @@
 
 CRM
 
-Testear que funcione el conteo de "veces en impago"
 
 Validacion de duplicados (si es q esta refinancioado)
 
@@ -11,10 +10,15 @@ Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Re
 En la vista de CRM no mostramos los datos reales
 
 
+Empresas: 
+
+    agregar habiliatar Buro fax estandar
+    Agregar costo de buro fax en el formulario de creacion y edicion 
+    Mostrar msj de Asnef / Buro como "no habilitado" si no se encuentra habilitado o con las condiciones necesarias
+
+
 Errores:
 
-
-Ajustar ventanda de impresion 
 Vista de listado de empresa:
 
     Calcualar correctamente las comisiones

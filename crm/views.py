@@ -88,13 +88,14 @@ def buscar_antecedentes_deudor(request):
     try:
         nombre = request.GET.get('nombre', '').strip()
         empresa_id = request.GET.get('empresa_id')
+        
         if not nombre or not empresa_id:
             return JsonResponse({'status': 'empty'})
 
         antecedente = Expediente.objects.filter(
             empresa_id=empresa_id,
             deudor_nombre__iexact=nombre
-        ).order_by('-fecha_creacion').first()
+        ).order_by('-id').first() # <--- ¡CORRECCIÓN AQUÍ! Usamos '-id' en lugar de fecha_creacion
 
         if antecedente:
             data = {
@@ -546,25 +547,31 @@ def detalle_expediente(request, exp_id):
     deuda_exigible = calcular_deuda_actualizada(exp)
     monto_a_vencer = float(exp.monto_original) - float(exp.monto_recuperado) - deuda_exigible
 
-    # --- DATOS PARA EL MODAL DE EDICIÓN (ESTO ES LO QUE FALTA) ---
-    # Obtenemos los tipos de producto únicos que ya existen en la empresa
-    # O bien, puedes sacarlos de empresa.tipos_impagos si prefieres esa lista
+    # --- DATOS PARA MODALES ---
     tipos_producto = (
-                        Expediente.objects
-                        .filter(empresa=empresa)
-                        .exclude(tipo_producto='TRANSFERENCIA')
-                        .values_list('tipo_producto', flat=True)
-                        .distinct()
-                    )
-    
-    # También necesitamos los agentes para el select de edición
+        Expediente.objects
+        .filter(empresa=empresa)
+        .exclude(tipo_producto='TRANSFERENCIA')
+        .values_list('tipo_producto', flat=True)
+        .distinct()
+    )
     agentes_disponibles = User.objects.filter(is_active=True).order_by('username')
 
-    # Antecedentes
-    veces_impago = Expediente.objects.filter(
-        empresa=empresa, 
-        deudor_dni=exp.deudor_dni
-    ).count() if exp.deudor_dni else 1
+    # --- ANTECEDENTES (LA CORRECCIÓN DEL CONTADOR) ---
+    # Si tiene DNI, buscamos por DNI (más exacto)
+    if exp.deudor_dni:
+        veces_impago = Expediente.objects.filter(
+            empresa=empresa, 
+            deudor_dni__iexact=exp.deudor_dni.strip(),
+            activo=True # Incluye a los que ya están PAGADOS, excluye Papelera
+        ).count()
+    # Si NO tiene DNI (como tu prueba de Carlos), buscamos por nombre
+    else:
+        veces_impago = Expediente.objects.filter(
+            empresa=empresa,
+            deudor_nombre__iexact=exp.deudor_nombre.strip(),
+            activo=True
+        ).count()
 
     context = {
         'empresa': empresa,
@@ -574,8 +581,6 @@ def detalle_expediente(request, exp_id):
         'deuda_futura': round(monto_a_vencer, 2),
         'veces_impago': veces_impago,
         'pagos': exp.pagos.all().order_by('-fecha_pago'),
-        
-        # Nuevos campos para que el modal funcione correctamente:
         'tipos_producto': tipos_producto,
         'agentes_disponibles': agentes_disponibles,
     }
