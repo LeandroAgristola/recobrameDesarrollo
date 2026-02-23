@@ -4,7 +4,7 @@ from django.db.models import Sum, Count, Q
 
 # Mantenemos tus opciones (Agregamos SEQURA_PASS si no estaba)
 OPCIONES_IMPAGOS = [
-    ('TODOS', '--- TODOS LOS PRODUCTOS ---'),
+
     ('SEQURA_HOTMART', 'SeQura Hotmart'),
     ('SEQURA_MANUAL', 'SeQura Manual'),
     ('SEQURA_COPECART', 'SeQura Copecart'),
@@ -12,6 +12,7 @@ OPCIONES_IMPAGOS = [
     ('AUTO_STRIPE', 'Auto Stripe'),
     ('AUTOFINANCIACION', 'Autofinanciación'),
     ('TRANSFERENCIA', 'Transferencia'), # este es un metodo para que aparezca como forma de pago.
+    ('TODOS', '--- TODOS LOS PRODUCTOS ---'),
 
 ]
 
@@ -42,6 +43,18 @@ class Empresa(models.Model):
     cursos = models.TextField(blank=True, null=True)
     notas = models.TextField(blank=True, null=True)
     datos_bancarios = models.TextField(blank=True, null=True)
+
+    # === GESTIÓN DE BURÓ Y ASNEF ===
+    costo_buro = models.DecimalField(
+        max_digits=8, 
+        decimal_places=2, 
+        default=0.00, 
+        help_text="Costo individual de cada Buró enviado"
+    )
+    habilita_buro_notificacion = models.BooleanField(
+        default=False, 
+        help_text="Aprobar envío de Buró de Notificación (independiente de cesiones)"
+    )
     
     # === ARCHIVOS ===
     contrato_colaboracion = models.FileField(upload_to='contratos/', null=True, blank=True)

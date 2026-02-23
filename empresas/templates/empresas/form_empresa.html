@@ -44,20 +44,36 @@
                     {{ form.telefono_contacto }}
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label class="form-label">Email General</label>
                     {{ form.email_contacto }}
                 </div>
-                <div class="col-md-6">
+                
+                <div class="col-md-3">
                     <label class="form-label">Fecha Alta</label>
                     {{ form.fecha_alta }}
                 </div>
 
-                <div class="col-12">
-                    <label class="form-label">Dirección Fiscal</label>
-                    {{ form.direccion }}
+                <div class="col-md-2">
+                    <label class="form-label">Costo Buró (€)</label>
+                    {{ form.costo_buro }}
+                    {% if form.costo_buro.errors %}
+                        <div class="text-danger small">{{ form.costo_buro.errors }}</div>
+                    {% endif %}
                 </div>
-            </div>
+                
+                <div class="col-md-2 d-flex flex-column align-items-center">
+                    
+                    <label class="form-label text-center mb-3"
+                        for="{{ form.habilita_buro_notificacion.id_for_label }}">
+                        Buro Gral.
+                    </label>
+
+                    <div class="form-check form-switch m-0 switch-lg">
+                        {{ form.habilita_buro_notificacion }}
+                    </div>
+
+                </div>
 
             <h5 class="mt-4 mb-3"><i class="fa-solid fa-headset me-2"></i>Operativa e Incidencias</h5>
             <div class="row g-3">

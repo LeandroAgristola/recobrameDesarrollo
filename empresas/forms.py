@@ -18,7 +18,9 @@ class EmpresaForm(forms.ModelForm):
             'persona_contacto', 'telefono_contacto', 'email_contacto', 
             'direccion', 'contacto_incidencias', 'email_incidencias', 
             'datos_bancarios', 'tipos_impagos', 'cursos', 'notas',
-            'contrato_colaboracion', 'contrato_cesion'
+            'contrato_colaboracion', 'contrato_cesion',
+            # ¡Nuevos campos agregados aquí!
+            'costo_buro', 'habilita_buro_notificacion'
         ]
         # ESTA PARTE ES CRUCIAL PARA EL ESTILO VISUAL:
         widgets = {
@@ -26,6 +28,8 @@ class EmpresaForm(forms.ModelForm):
             'razon_social': forms.TextInput(attrs={'class': 'form-control'}),
             'cif_nif': forms.TextInput(attrs={'class': 'form-control'}),
             'fecha_alta': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'costo_buro': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+            'habilita_buro_notificacion': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
             'persona_contacto': forms.TextInput(attrs={'class': 'form-control'}),
             'telefono_contacto': forms.TextInput(attrs={'class': 'form-control'}),
             'email_contacto': forms.EmailInput(attrs={'class': 'form-control'}),
@@ -37,6 +41,7 @@ class EmpresaForm(forms.ModelForm):
             'notas': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'contrato_colaboracion': forms.FileInput(attrs={'class': 'form-control'}),
             'contrato_cesion': forms.FileInput(attrs={'class': 'form-control'}),
+
         }
 
     def __init__(self, *args, **kwargs):
