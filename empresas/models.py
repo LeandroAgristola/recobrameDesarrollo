@@ -3,17 +3,15 @@ from django.utils import timezone
 from django.db.models import Sum, Count, Q
 
 # Mantenemos tus opciones (Agregamos SEQURA_PASS si no estaba)
+# Mantenemos solo los PRODUCTOS reales de deuda
 OPCIONES_IMPAGOS = [
-
     ('SEQURA_HOTMART', 'SeQura Hotmart'),
     ('SEQURA_MANUAL', 'SeQura Manual'),
     ('SEQURA_COPECART', 'SeQura Copecart'),
-    ('SEQURA_PASS', 'SeQura Pass'),
+    ('SEQURA_PASS', 'SeQura Pass'), # Es un producto (refinanciado)
     ('AUTO_STRIPE', 'Auto Stripe'),
     ('AUTOFINANCIACION', 'Autofinanciación'),
-    ('TRANSFERENCIA', 'Transferencia'), # este es un metodo para que aparezca como forma de pago.
     ('TODOS', '--- TODOS LOS PRODUCTOS ---'),
-
 ]
 
 class Empresa(models.Model):
@@ -64,6 +62,29 @@ class Empresa(models.Model):
     # Ahora la lógica estará en el modelo EsquemaComision
 
     # === PROPERTIES PARA LISTADO  ===
+    # === NUEVA LÓGICA PARA ASNEF ===
+    @property
+    def admite_asnef(self):
+        """
+        Verifica si la empresa cumple los requisitos para enviar a ASNEF:
+        1. Tener productos que admitan cesión.
+        2. Tener el contrato de cesión cargado.
+        """
+        PRODUCTOS_CESIBLES = ['SEQURA_MANUAL', 'AUTOFINANCIACION', 'SEQURA_PASS']
+        
+        # Si no hay productos contratados o falta el archivo físico del contrato, es False directo
+        if not self.tipos_impagos or not self.contrato_cesion:
+            return False
+            
+        # Convertimos el string de tipos de impago ('SEQURA_MANUAL, AUTO_STRIPE') en una lista
+        productos_empresa = [p.strip() for p in self.tipos_impagos.split(',')]
+        
+        # Verificamos si al menos uno de sus productos coincide con los permitidos para cesión
+        tiene_producto_cesible = any(prod in PRODUCTOS_CESIBLES for prod in productos_empresa)
+        
+        return tiene_producto_cesible
+
+
     @property
     def monto_recuperado(self):
         # CAMBIO: self.expedientes en lugar de self.expediente_set

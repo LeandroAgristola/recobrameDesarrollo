@@ -4,6 +4,16 @@ from django.contrib.auth.models import User
 from dateutil.relativedelta import relativedelta  # Se usa para calcular fechas
 from empresas.models import Empresa, OPCIONES_IMPAGOS # Importamos todo junto aquí
 
+METODOS_PAGO_CHOICES = [
+    ('TRANSFERENCIA', 'Transferencia Bancaria'),
+    ('SEQURA_PASS', 'SeQura Pass'),
+    ('SEQURA_HOTMART', 'Pasarela SeQura Hotmart'),
+    ('SEQURA_MANUAL', 'Pasarela SeQura Manual'),
+    ('SEQURA_COPECART', 'Pasarela SeQura Copecart'),
+    ('STRIPE', 'Stripe (Auto Stripe)'),
+    ('TARJETA', 'Tarjeta de Débito/Crédito'),
+]
+
 class CRMConfig(models.Model):
     empresa = models.OneToOneField(Empresa, on_delete=models.CASCADE, related_name='crm_config')
     tiene_cedidos = models.BooleanField(default=False)
@@ -13,6 +23,7 @@ class CRMConfig(models.Model):
         return f"CRM - {self.empresa.nombre}"
     
 class Expediente(models.Model):
+
     ESTADOS_GESTION = [
         ('ACTIVO', 'Con Deuda'),
         ('PAGADO', 'Deuda Cero'),
@@ -294,7 +305,7 @@ class RegistroPago(models.Model):
     monto = models.DecimalField(max_digits=12, decimal_places=2)
     descuento = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     fecha_pago = models.DateField(default=timezone.now) 
-    metodo_pago = models.CharField(max_length=100, default='TRANSFERENCIA')
+    metodo_pago = models.CharField(max_length=100, choices=METODOS_PAGO_CHOICES, default='TRANSFERENCIA')
     comprobante = models.FileField(upload_to='pagos/comprobantes/', null=True, blank=True)
     comision = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     fecha_registro = models.DateTimeField(auto_now_add=True)

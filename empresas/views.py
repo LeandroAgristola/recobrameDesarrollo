@@ -22,6 +22,8 @@ def aplicar_busqueda(queryset, busqueda):
         )
     return queryset
 
+# === VISTAS PRINCIPALES ===
+# Nota: En esta sección solo se manejan las vistas de listado, creación, edición, papelera y detalle.
 @login_required
 def lista_empresas(request):
     """
@@ -78,6 +80,9 @@ def lista_empresas(request):
         'active_tab': 'activas'
     })
 
+# vista para crear empresa, ahora con lógica de sesión para manejar el proceso de creación y 
+# edición en un solo formulario. Si el usuario entra a "Nueva Empresa" y ya tiene una empresa en proceso (ID en sesión), se carga esa empresa para editarla. Al finalizar la configuración de comisiones, se limpia la sesión para evitar conflictos futuros.
+@login_required
 def crear_empresa(request):
     # 1. Verificar si ya estamos en medio de un proceso de creación
     empresa_id_session = request.session.get('creando_empresa_id')
@@ -108,7 +113,8 @@ def crear_empresa(request):
 
     return render(request, 'empresas/form_empresa.html', {'form': form})
 
-        
+# editar empresa, ahora con lógica para detectar cambios en los métodos de impago y redirigir a 
+# configuración si se añaden nuevos métodos. Si se eliminan métodos, se borran las reglas de comisión asociadas a esos métodos.
 @login_required
 def editar_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
@@ -155,6 +161,8 @@ def editar_empresa(request, empresa_id):
         'titulo': f'Editar {empresa.nombre}'
     })
 
+# papelera de empresas, vista para mostrar las empresas desactivadas (baja lógica) con opción a 
+# reactivar o eliminar definitivamente. Se mantiene la búsqueda y paginación para facilitar la gestión de la papelera.
 @login_required
 def papelera_empresas(request):
     """
@@ -175,6 +183,8 @@ def papelera_empresas(request):
         'active_tab': 'papelera'
     })
 
+# vista para mostrar toda la información de la empresa, incluyendo los esquemas de 
+# comisión configurados y los métodos de impago seleccionados. Se procesan los métodos de impago para mostrar badges o etiquetas visuales en el template.
 @login_required
 def desactivar_empresa(request, empresa_id):
     """Baja lógica (Mover a Papelera)"""
@@ -186,6 +196,8 @@ def desactivar_empresa(request, empresa_id):
         messages.warning(request, f"Empresa '{empresa.nombre}' movida a la papelera.")
     return redirect('empresas:lista_empresas')
 
+# reactivar empresa, vista para recuperar una empresa de la papelera (baja lógica). Al reactivar, se limpia la 
+# fecha de baja pero se mantiene la fecha de alta original. Se muestra un mensaje de éxito al reactivar.
 @login_required
 def reactivar_empresa(request, empresa_id):
     """Recuperar de Papelera"""
@@ -198,6 +210,8 @@ def reactivar_empresa(request, empresa_id):
     
     return redirect('empresas:papelera_empresas')
 
+# Eliminar empresa, vista para eliminar definitivamente una empresa desde la papelera. Se muestra un mensaje de error (en rojo) al eliminar, 
+# para enfatizar que es una acción irreversible.
 @login_required
 def eliminar_empresa(request, empresa_id):
     """Eliminación Física (Definitiva)"""
@@ -209,6 +223,8 @@ def eliminar_empresa(request, empresa_id):
     messages.error(request, f"La empresa '{nombre}' ha sido eliminada definitivamente.")
     return redirect('empresas:papelera_empresas')
 
+# detalle empresa, vista para mostrar toda la información de la empresa, incluyendo los esquemas de comisión configurados y los métodos de 
+# impago seleccionados. Se procesan los métodos de impago para mostrar badges o etiquetas visuales en el template.
 @login_required
 def detalle_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
@@ -229,6 +245,8 @@ def detalle_empresa(request, empresa_id):
         'lista_impagos': lista_impagos,
     })
 
+# configurar comisiones, vista para configurar las reglas de comisión de una empresa. Se muestra un formulario para agregar nuevas reglas y un listado de las 
+# reglas existentes con opciones para editar o eliminar cada una. Al agregar o editar una regla, se valida que no haya conflictos entre reglas (ej: no puede haber una regla
 @login_required
 def configurar_comisiones(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
@@ -279,13 +297,14 @@ def configurar_comisiones(request, empresa_id):
     configurados_cedido = reglas.filter(tipo_caso='CEDIDO').values_list('tipo_producto', flat=True)
 
     # 3. Listado de productos que requieren configuración
-    PRODUCTOS_CON_CESION = ['SEQURA_MANUAL', 'AUTOFINANCIACION']
+    PRODUCTOS_CON_CESION = ['SEQURA_MANUAL', 'AUTOFINANCIACION', 'SEQURA_PASS']
     faltantes = []
 
     # Validar Impagos
     if not tiene_todos_impago:
         for prod in seleccionados:
-            if prod not in configurados_impago:
+            # LA MAGIA AQUÍ: Pedimos el impago SOLO si no es SEQURA_PASS
+            if prod not in configurados_impago and prod != 'SEQURA_PASS':
                 faltantes.append(f"Impago: {prod}")
 
     # Validar Cedidos
@@ -303,6 +322,8 @@ def configurar_comisiones(request, empresa_id):
         'faltantes': faltantes,
     })
 
+# editar esquema, vista para editar una regla de comisión existente. Se muestra un formulario con los datos actuales de la regla y sus tramos (si aplica). 
+# Al guardar, se valida que no haya conflictos con otras reglas existentes.
 @login_required
 def editar_esquema(request, esquema_id):
     esquema = get_object_or_404(EsquemaComision, id=esquema_id)
@@ -337,6 +358,8 @@ def editar_esquema(request, esquema_id):
         'titulo': f"Editar Regla: {esquema}"
     })
 
+# eliminar esquema, vista para eliminar una regla de comisión. Se muestra una confirmación antes de eliminar y se redirige a la configuración de comisiones 
+# después de eliminar.
 @login_required
 def eliminar_esquema(request, esquema_id):
     esquema = get_object_or_404(EsquemaComision, id=esquema_id)

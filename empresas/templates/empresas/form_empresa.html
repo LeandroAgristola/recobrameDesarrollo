@@ -75,6 +75,15 @@
 
                 </div>
 
+                <div class="col-12 mt-2">
+                    <label class="form-label">Dirección Fiscal</label>
+                    {{ form.direccion }}
+                    {% if form.direccion.errors %}
+                        <div class="text-danger small">{{ form.direccion.errors }}</div>
+                    {% endif %}
+                </div>
+                </div> <h5 class="mt-4 mb-3"><i class="fa-solid fa-gears me-2"></i>Configuración Operativa</h5>
+
             <h5 class="mt-4 mb-3"><i class="fa-solid fa-headset me-2"></i>Operativa e Incidencias</h5>
             <div class="row g-3">
                 

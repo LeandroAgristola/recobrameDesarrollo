@@ -10,6 +10,51 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBtn = document.getElementById('add-tramo');
     const tableBody = document.getElementById('tramosBody');
 
+    // Obtenemos el selector de producto (Asegúrate de ponerlo junto a tus otras variables arriba)
+    const selectProducto = document.getElementById('id_tipo_producto');
+
+    // === NUEVA LÓGICA: FILTRO DINÁMICO DE PRODUCTOS (OCULTAR) ===
+    function actualizarFiltroProductos() {
+        if (!selectCaso || !selectProducto) return;
+        
+        const caso = selectCaso.value;
+        const options = selectProducto.options;
+        // Los únicos productos que el sistema permite ceder
+        const cesibles = ['', 'TODOS', 'SEQURA_MANUAL', 'AUTOFINANCIACION', 'SEQURA_PASS'];
+
+        for (let i = 0; i < options.length; i++) {
+            const val = options[i].value;
+            
+            // 1. Restauramos todas las opciones a su estado normal
+            options[i].disabled = false; 
+            options[i].hidden = false;   // La volvemos visible
+            
+            if (caso === 'IMPAGO') {
+                // Si es Impago, OCULTAMOS exclusivamente Sequra Pass
+                if (val === 'SEQURA_PASS') {
+                    options[i].disabled = true;
+                    options[i].hidden = true; // Desaparece de la lista
+                    
+                    if (selectProducto.value === val) selectProducto.value = '';
+                }
+            } else if (caso === 'CEDIDO') {
+                // Si es Cedido, OCULTAMOS los que NO son cesibles
+                if (!cesibles.includes(val)) {
+                    options[i].disabled = true;
+                    options[i].hidden = true; // Desaparece de la lista
+                    
+                    if (selectProducto.value === val) selectProducto.value = '';
+                }
+            }
+        }
+    }
+
+    // Activamos el evento para que escuche cada vez que cambias de "Impago" a "Cedido"
+    if (selectCaso && selectProducto) {
+        selectCaso.addEventListener('change', actualizarFiltroProductos);
+        actualizarFiltroProductos(); // Lo ejecutamos al cargar la página por si estamos editando
+    }
+
     // FUNCIÓN PARA NOTIFICACIONES TOAST (ERROR)
     function lanzarError(mensaje) {
         const container = document.querySelector('.toast-container');

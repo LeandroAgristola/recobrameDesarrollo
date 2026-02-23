@@ -75,7 +75,7 @@ class EsquemaComisionForm(forms.ModelForm):
             seleccionados = [c.strip() for c in empresa.tipos_impagos.split(',') if c.strip()]
             nombres_dict = dict(OPCIONES_IMPAGOS)
 
-            opciones = [('TODOS', '--- TODOS LOS PRODUCTOS ---')]
+            opciones = [('TODOS', 'Todos los productos')]
             for cod in seleccionados:
                 opciones.append((cod, nombres_dict.get(cod, cod)))
 
@@ -84,6 +84,22 @@ class EsquemaComisionForm(forms.ModelForm):
             # Si no hay configuración, dejamos el select vacío por defecto
             self.fields['tipo_producto'].choices = [('', '---------')]
             
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_caso = cleaned_data.get('tipo_caso')
+        tipo_producto = cleaned_data.get('tipo_producto')
+
+        # Regla 1: SeQura Pass jamás puede ser un Impago Activo
+        if tipo_caso == 'IMPAGO' and tipo_producto == 'SEQURA_PASS':
+            self.add_error('tipo_producto', 'SeQura Pass es un producto exclusivo de carteras Cedidas. No aplica para Impagos.')
+
+        # Regla 2: Productos que no admiten cesión
+        PRODUCTOS_CESIBLES = ['SEQURA_MANUAL', 'AUTOFINANCIACION', 'SEQURA_PASS', 'TODOS', '']
+        if tipo_caso == 'CEDIDO' and tipo_producto not in PRODUCTOS_CESIBLES:
+            self.add_error('tipo_producto', 'El producto seleccionado no admite modalidad de Cedido.')
+
+        return cleaned_data
+    
 # 3. FORMSET TRAMOS
 TramoFormSet = inlineformset_factory(
     EsquemaComision, TramoComision,

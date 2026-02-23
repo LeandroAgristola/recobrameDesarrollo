@@ -65,7 +65,11 @@ class PagoForm(forms.ModelForm):
 
     class Meta:
         model = RegistroPago
-        fields = ['monto', 'descuento', 'fecha_pago', 'metodo_pago', 'comprobante']
+        fields = ['monto', 'descuento', 'metodo_pago', 'comprobante']
+
+    def __init__(self, *args, **kwargs):
+        self.expediente = kwargs.pop('expediente', None)
+        super().__init__(*args, **kwargs)
 
     # Validamos que el monto no exceda la deuda actual del expediente (con una pequeña tolerancia por redondeos)
     def clean_monto(self):
@@ -76,35 +80,6 @@ class PagoForm(forms.ModelForm):
                 raise forms.ValidationError(f"El monto excede la deuda actual ({self.expediente.monto_actual}€).")
         return monto
 
-    # Validamos el método de pago según el estado del expediente (Activo o Cedido)
-    def clean_metodo_pago(self):
-        metodo = self.cleaned_data.get('metodo_pago')
-        
-        if self.expediente:
-            # 1. REGLA PARA CEDIDOS (Aceleración de deuda)
-            if self.expediente.estado == 'CEDIDO':
-                permitidos = ['TRANSFERENCIA', 'SEQURA_PASS']
-                
-                if metodo not in permitidos:
-                    raise forms.ValidationError(
-                        "En fase de Cesión, solo se admite 'Transferencia' o 'SeQura Pass'."
-                    )
-            
-            # 2. REGLA NORMAL PARA IMPAGOS ACTIVOS
-            else:
-                permitidos = ['TRANSFERENCIA']
-                
-                if self.expediente.tipo_producto:
-                    permitidos.append(self.expediente.tipo_producto)
-                
-                if metodo not in permitidos:
-                    nombre_metodo = self.expediente.get_tipo_producto_display()
-                    raise forms.ValidationError(
-                        f"Método inválido. Solo se admite 'Transferencia' o '{nombre_metodo}'."
-                    )
-                        
-        return metodo
-    
     #valor negativo o nulo se interpreta como sin descuento
     def clean_descuento(self):
         descuento = self.cleaned_data.get('descuento')
