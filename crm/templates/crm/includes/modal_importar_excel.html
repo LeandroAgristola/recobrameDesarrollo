@@ -1,0 +1,34 @@
+<div class="modal fade" id="modalImportarExcel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="{% url 'crm:importar_excel' empresa.id %}" method="post" enctype="multipart/form-data" class="modal-content border-0 shadow">
+            {% csrf_token %}
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-excel me-2"></i>Importar Registros</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="alert alert-info small border-0 shadow-sm">
+                    <i class="fa-solid fa-circle-info me-1"></i> Sube la <strong>Plantilla Estándar</strong> con las 10 columnas correspondientes.
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Destino de la Carga</label>
+                    <select name="estado_carga" class="form-select">
+                        <option value="ACTIVO">Cargar como IMPAGOS</option>
+                        <option value="CEDIDO">Cargar como CEDIDOS</option>
+                    </select>
+                    <div class="form-text small">Al cargar como Cedidos, se ignora la regla de los 67 días.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Archivo Excel (.xlsx, .csv)</label>
+                    <input type="file" name="archivo_excel" class="form-control" accept=".xlsx, .xls, .csv" required>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">Importar Datos</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -12,7 +12,10 @@
                 </div>
                 
                 <div class="col-md-3 text-end">
-                    <button class="btn btn-primary btn-sm px-3 shadow-sm"><i class="fa-solid fa-file-import me-1"></i> Importar Excel</button>
+                    <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalImportarExcel">
+                        <i class="fa-solid fa-file-import me-1"></i> Importar Excel
+                    </button>
+
                     <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
                         <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
                     </button>
@@ -92,10 +95,11 @@
     </div>
 </div>
 
-
+{% include 'crm/includes/modal_importar_excel.html' %}
 {% include 'crm/includes/modal_nuevo_registro.html' %}
 {% include 'crm/includes/modal_confirmar_fecha.html' %}
 {% include 'crm/includes/modal_eliminar_doc.html' %}
+
 
 {% endblock %}
 

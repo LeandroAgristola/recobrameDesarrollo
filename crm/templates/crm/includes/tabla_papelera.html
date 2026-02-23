@@ -31,17 +31,37 @@
                         <th style="width: 120px;" class="text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+<tbody>
                     {% for exp in papelera_impagos %}
                     <tr class="table-light">
                         <td class="fw-bold text-muted">{{ exp.deudor_nombre }}</td>
                         <td class="text-danger">{{ exp.monto_actual }}€</td>
                         <td class="small text-muted fst-italic">"{{ exp.motivo_eliminacion|default:'Sin motivo' }}"</td>
                         <td class="small text-muted">{{ exp.fecha_eliminacion|date:"d/m/y H:i" }}</td>
+                        
                         <td class="text-center">
-                            </td>
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a href="{% url 'crm:restaurar_expediente' exp.id %}" class="btn btn-sm btn-success" title="Restaurar al CRM">
+                                    <i class="fa-solid fa-trash-arrow-up"></i>
+                                </a>
+                                
+                                <button type="button" 
+                                        class="btn btn-sm btn-danger" 
+                                        title="Eliminar DEFINITIVAMENTE"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalBorrarTotal{{ exp.id }}">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </td>
                     </tr>
+
+                    {% include 'crm/includes/modal_eliminar.html' with exp=exp %}
+
                     {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">No hay expedientes eliminados.</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>

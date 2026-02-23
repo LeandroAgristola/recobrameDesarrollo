@@ -12,6 +12,10 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from decimal import Decimal
 from django.db.models import F, Sum
+import pandas as pd
+import uuid
+from django.utils.dateparse import parse_date
+import math
 
 
 from empresas.models import Empresa,EsquemaComision
@@ -908,74 +912,128 @@ def confirmar_cesion(request, exp_id):
         
     return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
 
-
-    if not monto_pago or monto_pago <= 0:
-        return Decimal('0.00')
-
-    empresa = expediente.empresa
-    tipo_caso_actual = 'CEDIDO' if expediente.estado == 'CEDIDO' else 'IMPAGO'
-    producto_actual = expediente.tipo_producto
-
-    # 1. Buscar la regla EXACTA
-    esquema = EsquemaComision.objects.filter(
-        empresa=empresa,
-        tipo_caso=tipo_caso_actual,
-        tipo_producto=producto_actual
-    ).first()
-
-    if not esquema:
-        return Decimal('0.00')
-
-    # 2. Si es FIJO
-    if esquema.modalidad == 'FIJO':
-        porcentaje = esquema.porcentaje_fijo or Decimal('0.00')
-        return (Decimal(str(monto_pago)) * porcentaje) / Decimal('100.00')
-
-    # 3. Si es TRAMOS (Escalonado) - AQUÍ ESTABA EL ERROR
-    elif esquema.modalidad == 'TRAMOS':
-        hoy = timezone.now().date()
+# Vista para importar expedientes desde un archivo Excel o CSV, con lógica de validación de datos, manejo de errores, y asignación masiva a la empresa correspondiente
+@login_required
+def importar_excel(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    
+    if request.method == 'POST':
+        archivo = request.FILES.get('archivo_excel')
+        estado_carga = request.POST.get('estado_carga', 'ACTIVO')
         
-        # EL SECRETO: Sumar SOLO los pagos de ESTE MES, de ESTA EMPRESA, de ESTE PRODUCTO y ESTE CASO
-        pagos_historicos = expediente.pagos.model.objects.filter(
-            expediente__empresa=empresa,
-            expediente__tipo_producto=producto_actual,
-            fecha_pago__year=hoy.year,
-            fecha_pago__month=hoy.month
-        )
-
-        if tipo_caso_actual == 'CEDIDO':
-            pagos_historicos = pagos_historicos.filter(expediente__estado='CEDIDO')
-        else:
-            pagos_historicos = pagos_historicos.exclude(expediente__estado='CEDIDO')
-
-        # Lo que se ha recuperado este mes ANTES de procesar este pago
-        acumulado_mes = pagos_historicos.aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
-        
-        comision_total = Decimal('0.00')
-        monto_restante = Decimal(str(monto_pago))
-        inicio_evaluacion = acumulado_mes
-
-        # Recorremos los tramos ordenados de menor a mayor
-        tramos = esquema.tramos.all().order_by('monto_minimo')
-
-        for tramo in tramos:
-            if monto_restante <= Decimal('0.00'):
-                break
+        if not archivo:
+            messages.error(request, "Por favor sube un archivo.")
+            return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+            
+        try:
+            if archivo.name.endswith('.csv'):
+                df = pd.read_csv(archivo)
+            else:
+                df = pd.read_excel(archivo)
                 
-            if inicio_evaluacion < tramo.monto_maximo:
-                # Calculamos cuánto espacio queda en el escalón actual
-                espacio_disponible = tramo.monto_maximo - inicio_evaluacion
-                
-                # Tomamos lo que podamos procesar en este escalón
-                monto_a_procesar = min(monto_restante, espacio_disponible)
-                
-                # Sumamos la comisión de esta porción
-                comision_total += (monto_a_procesar * tramo.porcentaje) / Decimal('100.00')
-                
-                # Actualizamos variables para el siguiente escalón si sobra dinero
-                monto_restante -= monto_a_procesar
-                inicio_evaluacion += monto_a_procesar
+            nuevos_expedientes = []
+            
+            # === MAGIA DE IDs AUTOMÁTICOS ===
+            # 1. Preparamos el prefijo igual que en tu carga manual
+            prefix = f"{empresa.nombre[:3].upper()}{empresa.id}"
+            current_count = Expediente.objects.filter(empresa=empresa).count() + 1
+            
+            # 2. Cargamos en memoria los IDs que ya existen para evitar choques
+            existentes = set(Expediente.objects.values_list('numero_expediente', flat=True))
+            
+            # Diccionario traductor: Convierte cualquier texto raro al código oficial
+            MAPEO_PRODUCTOS = {
+                'sequra hotmart': 'SEQURA_HOTMART',
+                'sequra_hotmart': 'SEQURA_HOTMART',
+                'sequra manual': 'SEQURA_MANUAL',
+                'sequra_manual': 'SEQURA_MANUAL',
+                'sequra copecart': 'SEQURA_COPECART',
+                'sequra_copecart': 'SEQURA_COPECART',
+                'sequra pass': 'SEQURA_PASS',
+                'sequra_pass': 'SEQURA_PASS',
+                'auto stripe': 'AUTO_STRIPE',
+                'auto_stripe': 'AUTO_STRIPE',
+                'autofinanciacion': 'AUTOFINANCIACION',
+                'autofinanciación': 'AUTOFINANCIACION',
+            }
 
-        return comision_total
+            for index, row in df.iterrows():
+                try:
+                    # Leemos nombre primero para saber si la fila está vacía
+                    nombre = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ''
+                    if not nombre or nombre.lower() == 'nan':
+                        continue # Saltamos filas en blanco del Excel
+                        
+                    # === RESOLUCIÓN DE REFERENCIA ===
+                    val_ref = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ''
+                    if val_ref and val_ref.lower() != 'nan':
+                        referencia = val_ref # Usamos la del Excel (Ej: SeQura)
+                    else:
+                        # El Excel no trae referencia, generamos la tuya (Ej: EMP-000045)
+                        referencia = f"{prefix}-{current_count:06d}"
+                        
+                        # Nos aseguramos de que no exista
+                        while referencia in existentes:
+                            current_count += 1
+                            referencia = f"{prefix}-{current_count:06d}"
+                            
+                        # Lo registramos como usado y sumamos 1 para la próxima fila
+                        existentes.add(referencia)
+                        current_count += 1
+                    # ================================
+                    
+                    telefono = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else 'Sin Teléfono'
+                    
+                    dni = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ''
+                    if dni.lower() == 'nan': dni = ''
+                    
+                    # === LECTURA Y NORMALIZACIÓN DEL PRODUCTO ===
+                    tipo_prod_raw = str(row.iloc[4]).strip() if pd.notna(row.iloc[4]) else ''
+                    
+                    if tipo_prod_raw and tipo_prod_raw.lower() != 'nan':
+                        # Convertimos a minúsculas para buscarlo en nuestro diccionario traductor
+                        tipo_limpio = tipo_prod_raw.lower().strip()
+                        # Si lo encuentra en el diccionario, usa el código oficial. Si no, lo guarda en mayúsculas.
+                        tipo_prod = MAPEO_PRODUCTOS.get(tipo_limpio, tipo_prod_raw.upper())
+                    else:
+                        tipo_prod = ''
+                    
+                    coste = float(row.iloc[5]) if pd.notna(row.iloc[5]) else 0.0
+                    cuotas = int(row.iloc[6]) if pd.notna(row.iloc[6]) else 1
+                    
+                    email = str(row.iloc[7]).strip() if pd.notna(row.iloc[7]) else ''
+                    if email.lower() == 'nan': email = ''
+                    
+                    f_compra = pd.to_datetime(row.iloc[8], errors='coerce', dayfirst=True).date() if pd.notna(row.iloc[8]) else None
+                    f_impago = pd.to_datetime(row.iloc[9], errors='coerce', dayfirst=True).date() if pd.notna(row.iloc[9]) else None
 
-    return Decimal('0.00')
+                    expediente = Expediente(
+                        empresa=empresa,
+                        numero_expediente=referencia,
+                        deudor_nombre=nombre,
+                        deudor_telefono=telefono,
+                        deudor_dni=dni,
+                        tipo_producto=tipo_prod,
+                        monto_original=coste,
+                        monto_actual=coste, 
+                        cuotas_totales=cuotas,
+                        deudor_email=email,
+                        fecha_compra=f_compra,
+                        fecha_impago=f_impago,
+                        estado=estado_carga
+                    )
+                    nuevos_expedientes.append(expediente)
+                    
+                except Exception as row_error:
+                    print(f"Error procesando fila {index}: {row_error}")
+                    continue 
+            
+            # Insertamos todos a la vez en la base de datos
+            Expediente.objects.bulk_create(nuevos_expedientes, ignore_conflicts=True)
+            
+            messages.success(request, f"Se importaron {len(nuevos_expedientes)} expedientes exitosamente.")
+            
+        except Exception as e:
+            messages.error(request, f"Error crítico al leer el archivo: {str(e)}")
+            
+    return redirect(request.META.get('HTTP_REFERER', '/'))

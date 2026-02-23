@@ -1,34 +1,37 @@
 
 CRM
 
+
+
+Agregar opcion de refinanciar (ver en detalle)
 Validacion de duplicados (si es q esta refinancioado)
 
 Mejorar filtros
     Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Recobros)
 
-
+Asignar agentes de forma masiva agregar boton para seleccionar registros y asignar de forma masiva 
 
 Empresas: 
 
     
-
 Errores:
 
+En la papelira de CRM no tenemops los botones de acciones para eliminar o restuarar
 
 
 Carga masiva:
 
-agregar la opcion de directamente cargar todos los impagos en Cedidos
-Al realizar la carga masiva hay q ver si no esta en "ha pagado" o en la papelera
-Cargar de reporte:
-    opcion 1: reporte de SeQura comprar tipo e informar los registros nuevos y los impagos q no estan en comparacion con el CRM
-    opcion 2: cargar nuestro archivo de impagos y realizarlas mismas evaluaciones
+    Comparaciones:
+        Comparar los registros actuales y ver cuales no estan (buscarlos en eliminados o en Ha pagado) e informar el pagado 
+        Comprar los dias en impago para analizar si son nuevos < 7 dias en impago
+        
+
 
 
 
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 Desbloquear tics de seguimiento a medida que los abogados realizan acciones 
-Agregar opcion de refinanciar (ver en detalle)
+
 
 
 Diseño:
@@ -36,10 +39,6 @@ Diseño:
 separar miles con .
 
 
-
-Empresas: 
-
-    no se calculan correctamente las comisiones.
 
 
 Agente (asignado)		

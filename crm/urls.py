@@ -26,4 +26,5 @@ urlpatterns = [
 
     path('expediente/<int:exp_id>/confirmar-cesion/', views.confirmar_cesion, name='confirmar_cesion'),
     path('guardar-comentario/<int:expediente_id>/', views.guardar_comentario_libre, name='guardar_comentario_libre'),
+    path('empresa/<int:empresa_id>/importar/', views.importar_excel, name='importar_excel'),
 ]
