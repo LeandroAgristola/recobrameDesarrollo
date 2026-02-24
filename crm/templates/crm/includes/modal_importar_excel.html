@@ -11,14 +11,11 @@
                     <i class="fa-solid fa-circle-info me-1"></i> Sube la <strong>Plantilla Estándar</strong> con las 10 columnas correspondientes.
                 </div>
                 
-                <div class="mb-3">
-                    <label class="form-label fw-bold small">Destino de la Carga</label>
-                    <select name="estado_carga" class="form-select">
-                        <option value="ACTIVO">Cargar como IMPAGOS</option>
-                        <option value="CEDIDO">Cargar como CEDIDOS</option>
-                    </select>
-                    <div class="form-text small">Al cargar como Cedidos, se ignora la regla de los 67 días.</div>
+                <div class="alert alert-warning py-2 small mb-3 border-0 shadow-sm text-center">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Vas a importar este reporte a la cartera de:<br>
+                    <span class="fs-6"><strong id="textoEstadoCarga" class="text-uppercase">IMPAGOS</strong></span>
                 </div>
+                <input type="hidden" name="estado_carga" id="inputEstadoCarga" value="ACTIVO">
 
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Archivo Excel (.xlsx, .csv)</label>

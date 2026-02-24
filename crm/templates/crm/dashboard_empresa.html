@@ -10,16 +10,6 @@
                 <div class="col-md-4">
                     <h3 class="fw-bold mb-0 text-dark">{{ empresa.nombre }} <span class="text-muted fs-6">| CRM</span></h3>
                 </div>
-                
-                <div class="col-md-3 text-end">
-                    <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalImportarExcel">
-                        <i class="fa-solid fa-file-import me-1"></i> Importar Excel
-                    </button>
-
-                    <button class="btn btn-success btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
-                        <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
-                    </button>
-                </div>
             </div>
 
             <ul class="nav nav-tabs border-0" id="crmTab" role="tablist">
@@ -116,50 +106,8 @@
     <script src="{% static 'js/CRM/eliminarDoc.js' %}"></script>
     
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // 1. Inicializar Popovers
-            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl, {
-                    trigger: 'hover',
-                    html: true,
-                    customClass: 'crm-popover'
-                })
-            });
-
-            // 2. Activar Pestaña Correcta (Persistencia)
-            // Tomamos la variable tab_activa que enviamos desde el backend
-            const tabName = "{{ tab_activa|default:'impagos' }}"; 
-            
-            // Buscamos el botón por el ID que acabamos de crear (ej: recobros-tab)
-            const triggerEl = document.querySelector(`#${tabName}-tab`);
-            
-            if (triggerEl) {
-                const tabInstance = new bootstrap.Tab(triggerEl);
-                tabInstance.show();
-            }
-        });
+        window.CRM_TAB_ACTIVA = "{{ tab_activa|default:'impagos' }}";
     </script>
-
-    {% if expedientes_restaurar %}
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                var modalElement = document.getElementById('modalRestaurarMasivo');
-                if (modalElement) {
-                    var myModal = new bootstrap.Modal(modalElement);
-                    myModal.show();
-                }
-            });
-        </script>
-    {% elif expedientes_conciliar %}
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                var modalElement = document.getElementById('modalConciliacion');
-                if (modalElement) {
-                    var myModal = new bootstrap.Modal(modalElement);
-                    myModal.show();
-                }
-            });
-        </script>
-    {% endif %}
+    
+    <script src="{% static 'js/CRM/dashboard_logic.js' %}"></script>
 {% endblock %}

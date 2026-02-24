@@ -210,7 +210,16 @@ def dashboard_crm(request, empresa_id):
                 nuevo_exp.monto_actual = nuevo_exp.monto_original
 
             nuevo_exp.monto_recuperado = Decimal('0.00')
-            nuevo_exp.estado = 'ACTIVO'
+            
+            # === NUEVA LÓGICA CONTEXTUAL ===
+            estado_elegido = request.POST.get('estado_inicial', 'ACTIVO')
+            nuevo_exp.estado = estado_elegido
+            
+            # Si lo crearon desde la pestaña Cedidos, le ponemos fecha hoy para que no se rompa la tabla de recobros
+            if estado_elegido == 'CEDIDO':
+                nuevo_exp.fecha_cesion = timezone.now().date()
+            # ===============================
+            
             nuevo_exp.activo = True
             nuevo_exp.save()
             form.save_m2m()
@@ -1092,21 +1101,25 @@ def procesar_conciliacion(request):
             monto_a_pagar = exp.monto_actual
             if monto_a_pagar > 0:
                 try:
-                    # 1. Creación minimalista y segura del pago (Idéntica a tu registrar_pago)
+                    # 1. Crear RegistroPago
                     pago = RegistroPago()
                     pago.expediente = exp
                     pago.monto = monto_a_pagar
-                    
-                    # Asignamos la fecha si tu modelo lo requiere
-                    if hasattr(pago, 'fecha_pago'):
-                        pago.fecha_pago = timezone.now().date()
-                        
-                    # Llamamos al motor de comisiones dinámico
                     pago.comision = calcular_comision_exacta(exp, monto_a_pagar)
-                    pago.save()
                     
-                    # 2. Actualizar Expediente
-                    exp.monto_recuperado = (exp.monto_recuperado or Decimal('0.00')) + monto_a_pagar                
+                    if hasattr(pago, 'fecha_pago'): pago.fecha_pago = timezone.now().date()
+                    if hasattr(pago, 'comentarios'): pago.comentarios = "Liquidación por conciliación automática de reporte."
+                        
+                    if hasattr(pago, 'usuario'): pago.usuario = request.user
+                    elif hasattr(pago, 'registrado_por'): pago.registrado_por = request.user
+                    elif hasattr(pago, 'agente'): pago.agente = request.user
+                    
+                    pago.save()
+
+                    # 2. Actualizar Expediente (AQUÍ ESTÁ LA CORRECCIÓN DE LA VARIABLE)
+                    recuperado_anterior = exp.monto_recuperado or Decimal('0.00')
+                    exp.monto_recuperado = recuperado_anterior + monto_a_pagar
+                    
                     nueva_deuda = calcular_deuda_actualizada(exp)
                     exp.monto_actual = Decimal(str(nueva_deuda))
                     
@@ -1114,21 +1127,12 @@ def procesar_conciliacion(request):
                     if exp.estado == 'CEDIDO' and not exp.fecha_cesion:
                         exp.fecha_cesion = timezone.now().date()
                     # ========================================
-
+                    
                     if exp.monto_actual <= Decimal('1.00'):
                         exp.estado = 'PAGADO'
                     
-                    # 3. Recalcular deuda actual (Ya toma el descuento de la base de datos)
-                    nueva_deuda = calcular_deuda_actualizada(exp)
-                    exp.monto_actual = Decimal(str(nueva_deuda))
-                    
-                    # 4. Lógica de cierre limpia (Copiada de tu vista)
-                    if exp.monto_actual <= Decimal('1.00'):
-                        exp.estado = 'PAGADO'
-                        exp.activo = True 
-                    else:
-                        exp.estado = 'ACTIVO'
-                        exp.activo = True
+                    if not exp.agente:
+                        exp.agente = request.user
                         
                     exp.save()
                     pagos_cont += 1

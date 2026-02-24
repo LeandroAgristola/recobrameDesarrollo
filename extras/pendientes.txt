@@ -15,6 +15,8 @@ Mejorar filtros
 Asignar agentes de forma masiva agregar boton para seleccionar registros y asignar de forma masiva 
 
 
+Agregar boton de eliminar en reg_recobros de Cedidos y mover el modal fuera del sistema (unificar estos modales)
+
 Empresas: 
 
 Errores:
