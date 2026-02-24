@@ -1,6 +1,9 @@
 
 CRM
 
+Revisar papelera de cedidos
+
+Redirigir a las vistas que estamos trabajando y no siempre movernos a Dashboar
 
 
 Agregar opcion de refinanciar (ver en detalle)
@@ -11,58 +14,16 @@ Mejorar filtros
 
 Asignar agentes de forma masiva agregar boton para seleccionar registros y asignar de forma masiva 
 
+
 Empresas: 
 
-    
 Errores:
-
-En la papelira de CRM no tenemops los botones de acciones para eliminar o restuarar
-
-
-Carga masiva:
-
-    Comparaciones:
-        Comparar los registros actuales y ver cuales no estan (buscarlos en eliminados o en Ha pagado) e informar el pagado 
-        Comprar los dias en impago para analizar si son nuevos < 7 dias en impago
-        
-
-
-
 
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 Desbloquear tics de seguimiento a medida que los abogados realizan acciones 
-
-
 
 Diseño:
 
 separar miles con .
 
-
-
-
-Agente (asignado)		
-ID del deudor
-Nombre y Apellido
-Teléfono 
-Mail (opcional)
-DNI (opcional)
-Tipo (vamos a tener un listado de los modos de financiación) 
-Coste total 
-Cuotas
-Fecha de compra
-Fecha de impago
-Tiempo en impago (va a calcular la cantidad de tiempo en impago)
-Estado (listado de todos los estados)
-Causa de impago (listado con causas básicas)
-Deuda (va calcular la deuda actual)
-Cobrado (colola el total pagado según lo registro de cobros) 
-Comentarios (ver la mejor forma de agregar comentarios)
-
-Tics para llamadas y msj:
-w1/ll1 hasta w5/ll5
-BE - Buro enviado (Trae la información desde Asnef)
-BR - Buro Recibido  (Trae la información desde Asnef)
-ASNEF  (Trae la información desde Asnef)
-LLS (llamada de seguimiento para salir de ASNEF)
 

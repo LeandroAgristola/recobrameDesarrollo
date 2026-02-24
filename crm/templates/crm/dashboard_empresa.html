@@ -99,7 +99,12 @@
 {% include 'crm/includes/modal_nuevo_registro.html' %}
 {% include 'crm/includes/modal_confirmar_fecha.html' %}
 {% include 'crm/includes/modal_eliminar_doc.html' %}
-
+{% if expedientes_restaurar %}
+    {% include 'crm/includes/modal_restaurar_masivo.html' %}
+{% endif %}
+{% if expedientes_conciliar %}
+    {% include 'crm/includes/modal_confirmar_conciliacion.html' %}
+{% endif %}
 
 {% endblock %}
 
@@ -135,4 +140,26 @@
             }
         });
     </script>
+
+    {% if expedientes_restaurar %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var modalElement = document.getElementById('modalRestaurarMasivo');
+                if (modalElement) {
+                    var myModal = new bootstrap.Modal(modalElement);
+                    myModal.show();
+                }
+            });
+        </script>
+    {% elif expedientes_conciliar %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var modalElement = document.getElementById('modalConciliacion');
+                if (modalElement) {
+                    var myModal = new bootstrap.Modal(modalElement);
+                    myModal.show();
+                }
+            });
+        </script>
+    {% endif %}
 {% endblock %}

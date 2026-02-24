@@ -1,0 +1,47 @@
+<div class="modal fade" id="modalConciliacion" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white border-0">
+                <h6 class="modal-title fw-bold"><i class="fa-solid fa-scale-balanced me-2"></i> Conciliación de Reporte</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'crm:procesar_conciliacion' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body bg-light">
+                    <p class="small text-muted">
+                        Los siguientes deudores <strong>no aparecen</strong> en el reporte de 
+                        <span class="badge {% if conciliacion_estado == 'CEDIDO' %}bg-primary{% else %}bg-dark{% endif %} text-white shadow-sm">
+                            {% if conciliacion_estado == 'CEDIDO' %}CEDIDOS{% else %}IMPAGOS{% endif %}
+                        </span>
+                        que acabas de subir. Esto sugiere que han pagado.
+                    </p>
+                    
+                    <div class="table-responsive" style="max-height: 300px;">
+                        <table class="table table-sm table-hover bg-white border">
+                            <thead class="bg-dark text-white">
+                                <tr>
+                                    <th class="small">Referencia</th>
+                                    <th class="small">Nombre</th>
+                                    <th class="small text-end">Deuda a Liquidar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exp in expedientes_conciliar %}
+                                <tr>
+                                    <td class="small">{{ exp.numero_expediente }}</td>
+                                    <td class="small fw-bold">{{ exp.deudor_nombre }}</td>
+                                    <td class="small text-end text-success fw-bold">{{ exp.monto_actual }}€</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Omitir</button>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold">Registrar Pagos y Cerrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

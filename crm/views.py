@@ -312,8 +312,36 @@ def dashboard_crm(request, empresa_id):
     if r_q or r_desde or r_hasta:
         tab_activa = 'recobros'
 
-
     hay_filtros_impagos = any(key.startswith('f_') for key in request.GET) or (q != '')
+
+# =========================================================
+    # === LÓGICA NUEVA: CAPTURA DE CONCILIACIÓN PARA MODAL  ===
+    # =========================================================
+    ids_pendientes = request.session.get('pendientes_conciliacion', [])
+    conc_empresa_id = request.session.get('conciliacion_empresa_id')
+    conciliacion_estado = request.session.get('conciliacion_estado', 'ACTIVO') # <-- AQUI CAPTURAMOS EL ESTADO
+    
+    expedientes_conciliar = []
+    if ids_pendientes and conc_empresa_id == empresa.id:
+        expedientes_conciliar = Expediente.objects.filter(
+            numero_expediente__in=ids_pendientes, 
+            empresa=empresa, 
+            activo=True
+        )
+
+    # =========================================================
+    # === LÓGICA NUEVA: CAPTURA DE RESTAURACIÓN PARA MODAL  ===
+    # =========================================================
+    ids_restaurar = request.session.get('pendientes_restauracion', [])
+    rest_empresa_id = request.session.get('restauracion_empresa_id')
+    expedientes_restaurar = []
+
+    if ids_restaurar and rest_empresa_id == empresa.id:
+        expedientes_restaurar = Expediente.objects.filter(
+            numero_expediente__in=ids_restaurar, 
+            empresa=empresa, 
+            activo=False  # Filtramos por False porque están en la papelera
+        )
 
     context = {
         'empresa': empresa,
@@ -335,6 +363,11 @@ def dashboard_crm(request, empresa_id):
         'recobros_cedidos': recobros_cedidos,
 
         'recobros': recobros_qs,
+        
+        # === ENVIAMOS LAS LISTAS Y EL ESTADO A LOS MODALES ===
+        'expedientes_conciliar': expedientes_conciliar,
+        'expedientes_restaurar': expedientes_restaurar,
+        'conciliacion_estado': conciliacion_estado,
 
         'agentes_disponibles': User.objects.filter(is_active=True).order_by('username'),
         'tipos_producto': Expediente.objects.filter(empresa=empresa)
@@ -343,7 +376,6 @@ def dashboard_crm(request, empresa_id):
                         .order_by('tipo_producto'),
 
         'form': form,
-
         'q': q,
         'filtros_recobros': {'r_q': r_q, 'r_desde': r_desde, 'r_hasta': r_hasta},
         'tab_activa': tab_activa,
@@ -926,114 +958,231 @@ def importar_excel(request, empresa_id):
             return redirect('crm:dashboard_crm', empresa_id=empresa.id)
             
         try:
-            if archivo.name.endswith('.csv'):
-                df = pd.read_csv(archivo)
-            else:
-                df = pd.read_excel(archivo)
-                
-            nuevos_expedientes = []
+            df = pd.read_csv(archivo) if archivo.name.endswith('.csv') else pd.read_excel(archivo)
             
-            # === MAGIA DE IDs AUTOMÁTICOS ===
-            # 1. Preparamos el prefijo igual que en tu carga manual
+            expedientes_empresa = Expediente.objects.filter(empresa=empresa)
+            dict_ref = {exp.numero_expediente: exp for exp in expedientes_empresa if exp.numero_expediente}
+            dict_nombre_tel = {(exp.deudor_nombre.lower().strip(), exp.deudor_telefono.strip()): exp for exp in expedientes_empresa}
+            
+            ids_estado_previo = set(expedientes_empresa.filter(
+                activo=True, estado=estado_carga 
+            ).values_list('numero_expediente', flat=True))
+            
+            referencias_encontradas_en_excel = set()
+            nuevos_expedientes_lista = []
+            
+            # === NUEVO: SET PARA PAPELERA ===
+            ids_para_restaurar = set()
+            
+            contador_novedades, monto_novedades = 0, 0
             prefix = f"{empresa.nombre[:3].upper()}{empresa.id}"
-            current_count = Expediente.objects.filter(empresa=empresa).count() + 1
+            current_count = expedientes_empresa.count() + 1
+            existentes_en_db = set(dict_ref.keys())
             
-            # 2. Cargamos en memoria los IDs que ya existen para evitar choques
-            existentes = set(Expediente.objects.values_list('numero_expediente', flat=True))
-            
-            # Diccionario traductor: Convierte cualquier texto raro al código oficial
             MAPEO_PRODUCTOS = {
-                'sequra hotmart': 'SEQURA_HOTMART',
-                'sequra_hotmart': 'SEQURA_HOTMART',
-                'sequra manual': 'SEQURA_MANUAL',
-                'sequra_manual': 'SEQURA_MANUAL',
-                'sequra copecart': 'SEQURA_COPECART',
-                'sequra_copecart': 'SEQURA_COPECART',
-                'sequra pass': 'SEQURA_PASS',
-                'sequra_pass': 'SEQURA_PASS',
-                'auto stripe': 'AUTO_STRIPE',
-                'auto_stripe': 'AUTO_STRIPE',
-                'autofinanciacion': 'AUTOFINANCIACION',
-                'autofinanciación': 'AUTOFINANCIACION',
+                'sequra hotmart': 'SEQURA_HOTMART', 'sequra_hotmart': 'SEQURA_HOTMART',
+                'sequra manual': 'SEQURA_MANUAL', 'sequra_manual': 'SEQURA_MANUAL',
+                'sequra copecart': 'SEQURA_COPECART', 'sequra_copecart': 'SEQURA_COPECART',
+                'sequra pass': 'SEQURA_PASS', 'sequra_pass': 'SEQURA_PASS',
+                'auto stripe': 'AUTO_STRIPE', 'auto_stripe': 'AUTO_STRIPE',
+                'autofinanciacion': 'AUTOFINANCIACION', 'autofinanciación': 'AUTOFINANCIACION',
             }
 
             for index, row in df.iterrows():
                 try:
-                    # Leemos nombre primero para saber si la fila está vacía
-                    nombre = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ''
-                    if not nombre or nombre.lower() == 'nan':
-                        continue # Saltamos filas en blanco del Excel
-                        
-                    # === RESOLUCIÓN DE REFERENCIA ===
+                    nombre_raw = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ''
+                    if not nombre_raw or nombre_raw.lower() == 'nan': continue
+                    
                     val_ref = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ''
-                    if val_ref and val_ref.lower() != 'nan':
-                        referencia = val_ref # Usamos la del Excel (Ej: SeQura)
+                    telefono_raw = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else 'Sin Teléfono'
+                    
+                    match_exp = None
+                    if val_ref and val_ref.lower() != 'nan' and val_ref in dict_ref:
+                        match_exp = dict_ref[val_ref]
+                    elif (nombre_raw.lower(), telefono_raw) in dict_nombre_tel:
+                        match_exp = dict_nombre_tel[(nombre_raw.lower(), telefono_raw)]
+
+                    if match_exp:
+                        referencia = match_exp.numero_expediente
+                        es_nuevo_en_crm = False
+                        # === LÓGICA DE DETECCIÓN PAPELERA ===
+                        if not match_exp.activo:
+                            ids_para_restaurar.add(referencia)
                     else:
-                        # El Excel no trae referencia, generamos la tuya (Ej: EMP-000045)
-                        referencia = f"{prefix}-{current_count:06d}"
-                        
-                        # Nos aseguramos de que no exista
-                        while referencia in existentes:
-                            current_count += 1
+                        if val_ref and val_ref.lower() != 'nan':
+                            referencia = val_ref
+                        else:
                             referencia = f"{prefix}-{current_count:06d}"
-                            
-                        # Lo registramos como usado y sumamos 1 para la próxima fila
-                        existentes.add(referencia)
-                        current_count += 1
-                    # ================================
+                            while referencia in existentes_en_db:
+                                current_count += 1
+                                referencia = f"{prefix}-{current_count:06d}"
+                            current_count += 1
+                        existentes_en_db.add(referencia)
+                        es_nuevo_en_crm = True
                     
-                    telefono = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else 'Sin Teléfono'
-                    
-                    dni = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ''
-                    if dni.lower() == 'nan': dni = ''
-                    
-                    # === LECTURA Y NORMALIZACIÓN DEL PRODUCTO ===
-                    tipo_prod_raw = str(row.iloc[4]).strip() if pd.notna(row.iloc[4]) else ''
-                    
-                    if tipo_prod_raw and tipo_prod_raw.lower() != 'nan':
-                        # Convertimos a minúsculas para buscarlo en nuestro diccionario traductor
-                        tipo_limpio = tipo_prod_raw.lower().strip()
-                        # Si lo encuentra en el diccionario, usa el código oficial. Si no, lo guarda en mayúsculas.
-                        tipo_prod = MAPEO_PRODUCTOS.get(tipo_limpio, tipo_prod_raw.upper())
-                    else:
-                        tipo_prod = ''
+                    referencias_encontradas_en_excel.add(referencia)
                     
                     coste = float(row.iloc[5]) if pd.notna(row.iloc[5]) else 0.0
-                    cuotas = int(row.iloc[6]) if pd.notna(row.iloc[6]) else 1
-                    
-                    email = str(row.iloc[7]).strip() if pd.notna(row.iloc[7]) else ''
-                    if email.lower() == 'nan': email = ''
-                    
-                    f_compra = pd.to_datetime(row.iloc[8], errors='coerce', dayfirst=True).date() if pd.notna(row.iloc[8]) else None
                     f_impago = pd.to_datetime(row.iloc[9], errors='coerce', dayfirst=True).date() if pd.notna(row.iloc[9]) else None
-
-                    expediente = Expediente(
-                        empresa=empresa,
-                        numero_expediente=referencia,
-                        deudor_nombre=nombre,
-                        deudor_telefono=telefono,
-                        deudor_dni=dni,
-                        tipo_producto=tipo_prod,
-                        monto_original=coste,
-                        monto_actual=coste, 
-                        cuotas_totales=cuotas,
-                        deudor_email=email,
-                        fecha_compra=f_compra,
-                        fecha_impago=f_impago,
-                        estado=estado_carga
-                    )
-                    nuevos_expedientes.append(expediente)
                     
-                except Exception as row_error:
-                    print(f"Error procesando fila {index}: {row_error}")
-                    continue 
-            
-            # Insertamos todos a la vez en la base de datos
-            Expediente.objects.bulk_create(nuevos_expedientes, ignore_conflicts=True)
-            
-            messages.success(request, f"Se importaron {len(nuevos_expedientes)} expedientes exitosamente.")
+                    es_mora_reciente = f_impago and (timezone.now().date() - f_impago).days <= 7
+
+                    if es_nuevo_en_crm or es_mora_reciente:
+                        contador_novedades += 1
+                        monto_novedades += coste
+
+                    if es_nuevo_en_crm:
+                        tipo_prod_raw = str(row.iloc[4]).strip() if pd.notna(row.iloc[4]) else ''
+                        expediente = Expediente(
+                            empresa=empresa, numero_expediente=referencia, deudor_nombre=nombre_raw,
+                            deudor_telefono=telefono_raw, deudor_dni=str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else '',
+                            tipo_producto=MAPEO_PRODUCTOS.get(tipo_prod_raw.lower().strip(), tipo_prod_raw.upper()) if tipo_prod_raw else '',
+                            monto_original=Decimal(str(coste)), monto_actual=Decimal(str(coste)), 
+                            cuotas_totales=int(row.iloc[6]) if pd.notna(row.iloc[6]) else 1,
+                            deudor_email=str(row.iloc[7]).strip() if pd.notna(row.iloc[7]) else '',
+                            fecha_compra=pd.to_datetime(row.iloc[8], errors='coerce', dayfirst=True).date() if pd.notna(row.iloc[8]) else None,
+                            fecha_impago=f_impago, estado=estado_carga, activo=True
+                        )
+                        nuevos_expedientes_lista.append(expediente)
+                    
+                except Exception: continue 
+
+            if nuevos_expedientes_lista:
+                Expediente.objects.bulk_create(nuevos_expedientes_lista, ignore_conflicts=True)
+                empresa.casos_nuevos_semana = contador_novedades
+                empresa.monto_nuevo_semana = Decimal(str(monto_novedades))
+                empresa.fecha_ultima_importacion = timezone.now()
+                empresa.save()
+
+            # --- PREPARAR SESIONES PARA MODALES ---
+            # 1. Sesión para Restaurar
+            if ids_para_restaurar:
+                request.session['pendientes_restauracion'] = list(ids_para_restaurar)
+                request.session['restauracion_empresa_id'] = empresa.id
+                request.session['restauracion_estado_carga'] = estado_carga
+
+            # 2. Sesión para Conciliar
+            ids_desaparecidos = list(ids_estado_previo - referencias_encontradas_en_excel)
+            if ids_desaparecidos:
+                request.session['pendientes_conciliacion'] = ids_desaparecidos
+                request.session['conciliacion_empresa_id'] = empresa.id
+
+            if not ids_para_restaurar and not ids_desaparecidos:
+                messages.success(request, f"Importación exitosa. {len(nuevos_expedientes_lista)} registros nuevos.")
             
         except Exception as e:
-            messages.error(request, f"Error crítico al leer el archivo: {str(e)}")
+            messages.error(request, f"Error crítico: {str(e)}")
             
+    return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+
+# Vista para procesar la conciliación detectada en el import, registrando pagos de los expedientes que desaparecieron según el estado, y luego limpiando la sesión
+@login_required
+@require_POST
+def procesar_conciliacion(request):
+    ids_pendientes = request.session.get('pendientes_conciliacion', [])
+    empresa_id = request.session.get('conciliacion_empresa_id')
+    
+    if ids_pendientes and empresa_id:
+        empresa = get_object_or_404(Empresa, id=empresa_id)
+        expedientes = Expediente.objects.filter(numero_expediente__in=ids_pendientes, empresa=empresa, activo=True)
+        
+        pagos_cont = 0
+        
+        for exp in expedientes:
+            monto_a_pagar = exp.monto_actual
+            if monto_a_pagar > 0:
+                try:
+                    # 1. Creación minimalista y segura del pago (Idéntica a tu registrar_pago)
+                    pago = RegistroPago()
+                    pago.expediente = exp
+                    pago.monto = monto_a_pagar
+                    
+                    # Asignamos la fecha si tu modelo lo requiere
+                    if hasattr(pago, 'fecha_pago'):
+                        pago.fecha_pago = timezone.now().date()
+                        
+                    # Llamamos al motor de comisiones dinámico
+                    pago.comision = calcular_comision_exacta(exp, monto_a_pagar)
+                    pago.save()
+                    
+                    # 2. Actualizar Expediente
+                    exp.monto_recuperado = (exp.monto_recuperado or Decimal('0.00')) + monto_a_pagar                
+                    nueva_deuda = calcular_deuda_actualizada(exp)
+                    exp.monto_actual = Decimal(str(nueva_deuda))
+                    
+                    # === PARCHE DE SEGURIDAD PARA CEDIDOS ===
+                    if exp.estado == 'CEDIDO' and not exp.fecha_cesion:
+                        exp.fecha_cesion = timezone.now().date()
+                    # ========================================
+
+                    if exp.monto_actual <= Decimal('1.00'):
+                        exp.estado = 'PAGADO'
+                    
+                    # 3. Recalcular deuda actual (Ya toma el descuento de la base de datos)
+                    nueva_deuda = calcular_deuda_actualizada(exp)
+                    exp.monto_actual = Decimal(str(nueva_deuda))
+                    
+                    # 4. Lógica de cierre limpia (Copiada de tu vista)
+                    if exp.monto_actual <= Decimal('1.00'):
+                        exp.estado = 'PAGADO'
+                        exp.activo = True 
+                    else:
+                        exp.estado = 'ACTIVO'
+                        exp.activo = True
+                        
+                    exp.save()
+                    pagos_cont += 1
+                    
+                except Exception as e:
+                    # AHORA SÍ VEREMOS EL ERROR EN PANTALLA SI ALGO FALLA
+                    messages.error(request, f"Error al registrar pago de {exp.numero_expediente}: {str(e)}")
+
+        # Notificamos el éxito real
+        if pagos_cont > 0:
+            messages.success(request, f"¡Conciliación exitosa! Se registraron {pagos_cont} pagos y se cerraron los expedientes.")
+
+    # ==========================================
+    # CORRECCIÓN CRÍTICA DEL LOOP INFINITO
+    # ==========================================
+    if 'pendientes_conciliacion' in request.session:
+        del request.session['pendientes_conciliacion']
+    if 'conciliacion_empresa_id' in request.session:
+        del request.session['conciliacion_empresa_id']
+        
+    # Esta línea obliga a Django a guardar la sesión limpia y rompe el loop
+    request.session.modified = True 
+    
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+# Vista para procesar la restauración masiva detectada en el import, restaurando los expedientes que estaban en papelera según el estado, y luego limpiando la sesión
+@login_required
+@require_POST
+def procesar_restauracion_masiva(request):
+    """ Restaura los expedientes desde la papelera al estado correspondiente """
+    ids_restaurar = request.session.get('pendientes_restauracion', [])
+    empresa_id = request.session.get('restauracion_empresa_id')
+    estado_carga = request.session.get('restauracion_estado_carga', 'ACTIVO')
+    
+    if ids_restaurar and empresa_id:
+        empresa = get_object_or_404(Empresa, id=empresa_id)
+        expedientes = Expediente.objects.filter(numero_expediente__in=ids_restaurar, empresa=empresa, activo=False)
+        
+        count = 0
+        for exp in expedientes:
+            exp.activo = True
+            exp.estado = estado_carga # Lo manda a Impagos o Cedidos según cómo se subió el Excel
+            exp.fecha_eliminacion = None
+            exp.motivo_eliminacion = None
+            exp.save()
+            count += 1
+
+        if count > 0:
+            messages.success(request, f"Se han restaurado {count} expedientes a {estado_carga}.")
+    
+    # Limpieza de sesión
+    request.session.pop('pendientes_restauracion', None)
+    request.session.pop('restauracion_empresa_id', None)
+    request.session.pop('restauracion_estado_carga', None)
+    request.session.modified = True 
+    
     return redirect(request.META.get('HTTP_REFERER', '/'))

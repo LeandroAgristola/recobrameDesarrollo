@@ -58,6 +58,25 @@ class Empresa(models.Model):
     contrato_colaboracion = models.FileField(upload_to='contratos/', null=True, blank=True)
     contrato_cesion = models.FileField(upload_to='contratos/', null=True, blank=True)
 
+    # === MÉTRICAS DE CARGA (Nuevos) ===
+    casos_nuevos_semana = models.PositiveIntegerField(
+        default=0, 
+        help_text="Casos que entraron en impago en los últimos 7 días según el último reporte."
+    )
+    fecha_ultima_importacion = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="Fecha y hora de la última carga masiva."
+    )
+
+    # Puedes agregar también el monto para dar más valor
+    monto_nuevo_semana = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="Suma del monto original de los casos nuevos de la semana."
+    )
+
     # NOTA: Eliminamos tipo_comision, porcentaje_unico y porcentaje_base
     # Ahora la lógica estará en el modelo EsquemaComision
 

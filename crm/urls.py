@@ -23,8 +23,11 @@ urlpatterns = [
     path('registrar-pago/<int:expediente_id>/', views.registrar_pago, name='registrar_pago'),
     path('eliminar-pago/<int:pago_id>/', views.eliminar_pago, name='eliminar_pago'),
     path('editar-pago/<int:pago_id>/', views.editar_pago, name='editar_pago'),
+    path('procesar-conciliacion/', views.procesar_conciliacion, name='procesar_conciliacion'),
+    path('procesar-restauracion-masiva/', views.procesar_restauracion_masiva, name='procesar_restauracion_masiva'),
 
     path('expediente/<int:exp_id>/confirmar-cesion/', views.confirmar_cesion, name='confirmar_cesion'),
     path('guardar-comentario/<int:expediente_id>/', views.guardar_comentario_libre, name='guardar_comentario_libre'),
     path('empresa/<int:empresa_id>/importar/', views.importar_excel, name='importar_excel'),
+    
 ]
