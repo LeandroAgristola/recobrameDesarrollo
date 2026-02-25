@@ -43,7 +43,7 @@
                 <i class="fa-solid fa-print me-2"></i>Imprimir Ficha
             </button>
             
-            <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-secondary">
+            <a href="{% if url_anterior %}{{ url_anterior }}{% else %}{% url 'crm:dashboard_crm' empresa.id %}{% endif %}" class="btn btn-secondary">
                 <i class="fa-solid fa-arrow-left me-2"></i>Volver
             </a>
         </div>

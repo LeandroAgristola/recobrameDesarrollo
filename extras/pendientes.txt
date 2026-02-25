@@ -1,10 +1,6 @@
 
 CRM
 
-Revisar papelera de cedidos
-
-Redirigir a las vistas que estamos trabajando y no siempre movernos a Dashboar
-
 
 Agregar opcion de refinanciar (ver en detalle)
 Validacion de duplicados (si es q esta refinancioado)
@@ -15,17 +11,58 @@ Mejorar filtros
 Asignar agentes de forma masiva agregar boton para seleccionar registros y asignar de forma masiva 
 
 
-Agregar boton de eliminar en reg_recobros de Cedidos y mover el modal fuera del sistema (unificar estos modales)
-
 Empresas: 
 
-Errores:
+
+
+Mejoras:
 
 manejar tipos de monedas USD Euros (ver forma de cotizar al dia de hoy)
 Desbloquear tics de seguimiento a medida que los abogados realizan acciones 
-
-Diseño:
-
 separar miles con .
 
 
+Bien te voy a dar algunos detalles de cómo vamos a trabajar con los usuarios para q vayamos armando un plan de trabajo. Primero ordena toda la información que te paso y agrega la información 
+que te parezca. Una vez q tengamos la guía de pasos para esta nueva incorporación vamos a empezar a trabajar por etapas.
+
+Usuarios: 
+
+(admin) Ventana principal con boton de "nuevo usuario" 
+    Dos pestañas: (Staff y Clientes)
+    Pestaña Staff: el listado de todo el staf - nombre y apellido - numero de netelip, mercateli y mail - rol y acciones
+    Al apretar sobre el nombre vamos al detalle del usuario:
+        2 pestañas:
+            datos del usuario
+                Nombre apellido
+                Nro de identificacion
+                Telefono de contacto
+                mail
+                Fecha de alta
+                Contrato de colaboracion
+                Foto de Pefil?
+                Etc
+            facturas cargadas (lo traemos de contable)
+                un listado con las facturas que el agente lo envia y un estado (pagado o pendiente), que tambien lo traemos de contable
+    Dos formularios:
+        uno de alta de staff asignando el rol (Admin, Agente, Contable o Abogado)
+        uno de alta de cliente (nombre del usuario contraseña, mail telefono y empresas asignadas)
+            en empresas asignadas va aparecer un listado desplegable con todas las empresas y vamos a poder leccionar de ahi para asignarlas a cada usuario
+    Pestaña Clientes:
+        listado con todos los usuario de clientes, al apretar sobre ellos vamos al detalle del cliente
+            datos de contacto empresas asignadas y listado de facturas con estado (Pendiente - pagada) esto tmb lo traemos de contable
+    
+Permisos: 
+
+    Admin veremos todas las apps actuales aunq la vista de clientes se ingresa desde otra pagina y al no tener empresas asignadas no veremos nada. 
+    Una opcion es que como admin al ingresar en cliente veamos las metricas de todas las empresas (como si las tengamos todas asignadas)
+    En la parte de Staff tendremos un apartado con las metricas de todos los agentes, seleccionandolos desde una lista desplegable (estas metricas son las mismas q ven los agenes en su usuario)
+
+    Agente: 
+
+        Vera la app CRM pero solo con los CRM q tiene casos
+        Vera un link a su usuario con sus datos actuales
+        Vera un link con sus metricas (las mismas q vemos de la parte de admin pero solo para ese usuario)
+
+    Abogado y contables (queda pendiente su app)
+
+Errores:

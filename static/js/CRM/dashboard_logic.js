@@ -120,4 +120,27 @@ document.addEventListener("DOMContentLoaded", function() {
             if (btnSubmitNuevo) btnSubmitNuevo.disabled = false;
         });
     }
+
+    // ==========================================
+    // 7. PERSISTENCIA DE PESTAÑAS (URL DINÁMICA)
+    // ==========================================
+    const todasLasPestanas = document.querySelectorAll('button[data-bs-toggle="tab"], button[data-bs-toggle="pill"]');
+    
+    todasLasPestanas.forEach(pestana => {
+        pestana.addEventListener('shown.bs.tab', function (event) {
+            let target = event.target.getAttribute('data-bs-target');
+            if (target) {
+                // Limpiamos el texto para que "#tab-cedidos" quede como "cedidos"
+                let tabName = target.replace('#tab-', '').replace('#pills-', '');
+                
+                // Actualizamos la URL del navegador SIN recargar la página
+                let nuevaUrl = new URL(window.location.href);
+                nuevaUrl.searchParams.set('tab', tabName);
+                window.history.replaceState({}, '', nuevaUrl);
+                
+                // Actualizamos nuestra variable global
+                window.CRM_TAB_ACTIVA = tabName;
+            }
+        });
+    });
 });

@@ -1,6 +1,6 @@
 /**
- * Valida que el monto ingresado no sea superior a la deuda actual
- * antes de enviar el formulario.
+ * Valida el monto ingresado antes de enviar el formulario.
+ * No bloquea pagos superiores a la deuda, pero lanza una advertencia.
  */
 function validarPagoLocal(event, expId, deudaMax) {
     const inputMonto = document.getElementById(`input-monto-${expId}`);
@@ -14,35 +14,35 @@ function validarPagoLocal(event, expId, deudaMax) {
     errorDiv.innerHTML = '';
     inputMonto.classList.remove('is-invalid');
 
-    // Validación: No permitir más de lo debido
-    // (Usamos un margen de 0.01 por posibles redondeos en el float)
-    if (montoIngresado > (deudaMax + 0.01)) {
-        event.preventDefault(); // Detiene el envío del form
-        
+    // Validación estricta: No permitir 0 o negativos
+    if (montoIngresado <= 0) {
+        event.preventDefault();
         errorDiv.innerHTML = `
-            <div class="alert alert-danger d-flex align-items-center py-2 mb-3" role="alert">
+            <div class="alert alert-warning d-flex align-items-center py-2 mb-3" role="alert">
                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                <div class="small">
-                    <strong> Monto excedido:</strong> El pago no puede ser mayor a ${deudaMax} €).
-                </div>
+                <div class="small">El monto ingresado debe ser mayor a 0€.</div>
             </div>
         `;
-        
         inputMonto.classList.add('is-invalid');
         inputMonto.focus();
         return false;
     }
 
-    // Validación: No permitir 0 o negativos
-    if (montoIngresado <= 0) {
-        event.preventDefault();
-        errorDiv.innerHTML = `
-            <div class="alert alert-warning py-2 small mb-3">
-                Por favor, ingrese un monto superior a 0 €.
-            </div>
-        `;
-        return false;
+    // Validación flexible: Advertencia si paga más que la deuda exigible
+    // (Usamos un margen de 0.01 por posibles redondeos)
+    if (montoIngresado > (deudaMax + 0.01)) {
+        // Lanzamos un modal de confirmación del navegador
+        const confirmar = confirm(`⚠️ ATENCIÓN:\n\nEl monto ingresado (${montoIngresado}€) es superior a la deuda pendiente actual (${deudaMax}€).\n\n¿Estás seguro de que deseas registrar este pago de todas formas (ej. cancelación total de la financiación)?`);
+        
+        if (!confirmar) {
+            // Si el agente cancela la advertencia, detenemos el envío
+            event.preventDefault(); 
+            inputMonto.focus();
+            return false;
+        }
+        // Si el agente hace clic en "Aceptar", no hacemos el preventDefault
+        // y el formulario se envía al servidor con éxito.
     }
 
-    return true; // Todo correcto, se envía el formulario
+    return true;
 }

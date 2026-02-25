@@ -74,12 +74,14 @@ class PagoForm(forms.ModelForm):
     # Validamos que el monto no exceda la deuda actual del expediente (con una pequeña tolerancia por redondeos)
     def clean_monto(self):
         monto = self.cleaned_data.get('monto')
-        if self.expediente:
-            # Tolerancia de 0.01 por posibles redondeos decimales
-            if monto > (self.expediente.monto_actual + Decimal('0.01')):
-                raise forms.ValidationError(f"El monto excede la deuda actual ({self.expediente.monto_actual}€).")
+        if monto <= 0:
+            raise forms.ValidationError("El monto ingresado debe ser mayor a 0.")
+            
+        # HEMOS ELIMINADO LA RESTRICCIÓN DE MONTO MÁXIMO
+        # Para permitir que los deudores hagan pagos adelantados o cancelen el total.
+        
         return monto
-
+    
     #valor negativo o nulo se interpreta como sin descuento
     def clean_descuento(self):
         descuento = self.cleaned_data.get('descuento')

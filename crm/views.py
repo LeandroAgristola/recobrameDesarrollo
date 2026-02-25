@@ -288,8 +288,12 @@ def dashboard_crm(request, empresa_id):
 
     # --- PAPELERA SEPARADA ---
     papelera_base = expedientes_qs.filter(activo=False).order_by('-fecha_eliminacion')
-    papelera_impagos = papelera_base.filter(fecha_cesion__isnull=True)
-    papelera_cedidos = papelera_base.filter(fecha_cesion__isnull=False)
+    
+    # Es cedido si su estado es CEDIDO o si tiene una fecha de cesión registrada (ej. pagados)
+    papelera_cedidos = papelera_base.filter(Q(estado='CEDIDO') | Q(fecha_cesion__isnull=False))
+    
+    # Todo el resto, a impagos
+    papelera_impagos = papelera_base.exclude(Q(estado='CEDIDO') | Q(fecha_cesion__isnull=False))
 
     # --- 4. FILTROS RECOBROS ---
     # PRIMERO: Creamos la consulta base de recobros
@@ -424,8 +428,15 @@ def editar_expediente(request, exp_id):
             # Guardamos los datos base actualizados
             exp.save()
             
-            # 4. RECALCULAMOS la deuda (Tomará en cuenta si volvió a ACTIVO o sigue CEDIDO)
+            # 4. RECALCULAMOS la deuda y AJUSTAMOS EL ESTADO
             exp.monto_actual = Decimal(str(calcular_deuda_actualizada(exp)))
+            
+            # Si el deudor vuelve a tener deuda, lo "despertamos" de Pagados
+            if exp.monto_actual <= Decimal('1.00'):
+                exp.estado = 'PAGADO'
+            elif exp.estado == 'PAGADO':
+                exp.estado = 'CEDIDO' if exp.fecha_cesion else 'ACTIVO'
+                
             exp.save()
             
             messages.success(request, f"Expediente {exp.numero_expediente} actualizado correctamente.")
@@ -466,15 +477,28 @@ def eliminar_expediente(request, exp_id):
         motivo = request.POST.get('motivo_eliminacion')
         exp.eliminar_logico(motivo)
         messages.warning(request, f"Expediente movido a la papelera.")
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
     return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Vista para restaurar un expediente desde la papelera, con mensaje de éxito
 @login_required
 def restaurar_expediente(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
+    empresa_id = exp.empresa.id  # Lo declaramos aquí por seguridad antes de cualquier acción
+    
     exp.restaurar()
     messages.success(request, f"Expediente de {exp.deudor_nombre} restaurado.")
-    return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
+    
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Vista para eliminar definitivamente un expediente desde la papelera, con confirmación y mensaje de éxito
 @login_required
@@ -485,6 +509,11 @@ def eliminar_permanente_expediente(request, exp_id):
         nombre = exp.deudor_nombre
         exp.delete()
         messages.success(request, f"El expediente de {nombre} ha sido eliminado definitivamente.")
+# --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
     return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Vista para actualizar el estado de seguimiento (ticks) de forma rápida sin recargar toda la página
@@ -562,6 +591,7 @@ def actualizar_comentario_estandar(request):
 def guardar_comentario_libre(request, expediente_id):
     # Buscamos el expediente asegurando que pertenezca a una empresa del usuario (seguridad)
     expediente = get_object_or_404(Expediente, id=expediente_id)
+    empresa_id = expediente.empresa.id  # <-- Añadimos esto para el fallback seguro
     
     # Obtenemos el texto del textarea
     comentario = request.POST.get('comentarios', '').strip()
@@ -572,8 +602,12 @@ def guardar_comentario_libre(request, expediente_id):
     
     messages.success(request, "Nota guardada correctamente.")
     
-    # Redirigimos a la página anterior (el dashboard)
-    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Esta vista es para actualizar el agente asignado de forma rápida sin recargar toda la página
 @login_required
@@ -602,6 +636,8 @@ def actualizar_agente(request):
 @require_POST
 def subir_documento_crm(request, exp_id):
     exp = get_object_or_404(Expediente, id=exp_id)
+    empresa_id = exp.empresa.id  # <-- Lo extraemos aquí para usarlo al final
+    
     tipo = request.POST.get('tipo_documento')
     archivo = request.FILES.get('archivo')
     
@@ -616,15 +652,20 @@ def subir_documento_crm(request, exp_id):
     else:
         messages.error(request, "No se seleccionó ningún archivo.")
         
-    return redirect('crm:dashboard_crm', empresa_id=exp.empresa.id)
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Vista para eliminar un documento específico (AJAX)
 @login_required
 @require_POST
 def eliminar_documento_crm(request, doc_id):
     documento = get_object_or_404(DocumentoExpediente, id=doc_id)
-    exp_id = documento.expediente.id
     nombre = documento.nombre_archivo
+    
     documento.delete()
     
     return JsonResponse({'status': 'ok', 'message': f"Documento {nombre} eliminado."})
@@ -651,20 +692,21 @@ def detalle_expediente(request, exp_id):
     agentes_disponibles = User.objects.filter(is_active=True).order_by('username')
 
     # --- ANTECEDENTES (LA CORRECCIÓN DEL CONTADOR) ---
-    # Si tiene DNI, buscamos por DNI (más exacto)
     if exp.deudor_dni:
         veces_impago = Expediente.objects.filter(
             empresa=empresa, 
             deudor_dni__iexact=exp.deudor_dni.strip(),
-            activo=True # Incluye a los que ya están PAGADOS, excluye Papelera
+            activo=True
         ).count()
-    # Si NO tiene DNI (como tu prueba de Carlos), buscamos por nombre
     else:
         veces_impago = Expediente.objects.filter(
             empresa=empresa,
             deudor_nombre__iexact=exp.deudor_nombre.strip(),
             activo=True
         ).count()
+
+    # --- CAPTURAMOS LA RUTA DESDE DONDE VINO EL AGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
 
     context = {
         'empresa': empresa,
@@ -676,6 +718,7 @@ def detalle_expediente(request, exp_id):
         'pagos': exp.pagos.all().order_by('-fecha_pago'),
         'tipos_producto': tipos_producto,
         'agentes_disponibles': agentes_disponibles,
+        'url_anterior': url_anterior, # <--- ENVIAMOS LA RUTA AL HTML
     }
     return render(request, 'crm/detalle_expediente.html', context)
 
@@ -782,7 +825,10 @@ def calcular_comision_exacta(expediente, monto_pago):
 @login_required
 @require_POST
 def registrar_pago(request, expediente_id):
+
     expediente = get_object_or_404(Expediente, pk=expediente_id)
+    empresa_id = expediente.empresa.id  # <-- Extraemos esto para el fallback seguro
+    
     # Django captura 'monto' y 'descuento' automáticamente aquí
     form = PagoForm(request.POST, request.FILES, expediente=expediente)
 
@@ -810,7 +856,9 @@ def registrar_pago(request, expediente_id):
                 expediente.estado = 'PAGADO'
                 expediente.activo = True 
             else:
-                expediente.estado = 'ACTIVO'
+                # Evitamos que un pago parcial en "Cedidos" lo devuelva a "Impagos"
+                if expediente.estado != 'CEDIDO':
+                    expediente.estado = 'ACTIVO'
                 expediente.activo = True
 
             expediente.save()
@@ -829,7 +877,12 @@ def registrar_pago(request, expediente_id):
         for field, errors in form.errors.items():
             messages.error(request, f"{field}: {errors[0]}")
 
-    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Vistas para editar y eliminar pagos, con lógica de actualización de deuda y estado del expediente
 @login_required
@@ -837,6 +890,7 @@ def registrar_pago(request, expediente_id):
 def eliminar_pago(request, pago_id):
     pago = get_object_or_404(RegistroPago, id=pago_id)
     expediente = pago.expediente
+    empresa_id = expediente.empresa.id  # <-- Añadido para el fallback seguro
     
     # 1. Eliminar el pago
     pago.delete()
@@ -848,15 +902,25 @@ def eliminar_pago(request, pago_id):
     # 3. Recalcular Deuda Actual (Ahora la función considera que hay menos descuentos)
     expediente.monto_actual = Decimal(str(calcular_deuda_actualizada(expediente)))
     
-    # 4. Actualizar Estado (Si estaba PAGADO, vuelve a ACTIVO)
-    if expediente.monto_actual > 0:
-        expediente.estado = 'ACTIVO'
+    # 4. Actualizar Estado (Evitamos que un Cedido pagado vuelva como Impago)
+    # Usamos > 1.00 para mantener la misma tolerancia que usamos al registrar el pago
+    if expediente.monto_actual > Decimal('1.00'):
+        if expediente.fecha_cesion:
+            expediente.estado = 'CEDIDO'
+        else:
+            expediente.estado = 'ACTIVO'
         expediente.activo = True
         
     expediente.save()
     
     messages.success(request, "Pago eliminado y deuda restaurada.")
-    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+    
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Vista para editar un pago existente, permitiendo modificar monto y descuento, y luego recalculando la deuda y estado del expediente
 @login_required
@@ -864,14 +928,29 @@ def eliminar_pago(request, pago_id):
 def editar_pago(request, pago_id):
     pago = get_object_or_404(RegistroPago, id=pago_id)
     expediente = pago.expediente
+    empresa_id = expediente.empresa.id  
     
-    # Obtenemos datos del formulario manual (o usa PagoForm si prefieres)
+    # Obtenemos TODOS los datos del formulario manual
     nuevo_monto = request.POST.get('monto')
     nuevo_descuento = request.POST.get('descuento', 0)
+    nueva_fecha = request.POST.get('fecha_pago')
+    nuevo_metodo = request.POST.get('metodo_pago')
+    nuevo_comprobante = request.FILES.get('comprobante') # Capturamos el archivo
     
     if nuevo_monto:
         pago.monto = Decimal(nuevo_monto)
-        pago.descuento = Decimal(nuevo_descuento)
+        pago.descuento = Decimal(nuevo_descuento) if nuevo_descuento else Decimal('0.00')
+        
+        # --- NUEVAS ACTUALIZACIONES ---
+        if nueva_fecha:
+            pago.fecha_pago = nueva_fecha
+        if nuevo_metodo:
+            pago.metodo_pago = nuevo_metodo
+        if nuevo_comprobante:
+            pago.comprobante = nuevo_comprobante
+            
+        # Recalcular la comisión exacta con el nuevo monto
+        pago.comision = calcular_comision_exacta(expediente, pago.monto)
         pago.save()
         
         # Recalcular todo el expediente
@@ -879,16 +958,25 @@ def editar_pago(request, pago_id):
         expediente.monto_recuperado = total_recuperado
         expediente.monto_actual = Decimal(str(calcular_deuda_actualizada(expediente)))
         
-        # Ajuste de estado
-        if expediente.monto_actual <= 0.5: # Margen pequeño
+        # === EL MOTOR QUE "DESPIERTA" AL EXPEDIENTE ===
+        if expediente.monto_actual <= Decimal('1.00'): 
              expediente.estado = 'PAGADO'
         else:
-             expediente.estado = 'ACTIVO'
+             # Si tiene deuda, lo forzamos a salir de 'PAGADO'
+             if expediente.fecha_cesion:
+                 expediente.estado = 'CEDIDO'
+             else:
+                 expediente.estado = 'ACTIVO'
              
         expediente.save()
-        messages.success(request, "Pago actualizado correctamente.")
+        messages.success(request, "Pago actualizado completamente.")
         
-    return redirect(request.META.get('HTTP_REFERER', 'crm:dashboard_crm'))
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    return redirect('crm:dashboard_crm', empresa_id=empresa_id)
 
 # Vista para confirmar la cesión de un expediente, verificando que cumpla con los requisitos y luego actualizando su estado a CEDIDO, con lógica de aceleración de deuda
 @login_required
@@ -964,8 +1052,11 @@ def importar_excel(request, empresa_id):
         
         if not archivo:
             messages.error(request, "Por favor sube un archivo.")
+            url_anterior = request.META.get('HTTP_REFERER')
+            if url_anterior:
+                return redirect(url_anterior)
             return redirect('crm:dashboard_crm', empresa_id=empresa.id)
-            
+        
         try:
             df = pd.read_csv(archivo) if archivo.name.endswith('.csv') else pd.read_excel(archivo)
             
@@ -1082,6 +1173,11 @@ def importar_excel(request, empresa_id):
         except Exception as e:
             messages.error(request, f"Error crítico: {str(e)}")
             
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
     return redirect('crm:dashboard_crm', empresa_id=empresa.id)
 
 # Vista para procesar la conciliación detectada en el import, registrando pagos de los expedientes que desaparecieron según el estado, y luego limpiando la sesión
@@ -1145,9 +1241,6 @@ def procesar_conciliacion(request):
         if pagos_cont > 0:
             messages.success(request, f"¡Conciliación exitosa! Se registraron {pagos_cont} pagos y se cerraron los expedientes.")
 
-    # ==========================================
-    # CORRECCIÓN CRÍTICA DEL LOOP INFINITO
-    # ==========================================
     if 'pendientes_conciliacion' in request.session:
         del request.session['pendientes_conciliacion']
     if 'conciliacion_empresa_id' in request.session:
@@ -1156,7 +1249,15 @@ def procesar_conciliacion(request):
     # Esta línea obliga a Django a guardar la sesión limpia y rompe el loop
     request.session.modified = True 
     
-    return redirect(request.META.get('HTTP_REFERER', '/'))
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    # Fallback ultra-seguro por si se borró la sesión y falló el Referer
+    if empresa_id:
+        return redirect('crm:dashboard_crm', empresa_id=empresa_id)
+    return redirect('/') # Te devuelve al inicio del sistema si todo lo demás falla
 
 # Vista para procesar la restauración masiva detectada en el import, restaurando los expedientes que estaban en papelera según el estado, y luego limpiando la sesión
 @login_required
@@ -1189,4 +1290,12 @@ def procesar_restauracion_masiva(request):
     request.session.pop('restauracion_estado_carga', None)
     request.session.modified = True 
     
-    return redirect(request.META.get('HTTP_REFERER', '/'))
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    # Fallback ultra-seguro por si se borró la sesión y falló el Referer
+    if empresa_id:
+        return redirect('crm:dashboard_crm', empresa_id=empresa_id)
+    return redirect('/') # Te devuelve al inicio del sistema si todo lo demás falla
