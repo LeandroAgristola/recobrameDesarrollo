@@ -1263,6 +1263,7 @@ def procesar_conciliacion(request):
 @login_required
 @require_POST
 def procesar_restauracion_masiva(request):
+
     """ Restaura los expedientes desde la papelera al estado correspondiente """
     ids_restaurar = request.session.get('pendientes_restauracion', [])
     empresa_id = request.session.get('restauracion_empresa_id')
@@ -1299,3 +1300,28 @@ def procesar_restauracion_masiva(request):
     if empresa_id:
         return redirect('crm:dashboard_crm', empresa_id=empresa_id)
     return redirect('/') # Te devuelve al inicio del sistema si todo lo demás falla
+
+# Vista para asignar un agente a múltiples expedientes de forma masiva desde el dashboard, con lógica de validación y manejo de errores
+@login_required
+@require_POST
+def asignar_agente_masivo(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    agente_id = request.POST.get('agente_id')
+    expedientes_ids = request.POST.getlist('expedientes_ids') # Captura todos los checks
+
+    if agente_id and expedientes_ids:
+        agente = get_object_or_404(User, id=agente_id)
+        
+        # .update() hace la actualización masiva directo en la base de datos (Ultra rápido)
+        Expediente.objects.filter(id__in=expedientes_ids, empresa=empresa).update(agente=agente)
+        
+        messages.success(request, f"✅ Se asignaron {len(expedientes_ids)} expedientes al agente {agente.username}.")
+    else:
+        messages.warning(request, "Debes seleccionar al menos un expediente y un agente.")
+
+    # --- LÓGICA DE RETORNO INTELIGENTE ---
+    url_anterior = request.META.get('HTTP_REFERER')
+    if url_anterior:
+        return redirect(url_anterior)
+        
+    return redirect('crm:dashboard_crm', empresa_id=empresa.id)

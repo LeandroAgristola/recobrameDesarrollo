@@ -63,12 +63,32 @@
         </div>
   </div>   
 
-    <table class="table table-hover align-middle mb-0 table-crm" id="tablaExpedientes">
-            
-        <thead class="bg-light sticky-top" style="z-index: 100;">
-            <tr class="text-center small text-uppercase text-muted">
-                <th class="col-agente">Agente</th>
-                <th class="col-id">ID</th>
+ <div id="bulk-action-bar-impagos" class="d-none bg-primary bg-opacity-10 p-2 border border-primary rounded mb-3 d-flex align-items-center justify-content-between shadow-sm transition-all">
+        <span class="small fw-bold text-primary px-2"><span id="selected-count-impagos">0</span> expedientes seleccionados</span>
+        <div class="d-flex gap-2">
+            <select name="agente_id" class="form-select form-select-sm border-primary" form="form-masivo-impagos" required>
+                <option value="">Asignar a...</option>
+                {% for agente in agentes_disponibles %}
+                    <option value="{{ agente.id }}">{{ agente.username }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" form="form-masivo-impagos" class="btn btn-sm btn-primary fw-bold">
+                <i class="fa-solid fa-user-check"></i> Aplicar a todos
+            </button>
+        </div>
+    </div>
+
+    <form id="form-masivo-impagos" action="{% url 'crm:asignar_agente_masivo' empresa.id %}" method="POST">
+        {% csrf_token %}
+        <table class="table table-hover align-middle mb-0 table-crm" id="tablaExpedientes">
+                
+            <thead class="bg-light sticky-top" style="z-index: 100;">
+                <tr class="text-center small text-uppercase text-muted">
+                    <th style="width: 40px;" class="text-center align-middle">
+                        <input class="form-check-input border-secondary select-all-impagos" type="checkbox" title="Seleccionar todos">
+                    </th>
+                    <th class="col-agente">Agente</th>
+                    <th class="col-id">ID</th>
                 <th class="col-nombre" style="min-width: 180px;">Nombre y Apellido</th>
                 <th class="col-tel">Teléfono</th>
                 
@@ -102,7 +122,8 @@
 
             <tr id="fila-filtros" class="bg-white border-bottom shadow-sm" 
                 style="display: {% if hay_filtros_impagos %}table-row{% else %}none{% endif %};">
-                
+
+                <td class="text-center bg-light"></td>
                 <td class="col-agente">
                     <select name="f_agente" class="form-select form-select-sm filtro-columna" onchange="aplicarFiltrosJS()">
                         <option value="">Todos</option>
@@ -224,6 +245,10 @@
             <tr id="fila-exp-{{ exp.id }}" 
                 class="text-center {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}{% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}row-promesa-hoy{% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}row-promesa-vencida{% endif %}{% endif %} {% if exp.puede_ser_cedido %}row-cedido{% endif %}">
                 
+                <td class="text-center align-middle">
+                    <input class="form-check-input border-secondary row-checkbox-impagos" type="checkbox" name="expedientes_ids" value="{{ exp.id }}">
+                </td>
+
                 <td class="col-agente">
                     <select class="form-select form-select-sm fw-bold small text-muted"
                             onchange="cambiarAgente(this, {{ exp.id }})"
@@ -363,7 +388,7 @@
 
             {% empty %}
             <tr>
-                <td colspan="11" class="text-center py-5">
+                <td colspan="100%" class="text-center py-5">
                     <div class="text-success opacity-50 mb-3">
                         <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
                     </div>
@@ -374,7 +399,7 @@
             {% endfor %}
         </tbody>
     </table>
-</div>
+</form> </div>
 
 
 

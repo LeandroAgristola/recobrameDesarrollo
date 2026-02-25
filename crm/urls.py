@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/actualizar-comentario/', views.actualizar_comentario_estandar, name='actualizar_comentario'),
     path('api/actualizar-agente/', views.actualizar_agente, name='actualizar_agente'),
     path('expediente/<int:exp_id>/subir-doc/', views.subir_documento_crm, name='subir_documento_crm'),
+    path('empresa/<int:empresa_id>/asignar-masivo/', views.asignar_agente_masivo, name='asignar_agente_masivo'),
     
     path('buscar-antecedentes/', views.buscar_antecedentes_deudor, name='buscar_antecedentes'),
     path('expediente/editar/<int:exp_id>/', views.editar_expediente, name='editar_expediente'),
@@ -29,5 +30,6 @@ urlpatterns = [
     path('expediente/<int:exp_id>/confirmar-cesion/', views.confirmar_cesion, name='confirmar_cesion'),
     path('guardar-comentario/<int:expediente_id>/', views.guardar_comentario_libre, name='guardar_comentario_libre'),
     path('empresa/<int:empresa_id>/importar/', views.importar_excel, name='importar_excel'),
+    
     
 ]

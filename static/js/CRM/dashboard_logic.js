@@ -143,4 +143,64 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     });
-});
+
+    // ==========================================
+    // 8. ACCIONES MASIVAS (CHECKBOXES)
+    // ==========================================
+    
+    /**
+     * Activa la lógica de casillas maestras para acciones masivas.
+     * @param {string} tabPrefix - 'impagos' o 'cedidos'
+     */
+    function setupBulkActions(tabPrefix) {
+        const selectAll = document.querySelector(`.select-all-${tabPrefix}`);
+        const rowCheckboxes = document.querySelectorAll(`.row-checkbox-${tabPrefix}`);
+        const bulkBar = document.getElementById(`bulk-action-bar-${tabPrefix}`);
+        const countSpan = document.getElementById(`selected-count-${tabPrefix}`);
+
+        if (!selectAll || !bulkBar) return;
+
+        // Función para actualizar el contador y mostrar/ocultar la barra
+        function updateUI() {
+            const selectedCount = document.querySelectorAll(`.row-checkbox-${tabPrefix}:checked`).length;
+            countSpan.innerText = selectedCount;
+            
+            if (selectedCount > 0) {
+                bulkBar.classList.remove('d-none');
+            } else {
+                bulkBar.classList.add('d-none');
+            }
+        }
+
+        // Evento: Click en el Checkbox Maestro (Seleccionar todo)
+        selectAll.addEventListener('change', function() {
+            rowCheckboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+            updateUI();
+        });
+
+        // Evento: Click en los Checkboxes Individuales
+        rowCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                // Si desmarco uno, desmarco el maestro
+                if (!this.checked) {
+                    selectAll.checked = false;
+                }
+                
+                // Si marco todos individualmente, marco el maestro
+                const allChecked = document.querySelectorAll(`.row-checkbox-${tabPrefix}:checked`).length === rowCheckboxes.length;
+                if (allChecked) {
+                    selectAll.checked = true;
+                }
+                
+                updateUI();
+            });
+        });
+    }
+
+    // Inicializamos para ambas pestañas directamente
+    setupBulkActions('impagos');
+    setupBulkActions('cedidos');
+
+}); // ESTA ES LA LLAVE QUE CIERRA TU ARCHIVO PRINCIPAL
