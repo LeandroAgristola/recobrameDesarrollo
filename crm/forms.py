@@ -58,11 +58,6 @@ class ExpedienteForm(forms.ModelForm):
 
 # Formulario para registrar un pago, con validación del monto y método de pago
 class PagoForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.expediente = kwargs.pop('expediente', None)
-        super().__init__(*args, **kwargs)
-        self.fields['descuento'].required = False
-
     class Meta:
         model = RegistroPago
         fields = ['monto', 'descuento', 'metodo_pago', 'comprobante']
@@ -70,21 +65,18 @@ class PagoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.expediente = kwargs.pop('expediente', None)
         super().__init__(*args, **kwargs)
+        # Hacemos el descuento opcional en un único bloque __init__
+        self.fields['descuento'].required = False
 
-    # Validamos que el monto no exceda la deuda actual del expediente (con una pequeña tolerancia por redondeos)
     def clean_monto(self):
         monto = self.cleaned_data.get('monto')
-        if monto <= 0:
+        if monto is None or monto <= 0:
             raise forms.ValidationError("El monto ingresado debe ser mayor a 0.")
-            
-        # HEMOS ELIMINADO LA RESTRICCIÓN DE MONTO MÁXIMO
-        # Para permitir que los deudores hagan pagos adelantados o cancelen el total.
-        
         return monto
     
-    #valor negativo o nulo se interpreta como sin descuento
     def clean_descuento(self):
         descuento = self.cleaned_data.get('descuento')
-        if not descuento or descuento < 0:
+        # Si llega vacío (None) o es negativo, forzamos un 0.00 matemático
+        if descuento is None or descuento < 0:
             return Decimal('0.00')
         return descuento

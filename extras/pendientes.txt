@@ -1,8 +1,6 @@
 
 CRM
 
-Arreglar diseño de las pestañas superiores 
-
 Agregar opcion de refinanciar (ver en detalle)
 Validacion de duplicados (si es q esta refinancioado)
 
@@ -65,3 +63,4 @@ Permisos:
     Abogado y contables (queda pendiente su app)
 
 Errores:
+

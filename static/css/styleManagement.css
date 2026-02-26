@@ -296,22 +296,45 @@ label { font-weight: 500; color: #0a2c46; }
 
 /* ESTILOS ESPECÍFICOS DE LISTADO CRM */
 
-/* Contenedor tipo Google Sheets */
+/* --- 1. INTEGRACIÓN MÁGICA DE PESTAÑAS (Para todas las tablas y cards) --- */
+#crmTabContent > .tab-pane > div {
+    margin-top: -1px; /* Sube el contenedor 1 pixel para solapar la línea */
+    border: 1px solid #dee2e6 !important; 
+    border-top-left-radius: 0 !important; /* Esquina recta para fusionar */
+}
+
+/* La pestaña activa se pone por encima y se vuelve "blanca" abajo */
+.nav-tabs .nav-link.active {
+    position: relative;
+    z-index: 10 !important;
+    background-color: #fff !important;
+    border-bottom-color: #fff !important; 
+}
+
+/* Excepción: La pestaña de Info Empresa usa fondo gris */
+#info-empresa-tab.active {
+    background-color: #f8f9fa !important;
+    border-bottom-color: #f8f9fa !important;
+}
+#tab-info-empresa > div {
+    background-color: #f8f9fa !important;
+}
+
+/* --- 2. CONTENEDOR TIPO GOOGLE SHEETS (Scroll) --- */
 .crm-table-container {
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
+    max-height: calc(100vh - 220px); 
+    overflow-x: auto !important;
+    overflow-y: auto !important; /* MÁGIA: Activamos scroll vertical interno */
+    background-color: #fff;
+    position: relative;
     border-radius: 8px;
 }
 
 .table-crm {
     width: max-content !important; 
     min-width: 100%;
-}
-
-.table-crm thead.sticky-top,
-.sticky-top {
-    z-index: 100 !important; /* Siempre menor al 1000 de la sidebar */
+    border-collapse: separate; 
+    border-spacing: 0;
 }
 
 .table-crm th, 
@@ -322,8 +345,23 @@ label { font-weight: 500; color: #0a2c46; }
     text-overflow: ellipsis;
 }
 
-/* Clases de ancho fijo según tus medidas */
-/* Usar min-width asegura que la columna no se achique más de lo pedido */
+/* --- 3. CABECERAS Y FILTROS FIJOS (Eje Y) --- */
+.table-crm thead th.sticky-top {
+    position: sticky !important;
+    top: 0;
+    z-index: 100 !important; 
+    background-color: #f8f9fa !important;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#fila-filtros td, #fila-filtros-cedidos td {
+    position: sticky !important;
+    top: 38px; /* Altura del encabezado principal */
+    z-index: 95 !important;
+    background-color: #ffffff !important;
+}
+
+/* --- 4. TAMAÑOS DE COLUMNAS FIJOS (Tus medidas originales) --- */
 .col-agente { min-width: 150px; width: 150px; }
 .col-id { min-width: 100px; width: 100px; }
 .col-nombre { min-width: 250px; width: 250px; }
@@ -331,90 +369,62 @@ label { font-weight: 500; color: #0a2c46; }
 .col-tipo { min-width: 100px; width: 100px; }
 .col-monto { min-width: 150px; width: 150px; }
 .col-cuota { min-width: 100px; width: 100px; }
-.col-fecha { min-width: 150px; width: 150px; } /* Ajustado de 200 a 150 por practicidad */
+.col-fecha { min-width: 150px; width: 150px; } 
 .col-dias { min-width: 80px; width: 80px; }
 .col-estado { min-width: 150px; width: 150px; }
-.col-comentario { min-width: 400px; width: 400px; white-space: normal !important; } /* Permitir que el comentario sí envuelva texto */
+.col-comentario { min-width: 400px; width: 400px; white-space: normal !important; } 
 .col-tic { min-width: 45px; width: 45px; }
 .col-asnef { min-width: 45px; width: 45px; }
 .col-acciones { min-width: 150px; width: 150px; }
 
+/* --- 5. COLUMNAS CONGELADAS LATERALES (Eje X - Tus coordenadas) --- */
 .col-nombre, .col-tel, .col-acciones {
     position: sticky !important;
     background-color: white !important; /* Fondo blanco OBLIGATORIO */
     z-index: 5; /* Capa intermedia */
 }
+.col-nombre { left: 0; }
+.col-tel { left: 250px; }
+.col-acciones { 
+    right: 0; 
+    border-left: 1px solid #0000003b; 
+}
 
-/* 3. Corrección para los encabezados fijos (para que no los tape el scroll vertical) */
+/* CRÍTICO: La esquina donde chocan cabeceras y columnas laterales */
 thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
-    z-index: 15; /* Capa superior */
+    z-index: 110 !important; /* Capa superior absoluta */
 }
 
-/* Nombre: Se pega al borde izquierdo (tapando ID y Agente al scrollear) */
-.col-nombre {
-    left: 0;
-    min-width: 250px; /* Ancho fijo para que no baile */
-}
-
-/* Teléfono: Se pega justo después del Nombre (0 + 250px) */
-.col-tel {
-    left: 250px; /* Mismo valor que el ancho de .col-nombre */
-    min-width: 120px;
-}
-
-/* Acciones: Se pega al borde derecho */
-.col-acciones {
-    right: 0;
-    min-width: 150px;
-    border-left: 1px solid #0000003b; /* Borde negro para marcar la división */
-}
-
-/* Asegura que todos los botones de acción tengan el mismo tamaño */
+/* --- 6. BOTONES DE ACCIÓN Y BARRA MASIVA --- */
 .btn-action-crm {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; padding: 0;
 }
 
-
-/* --- PROMESAS DE PAGO --- */
-
-/* 1. PAGOS PARA HOY (AMARILLO) */
-.row-promesa-hoy td {
-    
-    background-color: #d7f6f8 !important; 
-}
-.row-promesa-hoy {
-    
-    border-left: 5px solid #6aeff8 !important; 
+#bulk-action-bar-impagos, #bulk-action-bar-cedidos {
+    position: sticky; left: 0; z-index: 90; margin-bottom: 10px;
 }
 
-/* 2. PAGOS VENCIDOS (ROSADO) */
-.row-promesa-vencida td {
-    background-color: #f8d7da !important; /* Rosado/Rojo suave */
-}
-.row-promesa-vencida {
-    border-left: 5px solid #dc3545 !important; /* Borde rojo fuerte */
-}
+/* --- 7. PROMESAS DE PAGO Y CEDIDOS (Tus colores exactos) --- */
+.row-promesa-hoy td { background-color: #d7f6f8 !important; }
+.row-promesa-hoy { border-left: 5px solid #6aeff8 !important; }
 
-/* 2. PAGOS VENCIDOS (ROSADO) */
-.row-cedido td {
-    background-color: #fff3cd !important;
-}
-.row-cedido {
-    border-left: 5px solid #ffc107 !important;
-}
+.row-promesa-vencida td { background-color: #f8d7da !important; }
+.row-promesa-vencida { border-left: 5px solid #dc3545 !important; }
 
-/* Efectos hover para ambos */
+.row-cedido td { background-color: #fff3cd !important; }
+.row-cedido { border-left: 5px solid #ffc107 !important; }
+
 .row-promesa-hoy:hover td { background-color: #d7f6f8 !important; }
 .row-promesa-vencida:hover td { background-color: #f1b0b7 !important; }
 
-/* ==========================================================================
-   LÓGICA DE IMPRESIÓN PARA FICHAS DE CLIENTE (CORREGIDA)
-   ========================================================================== */
+/* --- 8. SCROLLBAR MODERNA (Para que no se vea la nativa gris fea) --- */
+.crm-table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+.crm-table-container::-webkit-scrollbar-track { background: #f1f1f1; }
+.crm-table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+.crm-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+.crm-table-container::-webkit-scrollbar-thumb:active { background: #9c9c9c; }
+/* LÓGICA DE IMPRESIÓN PARA FICHAS DE CLIENTE */
+
 @media print {
     /* 1. OCULTAR NAVEGACIÓN Y BOTONES (Lo único que no queremos) */
     .sidebar, 
@@ -452,66 +462,3 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
     }
 }
 
-
-
-/* ==========================================================================
-   SCROLL DINÁMICO Y CABECERAS FIJAS (VERSION INTEGRADA)
-   ========================================================================== */
-
-/* 1. Contenedor con scroll pero sin borde superior para integrar pestañas */
-.crm-table-container {
-    max-height: calc(100vh - 220px); 
-    overflow-y: auto !important;
-    overflow-x: auto !important;
-    background-color: #fff;
-    position: relative;
-    /* Mantenemos bordes laterales y abajo, pero ELIMINAMOS el superior */
-    border-top: none !important; 
-    border-top-left-radius: 0 !important;
-    border-top-right-radius: 0 !important;
-}
-
-/* 2. Congelar Encabezados (Header Principal) */
-.table-crm thead th.sticky-top {
-    position: sticky !important;
-    top: 0;
-    z-index: 1020 !important;
-    background-color: #f8f9fa !important;
-    /* Un borde sutil para que no se pierda la división al scrollear */
-    border-bottom: 1px solid #dee2e6;
-}
-
-/* 3. Congelar Fila de Filtros */
-#fila-filtros, #fila-filtros-cedidos {
-    position: sticky !important;
-    top: 38px; /* Ajustado para que pegue justo debajo del header */
-    z-index: 1010 !important;
-    background-color: #ffffff !important;
-}
-
-/* 4. Estilo de la barra de scroll (Usando tus colores) */
-.crm-table-container::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.crm-table-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.crm-table-container::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 4px;
-}
-
-.crm-table-container::-webkit-scrollbar-thumb:hover {
-    background: var(--color-primary); 
-}
-
-/* 5. Asegurar que la barra de acciones masivas no rompa la integración */
-#bulk-action-bar-impagos, #bulk-action-bar-cedidos {
-    position: sticky;
-    left: 0;
-    z-index: 1030;
-    margin: 10px 15px; /* Un poco de margen para que no toque los bordes */
-}
