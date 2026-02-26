@@ -1,0 +1,324 @@
+<th class="col-agente">
+    <div class="d-flex align-items-center justify-content-between">
+        Agente
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if f_agentes_seleccionados %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if f_agentes_seleccionados %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 220px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Filtrar por Agente</h6>
+                <input type="text" class="form-control form-control-sm mb-2" id="search-agente-{{ pref }}" placeholder="Buscar..." onkeyup="filtrarOpcionesMenu('search-agente-{{ pref }}', 'lista-agentes-{{ pref }}')">
+                <div class="overflow-auto" style="max-height: 150px;" id="lista-agentes-{{ pref }}">
+                    {% for a in agentes_disponibles %}
+                    <div class="form-check dropdown-item-cb">
+                        <input class="form-check-input filtro-sheet-cb" type="checkbox" name="f_agente" value="{{ a.id }}" id="chk_ag_{{ pref }}_{{ a.id }}" 
+                               {% if a.id|stringformat:"i" in f_agentes_seleccionados %}checked{% endif %}>
+                        <label class="form-check-label small" for="chk_ag_{{ pref }}_{{ a.id }}">{{ a.username }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-id">
+    <div class="d-flex align-items-center justify-content-between">
+        ID
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_id %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_id %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Buscar ID</h6>
+                <input type="text" name="f_id" class="form-control form-control-sm filtro-sheet-input" placeholder="ID..." value="{{ filtros.f_id }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-nombre" style="min-width: 180px;">
+    <div class="d-flex align-items-center justify-content-between">
+        Nombre y Apellido
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_nombre %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_nombre %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Buscar Nombre</h6>
+                <input type="text" name="f_nombre" class="form-control form-control-sm filtro-sheet-input" placeholder="Ej: Juan Perez" value="{{ filtros.f_nombre }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-tel">
+    <div class="d-flex align-items-center justify-content-between">
+        Teléfono
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_tel %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_tel %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Buscar Teléfono</h6>
+                <input type="text" name="f_tel" class="form-control form-control-sm filtro-sheet-input" placeholder="Ej: +34..." value="{{ filtros.f_tel }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-tipo">
+    <div class="d-flex align-items-center justify-content-between">
+        Tipo
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if f_tipos_seleccionados %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if f_tipos_seleccionados %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 220px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Filtrar por Tipo</h6>
+                <div class="overflow-auto" style="max-height: 150px;">
+                    {% for tipo in tipos_producto %}
+                    <div class="form-check">
+                        <input class="form-check-input filtro-sheet-cb" type="checkbox" name="f_tipo" value="{{ tipo }}" id="chk_tp_{{ pref }}_{{ forloop.counter }}"
+                               {% if tipo in f_tipos_seleccionados %}checked{% endif %}>
+                        <label class="form-check-label small" for="chk_tp_{{ pref }}_{{ forloop.counter }}">{{ tipo }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-monto text-center">
+    <div class="d-flex align-items-center justify-content-between">
+        V. Producto
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_monto_min or filtros.f_monto_max %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_monto_min or filtros.f_monto_max %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Rango de Valor</h6>
+                <label class="small text-muted mb-1">Mínimo (€):</label>
+                <input type="number" name="f_monto_min" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_monto_min }}">
+                <label class="small text-muted mb-1">Máximo (€):</label>
+                <input type="number" name="f_monto_max" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_monto_max }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-cuota text-center">
+    <div class="d-flex align-items-center justify-content-between">
+        Cuotas
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_cuotas %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_cuotas %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">N° de Cuotas</h6>
+                <input type="number" name="f_cuotas" class="form-control form-control-sm filtro-sheet-input" placeholder="Ej: 12" value="{{ filtros.f_cuotas }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-fecha text-center">
+    <div class="d-flex align-items-center justify-content-between">
+        F. Compra
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_compra_desde or filtros.f_compra_hasta %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_compra_desde or filtros.f_compra_hasta %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">F. de Compra</h6>
+                <label class="small text-muted mb-1">Desde:</label>
+                <input type="date" name="f_compra_desde" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_compra_desde }}">
+                <label class="small text-muted mb-1">Hasta:</label>
+                <input type="date" name="f_compra_hasta" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_compra_hasta }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-fecha text-center">
+    <div class="d-flex align-items-center justify-content-between">
+        F. Impago
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_impago_desde or filtros.f_impago_hasta %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_impago_desde or filtros.f_impago_hasta %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">F. de Impago</h6>
+                <label class="small text-muted mb-1">Desde:</label>
+                <input type="date" name="f_impago_desde" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_impago_desde }}">
+                <label class="small text-muted mb-1">Hasta:</label>
+                <input type="date" name="f_impago_hasta" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_impago_hasta }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-dias text-center">
+    <div class="d-flex align-items-center justify-content-between">
+        Días
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_dias_min or filtros.f_dias_max %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_dias_min or filtros.f_dias_max %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Días en Impago</h6>
+                <label class="small text-muted mb-1">Mínimo de días:</label>
+                <input type="number" name="f_dias_min" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_dias_min }}">
+                <label class="small text-muted mb-1">Máximo de días:</label>
+                <input type="number" name="f_dias_max" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_dias_max }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-comentario">
+    <div class="d-flex align-items-center justify-content-between">
+        Comentario
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if f_comentarios_seleccionados %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if f_comentarios_seleccionados %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 250px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Filtrar por Comentario</h6>
+                <div class="overflow-auto" style="max-height: 200px;">
+                    {% for cod, text in impagos.0.OPCIONES_COMENTARIO %}
+                    <div class="form-check">
+                        <input class="form-check-input filtro-sheet-cb" type="checkbox" name="f_comentario" value="{{ cod }}" id="chk_cm_{{ pref }}_{{ cod }}"
+                               {% if cod in f_comentarios_seleccionados %}checked{% endif %}>
+                        <label class="form-check-label small" for="chk_cm_{{ pref }}_{{ cod }}">{{ text }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-estado">
+    <div class="d-flex align-items-center justify-content-between">
+        Estado
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if f_estados_seleccionados %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if f_estados_seleccionados %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 220px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Filtrar por Estado</h6>
+                <div class="overflow-auto" style="max-height: 150px;">
+                    {% for cod, text in impagos.0.CAUSAS_IMPAGO %}
+                    <div class="form-check">
+                        <input class="form-check-input filtro-sheet-cb" type="checkbox" name="f_estado" value="{{ cod }}" id="chk_st_{{ pref }}_{{ cod }}"
+                               {% if cod in f_estados_seleccionados %}checked{% endif %}>
+                        <label class="form-check-label small" for="chk_st_{{ pref }}_{{ cod }}">{{ text }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-monto text-center text-danger">
+    <div class="d-flex align-items-center justify-content-between">
+        Deuda
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_deuda_min or filtros.f_deuda_max %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_deuda_min or filtros.f_deuda_max %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Rango de Deuda</h6>
+                <label class="small text-muted mb-1">Mínimo (€):</label>
+                <input type="number" name="f_deuda_min" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_deuda_min }}">
+                <label class="small text-muted mb-1">Máximo (€):</label>
+                <input type="number" name="f_deuda_max" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_deuda_max }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-monto text-center text-success">
+    <div class="d-flex align-items-center justify-content-between">
+        Pagado
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_pagado_min or filtros.f_pagado_max %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_pagado_min or filtros.f_pagado_max %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Rango Pagado</h6>
+                <label class="small text-muted mb-1">Mínimo (€):</label>
+                <input type="number" name="f_pagado_min" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_pagado_min }}">
+                <label class="small text-muted mb-1">Máximo (€):</label>
+                <input type="number" name="f_pagado_max" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_pagado_max }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+{% for tic in tics_list %}
+<th class="col-tic text-center p-1">
+    <div class="d-flex align-items-center justify-content-center gap-1">
+        <span style="font-size: 0.8rem;">{{ tic.name }}</span>
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" 
+                    style="display: {% if tic.is_active %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if tic.is_active %}text-primary{% endif %}" style="font-size: 0.65rem;"></i>
+            </button>
+            <div class="dropdown-menu p-2 shadow border-0" style="min-width: 100px;">
+                <div class="form-check mb-1">
+                    <input class="form-check-input filtro-sheet-cb" type="checkbox" name="f_{{ tic.id }}" value="true" id="chk_{{ pref }}_{{ tic.id }}_true" 
+                           {% if tic.true_checked %}checked{% endif %}>
+                    <label class="form-check-label small text-success fw-bold" for="chk_{{ pref }}_{{ tic.id }}_true">Sí</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input filtro-sheet-cb" type="checkbox" name="f_{{ tic.id }}" value="false" id="chk_{{ pref }}_{{ tic.id }}_false" 
+                           {% if tic.false_checked %}checked{% endif %}>
+                    <label class="form-check-label small text-danger fw-bold" for="chk_{{ pref }}_{{ tic.id }}_false">No</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</th>
+{% endfor %}
+
+<th class="col-fecha text-center">
+    <div class="d-flex align-items-center justify-content-between">
+        Último Msj
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_msj_desde or filtros.f_msj_hasta %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_msj_desde or filtros.f_msj_hasta %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Último Mensaje</h6>
+                <label class="small text-muted mb-1">Desde:</label>
+                <input type="date" name="f_msj_desde" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_msj_desde }}">
+                <label class="small text-muted mb-1">Hasta:</label>
+                <input type="date" name="f_msj_hasta" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_msj_hasta }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-fecha text-center">
+    <div class="d-flex align-items-center justify-content-between">
+        F. Pago/Prom.
+        <div class="dropdown">
+            <button class="btn btn-sm border-0 p-0 text-muted btn-column-filter" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="window" style="display: {% if filtros.f_pago_desde or filtros.f_pago_hasta %}inline-block{% else %}none{% endif %};">
+                <i class="fas fa-filter {% if filtros.f_pago_desde or filtros.f_pago_hasta %}text-primary{% endif %}"></i>
+            </button>
+            <div class="dropdown-menu p-3 shadow border-0" style="min-width: 200px;">
+                <h6 class="dropdown-header px-0 text-dark fw-bold">Fecha Pago/Promesa</h6>
+                <label class="small text-muted mb-1">Desde:</label>
+                <input type="date" name="f_pago_desde" class="form-control form-control-sm mb-2 filtro-sheet-input" value="{{ filtros.f_pago_desde }}">
+                <label class="small text-muted mb-1">Hasta:</label>
+                <input type="date" name="f_pago_hasta" class="form-control form-control-sm filtro-sheet-input" value="{{ filtros.f_pago_hasta }}">
+            </div>
+        </div>
+    </div>
+</th>
+
+<th class="col-acciones text-center" style="min-width: 150px;">Acciones</th>

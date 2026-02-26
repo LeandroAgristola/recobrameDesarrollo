@@ -166,7 +166,6 @@ def buscar_antecedentes_deudor(request):
         print(f"Error en buscar_antecedentes: {e}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-# --- VISTA PRINCIPAL (DASHBOARD) ---
 @login_required
 def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
@@ -229,7 +228,7 @@ def dashboard_crm(request, empresa_id):
         else:
             messages.error(request, "Error al crear expediente. Revisa los campos.")
 
-    # --- 3. FILTROS IMPAGOS ---
+    # --- 3. FILTROS ESTILO GOOGLE SHEETS (TODAS LAS COLUMNAS) ---
     qs_filtrado = expedientes_qs
     q = request.GET.get('q', '')
 
@@ -242,29 +241,49 @@ def dashboard_crm(request, empresa_id):
             Q(deudor_telefono__icontains=q)
         )
 
-    # Filtros por columna
-    f_agente = request.GET.get('f_agente')
-    if f_agente: qs_filtrado = qs_filtrado.filter(agente_id=f_agente)
-
+    # 3.1. Filtros de Texto Directo
+    f_id = request.GET.get('f_id')
+    if f_id: qs_filtrado = qs_filtrado.filter(numero_expediente__icontains=f_id)
+    
+    f_nombre = request.GET.get('f_nombre')
+    if f_nombre: qs_filtrado = qs_filtrado.filter(deudor_nombre__icontains=f_nombre)
+    
     f_tel = request.GET.get('f_tel')
     if f_tel: qs_filtrado = qs_filtrado.filter(deudor_telefono__icontains=f_tel)
 
-    f_tipo = request.GET.get('f_tipo')
-    if f_tipo: qs_filtrado = qs_filtrado.filter(tipo_producto__icontains=f_tipo)
+    # 3.2. Filtros de Múltiple Selección (Listas de checkboxes)
+    f_agentes = request.GET.getlist('f_agente')
+    if f_agentes: qs_filtrado = qs_filtrado.filter(agente_id__in=f_agentes)
 
-    f_monto = request.GET.get('f_monto')
-    if f_monto: qs_filtrado = qs_filtrado.filter(monto_original=f_monto)
+    f_tipos = request.GET.getlist('f_tipo')
+    if f_tipos: qs_filtrado = qs_filtrado.filter(tipo_producto__in=f_tipos)
 
+    f_estados = request.GET.getlist('f_estado')
+    if f_estados: qs_filtrado = qs_filtrado.filter(causa_impago__in=f_estados)
+
+    f_comentarios = request.GET.getlist('f_comentario')
+    if f_comentarios: qs_filtrado = qs_filtrado.filter(comentario_estandar__in=f_comentarios)
+
+    # 3.3. Filtros Numéricos (Rangos Min/Max y Exactos)
     f_cuotas = request.GET.get('f_cuotas')
     if f_cuotas: qs_filtrado = qs_filtrado.filter(cuotas_totales=f_cuotas)
 
-    f_estado = request.GET.get('f_estado')
-    if f_estado: qs_filtrado = qs_filtrado.filter(causa_impago=f_estado)
+    f_monto_min = request.GET.get('f_monto_min')
+    f_monto_max = request.GET.get('f_monto_max')
+    if f_monto_min: qs_filtrado = qs_filtrado.filter(monto_original__gte=f_monto_min)
+    if f_monto_max: qs_filtrado = qs_filtrado.filter(monto_original__lte=f_monto_max)
 
-    f_comentario = request.GET.get('f_comentario')
-    if f_comentario: qs_filtrado = qs_filtrado.filter(comentario_estandar=f_comentario)
+    f_deuda_min = request.GET.get('f_deuda_min')
+    f_deuda_max = request.GET.get('f_deuda_max')
+    if f_deuda_min: qs_filtrado = qs_filtrado.filter(monto_actual__gte=f_deuda_min)
+    if f_deuda_max: qs_filtrado = qs_filtrado.filter(monto_actual__lte=f_deuda_max)
 
-    # Filtros fechas
+    f_pagado_min = request.GET.get('f_pagado_min')
+    f_pagado_max = request.GET.get('f_pagado_max')
+    if f_pagado_min: qs_filtrado = qs_filtrado.filter(monto_recuperado__gte=f_pagado_min)
+    if f_pagado_max: qs_filtrado = qs_filtrado.filter(monto_recuperado__lte=f_pagado_max)
+
+    # 3.4. Filtros de Fechas (Rangos)
     f_compra_desde = request.GET.get('f_compra_desde')
     f_compra_hasta = request.GET.get('f_compra_hasta')
     if f_compra_desde: qs_filtrado = qs_filtrado.filter(fecha_compra__gte=f_compra_desde)
@@ -274,6 +293,43 @@ def dashboard_crm(request, empresa_id):
     f_impago_hasta = request.GET.get('f_impago_hasta')
     if f_impago_desde: qs_filtrado = qs_filtrado.filter(fecha_impago__gte=f_impago_desde)
     if f_impago_hasta: qs_filtrado = qs_filtrado.filter(fecha_impago__lte=f_impago_hasta)
+
+    f_msj_desde = request.GET.get('f_msj_desde')
+    f_msj_hasta = request.GET.get('f_msj_hasta')
+    if f_msj_desde: qs_filtrado = qs_filtrado.filter(ultimo_mensaje_fecha__gte=f_msj_desde)
+    if f_msj_hasta: qs_filtrado = qs_filtrado.filter(ultimo_mensaje_fecha__lte=f_msj_hasta)
+
+    f_pago_desde = request.GET.get('f_pago_desde')
+    f_pago_hasta = request.GET.get('f_pago_hasta')
+    if f_pago_desde: qs_filtrado = qs_filtrado.filter(fecha_pago_promesa__gte=f_pago_desde)
+    if f_pago_hasta: qs_filtrado = qs_filtrado.filter(fecha_pago_promesa__lte=f_pago_hasta)
+
+    # Cálculo matemático para Filtro de "Días de Impago" (Min = Más reciente, Max = Más antiguo)
+    f_dias_min = request.GET.get('f_dias_min')
+    f_dias_max = request.GET.get('f_dias_max')
+    hoy = timezone.now().date()
+    
+    if f_dias_min: 
+        fecha_limite_max = hoy - timedelta(days=int(f_dias_min))
+        qs_filtrado = qs_filtrado.filter(fecha_impago__lte=fecha_limite_max)
+    if f_dias_max:
+        fecha_limite_min = hoy - timedelta(days=int(f_dias_max))
+        qs_filtrado = qs_filtrado.filter(fecha_impago__gte=fecha_limite_min)
+
+    # 3.5. Filtros de Tics de Seguimiento (Marcado = True, No Marcado = False)
+    tics_keys = ['w1', 'l1', 'w2', 'l2', 'w3', 'l3', 'w4', 'l4', 'w5', 'l5', 'be', 'br', 'llb', 'as', 'lla']
+    for tic in tics_keys:
+        valores = request.GET.getlist(f'f_{tic}') # Puede traer 'true', 'false' o ambos
+        if valores:
+            campo = 'asnef' if tic == 'as' else tic
+            
+            # Si solo marcó "Sí"
+            if 'true' in valores and 'false' not in valores:
+                qs_filtrado = qs_filtrado.filter(**{campo: True})
+            # Si solo marcó "No"
+            elif 'false' in valores and 'true' not in valores:
+                qs_filtrado = qs_filtrado.filter(**{campo: False})
+            # Si marcó ambos, no filtramos nada (quiere ver todos)
 
     # --- BASE ACTIVA PARA TABS ---
     base_qs = qs_filtrado.filter(activo=True)
@@ -320,19 +376,39 @@ def dashboard_crm(request, empresa_id):
     recobros_impagos = recobros_qs.filter(expediente__fecha_cesion__isnull=True)
     recobros_cedidos = recobros_qs.filter(expediente__fecha_cesion__isnull=False)
 
-    # --- 5. UI ---
+# --- 5. UI ---
     tab_activa = request.GET.get('tab', 'impagos')
     if r_q or r_desde or r_hasta:
         tab_activa = 'recobros'
 
     hay_filtros_impagos = any(key.startswith('f_') for key in request.GET) or (q != '')
 
-# =========================================================
+    # =========================================================
+    # === LÓGICA NUEVA: PREPARAR LOS TICS PARA EL TEMPLATE  ===
+    # =========================================================
+    tics_raw = [
+        ('w1', 'W1'), ('l1', 'L1'), ('w2', 'W2'), ('l2', 'L2'), 
+        ('w3', 'W3'), ('l3', 'L3'), ('w4', 'W4'), ('l4', 'L4'), 
+        ('w5', 'W5'), ('l5', 'L5'), ('be', 'BE'), ('br', 'BR'), 
+        ('llb', 'LLB'), ('as', 'ASNEF'), ('lla', 'LLA')
+    ]
+    tics_list = []
+    for tic, name in tics_raw:
+        valores = request.GET.getlist(f'f_{tic}')
+        tics_list.append({
+            'id': tic,
+            'name': name,
+            'true_checked': 'true' in valores,
+            'false_checked': 'false' in valores,
+            'is_active': bool(valores) # True si hay alguno marcado
+        })
+
+    # =========================================================
     # === LÓGICA NUEVA: CAPTURA DE CONCILIACIÓN PARA MODAL  ===
     # =========================================================
     ids_pendientes = request.session.get('pendientes_conciliacion', [])
     conc_empresa_id = request.session.get('conciliacion_empresa_id')
-    conciliacion_estado = request.session.get('conciliacion_estado', 'ACTIVO') # <-- AQUI CAPTURAMOS EL ESTADO
+    conciliacion_estado = request.session.get('conciliacion_estado', 'ACTIVO') 
     
     expedientes_conciliar = []
     if ids_pendientes and conc_empresa_id == empresa.id:
@@ -353,7 +429,7 @@ def dashboard_crm(request, empresa_id):
         expedientes_restaurar = Expediente.objects.filter(
             numero_expediente__in=ids_restaurar, 
             empresa=empresa, 
-            activo=False  # Filtramos por False porque están en la papelera
+            activo=False  
         )
 
     context = {
@@ -393,6 +469,16 @@ def dashboard_crm(request, empresa_id):
         'filtros_recobros': {'r_q': r_q, 'r_desde': r_desde, 'r_hasta': r_hasta},
         'tab_activa': tab_activa,
         'hay_filtros_impagos': hay_filtros_impagos,
+        
+        # === LISTAS DE FILTROS MÚLTIPLES (Estilo Sheets) ===
+        'f_agentes_seleccionados': request.GET.getlist('f_agente'),
+        'f_tipos_seleccionados': request.GET.getlist('f_tipo'),
+        'f_estados_seleccionados': request.GET.getlist('f_estado'),
+        'f_comentarios_seleccionados': request.GET.getlist('f_comentario'),
+        
+        # === AQUI PASAMOS LOS TICS ===
+        'tics_list': tics_list,
+        
         'filtros': request.GET
     }
 

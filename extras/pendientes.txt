@@ -4,8 +4,6 @@ CRM
 Agregar opcion de refinanciar (ver en detalle)
 Validacion de duplicados (si es q esta refinancioado)
 
-Mejorar filtros
-    Cambiar filtro de fechas para que sea un calendario por rangos (impagos y reg Recobros)
 
 
 Empresas: 

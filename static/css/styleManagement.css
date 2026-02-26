@@ -95,16 +95,21 @@ label { font-weight: 500; color: #0a2c46; }
     padding: 5px;
 }
 
-.sidebar-header span {
-    color: #0a2c46;
-    font-weight: 700;
-    font-size: 1.5rem;
-    opacity: 0;
-    transition: opacity 0.2s;
+/* === LOGOTIPO EN TEXTO (Aparece al expandir el sidebar) === */
+.sidebar-header .logo-text {
+    max-width: 150px;    /* Aseguramos que entre bien en el ancho de 250px del sidebar */
+    max-height: 45px;    /* Limitamos el alto para que no se vea desproporcionado */
+    object-fit: contain; /* Evita que la imagen se deforme */
     margin-left: 10px;
+    opacity: 0;          /* Arranca invisible */
+    transition: opacity 0.2s ease-in-out;
 }
 
-.sidebar:hover .sidebar-header span { opacity: 1; }
+/* Cuando el mouse pasa por el sidebar, hacemos aparecer la imagen */
+.sidebar:hover .sidebar-header .logo-text {
+    opacity: 1;
+    transition-delay: 0.1s; /* Pequeño retraso para que primero se abra la barra y luego aparezcan las letras */
+}
 
 .sidebar nav {
     margin-top: 10px;
@@ -267,7 +272,7 @@ label { font-weight: 500; color: #0a2c46; }
 
 .login-page .logo-img {
 
-    height: 80px;
+    height: 180px;
     width: auto;
     margin: 0 !important;
 
@@ -337,12 +342,17 @@ label { font-weight: 500; color: #0a2c46; }
     border-spacing: 0;
 }
 
-.table-crm th, 
+/* --- Evita que los textos largos deformen la tabla (Solo en los datos) --- */
 .table-crm td {
-    /* Evita que el contenido empuje los bordes de la celda */
     white-space: nowrap; 
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* --- Permite que los menús desplegables "rompan" el borde de la celda --- */
+.table-crm th {
+    white-space: nowrap; 
+    overflow: visible !important; /* ESTA ES LA MAGIA */
 }
 
 /* --- 3. CABECERAS Y FILTROS FIJOS (Eje Y) --- */
@@ -423,6 +433,13 @@ thead th.col-nombre, thead th.col-tel, thead th.col-acciones {
 .crm-table-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
 .crm-table-container::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
 .crm-table-container::-webkit-scrollbar-thumb:active { background: #9c9c9c; }
+
+/* Forzar que los menús desplegables salgan del contenedor con scroll */
+.table-crm .dropdown-menu {
+    position: absolute !important;
+    z-index: 9999 !important;
+}
+
 /* LÓGICA DE IMPRESIÓN PARA FICHAS DE CLIENTE */
 
 @media print {
