@@ -1,0 +1,31 @@
+<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="fa-solid fa-building-user me-2"></i>Nuevo Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="crear_cliente" value="1">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-6"><label>Nombre*</label><input type="text" name="nombre" class="form-control" required></div>
+                        <div class="col-6"><label>Apellido*</label><input type="text" name="apellido" class="form-control" required></div>
+                        <div class="col-12"><label>Email* (Será su usuario)</label><input type="email" name="email" class="form-control" required></div>
+                        <div class="col-12"><label>Teléfono</label><input type="text" name="telefono" class="form-control"></div>
+                        <div class="col-12">
+                            <label class="fw-bold text-primary mb-1"><i class="fa-solid fa-link me-1"></i>Asignar Empresas</label>
+                            {{ form_cliente.empresas }}
+                            <small class="text-muted d-block mt-1">El cliente solo podrá ver la info de las empresas que selecciones aquí.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark fw-bold">Crear y Generar Clave</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

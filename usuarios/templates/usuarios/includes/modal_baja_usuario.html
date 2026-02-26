@@ -1,0 +1,22 @@
+<div class="modal fade" id="modalBaja{{ perfil.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h6 class="modal-title">Dar de Baja</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'usuarios:baja_usuario' perfil.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body text-center">
+                    <p>¿Seguro que deseas desactivar a <strong>{{ perfil.user.first_name }}</strong>?</p>
+                    <label class="small text-muted mb-1 text-start w-100">Fecha de Baja (Opcional):</label>
+                    <input type="date" name="fecha_baja" class="form-control form-control-sm">
+                    <small class="text-danger d-block mt-2">El usuario perderá el acceso al sistema inmediatamente.</small>
+                </div>
+                <div class="modal-footer py-1 justify-content-center">
+                    <button type="submit" class="btn btn-sm btn-danger fw-bold">Sí, Dar de Baja</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

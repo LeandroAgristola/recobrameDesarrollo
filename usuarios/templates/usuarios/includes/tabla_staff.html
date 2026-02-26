@@ -1,0 +1,61 @@
+<div class="crm-table-container border shadow-sm pb-3 rounded-bottom">
+    <table class="table table-hover align-middle mb-0 table-crm">
+        <thead class="bg-light sticky-top" style="z-index: 100;">
+            <tr class="text-uppercase text-muted small">
+                <th style="min-width: 250px;">Usuario</th>
+                <th style="min-width: 150px;">Rol</th>
+                <th style="min-width: 120px;" class="text-center">Netelip</th>
+                <th style="min-width: 150px;" class="text-center">Mercateli</th>
+                <th style="min-width: 120px;" class="text-center">Estado</th>
+                <th style="min-width: 100px;" class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for perfil in staff %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-secondary bg-opacity-10 rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                            {% if perfil.foto_perfil %}
+                                <img src="{{ perfil.foto_perfil.url }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <i class="fa-solid fa-user text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">{{ perfil.user.get_full_name|default:perfil.user.username }}</h6>
+                            <small class="text-muted">{{ perfil.user.email }}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1">
+                        {{ perfil.get_rol_display }}
+                    </span>
+                </td>
+                <td class="text-center font-monospace small">{{ perfil.netelip_ext|default:"-" }}</td>
+                <td class="text-center font-monospace small">{{ perfil.mercateli_id|default:"-" }}</td>
+                <td class="text-center">
+                    <span class="badge bg-success shadow-sm"><i class="fa-solid fa-check me-1"></i>Activo</span>
+                </td>
+                <td class="text-center">
+                    <a href="#" class="btn btn-sm btn-outline-primary" title="Ver Detalle">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-1" data-bs-toggle="modal" data-bs-target="#modalBaja{{ perfil.id }}" title="Dar de Baja">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% include 'usuarios/includes/modal_baja_usuario.html' with perfil=perfil %}
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-users-slash mb-3 fs-2 opacity-50"></i>
+                    <p class="mb-0">No se encontraron miembros del staff.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

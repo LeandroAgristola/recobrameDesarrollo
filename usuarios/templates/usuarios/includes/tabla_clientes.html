@@ -1,0 +1,55 @@
+<div class="crm-table-container border shadow-sm pb-3 rounded-bottom">
+    <table class="table table-hover align-middle mb-0 table-crm">
+        <thead class="bg-light sticky-top" style="z-index: 100;">
+            <tr class="text-uppercase text-muted small">
+                <th style="min-width: 250px;">Cliente</th>
+                <th style="min-width: 150px;">Teléfono</th>
+                <th style="min-width: 200px;" class="text-center">Empresas Asignadas</th>
+                <th style="min-width: 120px;" class="text-center">Estado</th>
+                <th style="min-width: 100px;" class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for perfil in clientes %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-info bg-opacity-10 rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                            <i class="fa-solid fa-building-user text-info"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">{{ perfil.user.get_full_name|default:perfil.user.username }}</h6>
+                            <small class="text-muted">{{ perfil.user.email }}</small>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-muted small">{{ perfil.telefono|default:"No registrado" }}</td>
+                <td class="text-center">
+                    <span class="badge bg-dark bg-opacity-10 text-dark border px-2 py-1">
+                        {{ perfil.empresas_asignadas.count }} Empresa(s)
+                    </span>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-success shadow-sm"><i class="fa-solid fa-check me-1"></i>Activo</span>
+                </td>
+                <td class="text-center">
+                    <a href="#" class="btn btn-sm btn-outline-primary" title="Ver Detalle">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-1" data-bs-toggle="modal" data-bs-target="#modalBaja{{ perfil.id }}" title="Dar de Baja">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% include 'usuarios/includes/modal_baja_usuario.html' with perfil=perfil %}
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-building-circle-xmark mb-3 fs-2 opacity-50"></i>
+                    <p class="mb-0">No se encontraron clientes registrados.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
