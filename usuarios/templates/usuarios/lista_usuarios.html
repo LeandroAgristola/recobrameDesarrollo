@@ -5,33 +5,51 @@
 <div class="container-fluid py-4">
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            
+
             <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
                 <div class="col-md-4">
                     <h3 class="fw-bold mb-0 text-dark">Gestión de Usuarios</h3>
                 </div>
-                
+
                 <div class="col-md-8 d-flex justify-content-end gap-2 align-items-center">
                     <form method="GET" class="d-flex w-50">
-                        <div class="search-box w-100 position-relative">
-                            <i class="fa-solid fa-search search-icon position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                            <input type="text" name="q" value="{{ q }}" class="form-control ps-5" placeholder="Buscar por nombre, email, teléfono..." style="border-radius: 6px;">
-                            <input type="hidden" name="tab" value="{{ tab_activa }}">
+                        <div class="d-flex w-100">
+                            <div class="search-box w-100 position-relative">
+                                <i
+                                    class="fa-solid fa-search search-icon position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                <input type="text" name="q" value="{{ q }}" class="form-control ps-5"
+                                    placeholder="Buscar por nombre, email, teléfono..."
+                                    style="border-top-right-radius: 0; border-bottom-right-radius: 0;">
+                                <input type="hidden" name="tab" value="{{ tab_activa }}">
+                            </div>
+                            <button type="submit" class="btn btn-secondary"
+                                style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                Buscar
+                            </button>
+                            {% if q %}
+                            <a href="{% url 'usuarios:lista_usuarios' %}" class="btn btn-outline-danger ms-2"
+                                title="Limpiar Búsqueda">
+                                <i class="fa-solid fa-xmark"></i>
+                            </a>
+                            {% endif %}
                         </div>
-                        <button type="submit" class="btn btn-secondary ms-1">Buscar</button>
-                        {% if q %}
-                            <a href="{% url 'usuarios:lista_usuarios' %}" class="btn btn-outline-danger ms-1" title="Limpiar Búsqueda"><i class="fa-solid fa-xmark"></i></a>
-                        {% endif %}
                     </form>
 
                     <div class="dropdown">
-                        <button class="btn btn-primary fw-bold shadow-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-success fw-bold shadow-sm dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown">
                             <i class="fa-solid fa-user-plus me-2"></i>Nuevo Usuario
                         </button>
                         <ul class="dropdown-menu shadow-sm">
-                            <li><a class="dropdown-item fw-bold text-primary" href="#" data-bs-toggle="modal" data-bs-target="#modalNuevoStaff"><i class="fa-solid fa-user-tie me-2"></i>Crear Staff</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item fw-bold text-dark" href="#" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente"><i class="fa-solid fa-building-user me-2"></i>Crear Cliente</a></li>
+                            <li><a class="dropdown-item fw-bold text-primary" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#modalNuevoStaff"><i class="fa-solid fa-user-tie me-2"></i>Crear
+                                    Staff</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item fw-bold text-dark" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#modalNuevoCliente"><i
+                                        class="fa-solid fa-building-user me-2"></i>Crear Cliente</a></li>
                         </ul>
                     </div>
                 </div>
@@ -39,41 +57,44 @@
 
             <ul class="nav nav-tabs border-0" id="usuariosTab" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link {% if tab_activa == 'staff' %}active{% endif %} fw-bold" 
-                            id="staff-tab" data-bs-toggle="tab" data-bs-target="#tab-staff" type="button"
-                            onclick="document.querySelector('input[name=\'tab\']').value='staff';">
+                    <button class="nav-link {% if tab_activa == 'staff' %}active{% endif %} fw-bold" id="staff-tab"
+                        data-bs-toggle="tab" data-bs-target="#tab-staff" type="button"
+                        onclick="document.querySelector('input[name=\'tab\']').value='staff';">
                         <i class="fa-solid fa-user-tie me-2"></i>Equipo (Staff)
                         <span class="badge bg-light text-dark border ms-1">{{ staff.count }}</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link {% if tab_activa == 'clientes' %}active{% endif %} fw-bold" 
-                            id="clientes-tab" data-bs-toggle="tab" data-bs-target="#tab-clientes" type="button"
-                            onclick="document.querySelector('input[name=\'tab\']').value='clientes';">
+                    <button class="nav-link {% if tab_activa == 'clientes' %}active{% endif %} fw-bold"
+                        id="clientes-tab" data-bs-toggle="tab" data-bs-target="#tab-clientes" type="button"
+                        onclick="document.querySelector('input[name=\'tab\']').value='clientes';">
                         <i class="fa-solid fa-building-user me-2"></i>Clientes
                         <span class="badge bg-light text-dark border ms-1">{{ clientes.count }}</span>
                     </button>
                 </li>
                 <li class="nav-item ms-auto">
-                    <button class="nav-link text-danger {% if tab_activa == 'papelera' %}active{% endif %} fw-bold" 
-                            id="papelera-tab" data-bs-toggle="tab" data-bs-target="#tab-papelera" type="button"
-                            onclick="document.querySelector('input[name=\'tab\']').value='papelera';">
+                    <button class="nav-link text-danger {% if tab_activa == 'papelera' %}active{% endif %} fw-bold"
+                        id="papelera-tab" data-bs-toggle="tab" data-bs-target="#tab-papelera" type="button"
+                        onclick="document.querySelector('input[name=\'tab\']').value='papelera';">
                         <i class="fa-solid fa-trash-can me-1"></i>Papelera
                     </button>
                 </li>
             </ul>
 
             <div class="tab-content" id="crmTabContent">
-                
-                <div class="tab-pane fade {% if tab_activa == 'staff' %}show active{% endif %}" id="tab-staff" role="tabpanel">
+
+                <div class="tab-pane fade {% if tab_activa == 'staff' %}show active{% endif %}" id="tab-staff"
+                    role="tabpanel">
                     {% include 'usuarios/includes/tabla_staff.html' %}
                 </div>
 
-                <div class="tab-pane fade {% if tab_activa == 'clientes' %}show active{% endif %}" id="tab-clientes" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'clientes' %}show active{% endif %}" id="tab-clientes"
+                    role="tabpanel">
                     {% include 'usuarios/includes/tabla_clientes.html' %}
                 </div>
 
-                <div class="tab-pane fade {% if tab_activa == 'papelera' %}show active{% endif %}" id="tab-papelera" role="tabpanel">
+                <div class="tab-pane fade {% if tab_activa == 'papelera' %}show active{% endif %}" id="tab-papelera"
+                    role="tabpanel">
                     {% include 'usuarios/includes/tabla_papelera.html' %}
                 </div>
 
@@ -92,14 +113,14 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-$(document).ready(function() {
-    // Inicializar Select2 en el modal de Clientes
-    $('.select2-empresas').select2({
-        dropdownParent: $('#modalNuevoCliente'),
-        placeholder: "Selecciona las empresas...",
-        allowClear: true,
-        width: '100%'
+    $(document).ready(function () {
+        // Inicializar Select2 en el modal de Clientes
+        $('.select2-empresas').select2({
+            dropdownParent: $('#modalNuevoCliente'),
+            placeholder: "Selecciona las empresas...",
+            allowClear: true,
+            width: '100%'
+        });
     });
-});
 </script>
 {% endblock %}

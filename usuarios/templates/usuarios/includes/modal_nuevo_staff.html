@@ -1,23 +1,105 @@
 <div class="modal fade" id="modalNuevoStaff" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title"><i class="fa-solid fa-user-tie me-2"></i>Nuevo Miembro del Staff</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="crear_staff" value="1">
                 <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Nombre*</label>
+                            {{ form_staff.nombre.errors }}
+                            <input type="text" name="nombre" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Apellido*</label>
+                            <input type="text" name="apellido" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Email* (Será su usuario)</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Rol*</label>
+                            {{ form_staff.rol }}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Teléfono</label>
+                            <input type="text" name="telefono" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">DNI/NIE</label>
+                            <input type="text" name="dni_nie" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Fecha de Alta (Opcional)</label>
+                            {{ form_staff.fecha_alta }}
+                            <small class="text-muted d-block mt-1">Se usará hoy si queda vacío.</small>
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mt-4 mb-2 text-info"><i
+                            class="fa-solid fa-brands fa-whatsapp me-2"></i>Información Mercateli</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Despacho</label>
+                            <input type="text" name="mercateli_despacho" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">ID Mercateli</label>
+                            <input type="text" name="mercateli_id" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 border-top pt-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Foto de Perfil</label>
+                            <input type="file" name="foto_perfil" class="form-control" accept="image/*">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Contrato / DNI (PDF)</label>
+                            <input type="file" name="contrato_colaboracion" class="form-control"
+                                accept=".pdf,.doc,.docx">
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mt-4 mb-3 text-primary"><i
+                            class="fa-solid fa-headset me-2"></i>Configuración Netelip</h6>
+
                     <div class="row g-3">
-                        <div class="col-6"><label>Nombre*</label>{{ form_staff.nombre.errors }}<input type="text" name="nombre" class="form-control" required></div>
-                        <div class="col-6"><label>Apellido*</label><input type="text" name="apellido" class="form-control" required></div>
-                        <div class="col-12"><label>Email* (Será su usuario)</label><input type="email" name="email" class="form-control" required></div>
-                        <div class="col-6"><label>Rol*</label>{{ form_staff.rol }}</div>
-                        <div class="col-6"><label>Teléfono</label><input type="text" name="telefono" class="form-control"></div>
-                        <div class="col-4"><label>DNI/NIE</label><input type="text" name="dni_nie" class="form-control"></div>
-                        <div class="col-4"><label>Ext. Netelip</label><input type="text" name="netelip_ext" class="form-control"></div>
-                        <div class="col-4"><label>ID Mercateli</label><input type="text" name="mercateli_id" class="form-control"></div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Teléfono (Nro)</label>
+                            <input type="text" name="netelip_number" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Ext.</label>
+                            <input type="text" name="netelip_ext" class="form-control">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-muted small">Servidor SIP</label>
+                            <input type="text" name="netelip_server" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Usuario SIP</label>
+                            <input type="text" name="netelip_user" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Contraseña SIP</label>
+                            <input type="text" name="netelip_pass" class="form-control">
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">

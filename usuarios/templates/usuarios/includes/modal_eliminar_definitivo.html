@@ -1,0 +1,30 @@
+<!-- Modal Confirmar Eliminación Definitiva -->
+<div class="modal fade" id="modalEliminarDefinitivo{{ perfil.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Permanentemente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fa-solid fa-trash-can text-danger display-4 mb-3"></i>
+                <p class="fs-5 mb-1">¿Estás seguro de querer eliminar a <strong>{{
+                        perfil.user.first_name|default:perfil.user.username }}</strong>?</p>
+                <p class="text-muted small mb-0">Esta acción no se puede deshacer. Todos los datos, interacciones y
+                    movimientos de este usuario se perderán para siempre.</p>
+            </div>
+            <div class="modal-footer bg-light justify-content-center">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{% url 'usuarios:eliminar_usuario_papelera' perfil.id %}" method="POST" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4 shadow-sm">
+                        <i class="fa-solid fa-skull me-2"></i>Eliminar Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

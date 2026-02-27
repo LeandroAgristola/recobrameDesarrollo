@@ -18,35 +18,8 @@ Empresas:
 
 Usuarios:
 
-    ajustar barra de busqueda
+    falta campo para foto de perfil y contrato de colaboracion (archivo)
 
-
-🗺️ PLAN DE TRABAJO: MÓDULO DE USUARIOS
-
-
-ETAPA 3: Formularios de Alta (Modales Inteligentes)
-
-    Construiremos el botón "Nuevo Usuario" que abrirá un modal con dos opciones (o dos modales distintos):
-
-    Alta Staff: Formulario solicitando nombre, mail, rol, netelip, mercateli, etc.
-
-    Alta Cliente: Formulario solicitando nombre, mail, teléfono y un selector múltiple elegante (quizás usando librerías como Select2) para asignar las empresas que le pertenecen.
-
-    Agregado de Seguridad: Generación automática de contraseña inicial y/o envío de email de bienvenida para que el usuario (staff o cliente) establezca su propia contraseña.
-
-ETAPA 4: Vistas de Detalle (Fichas de Usuario)
-
-    Al hacer clic en un usuario desde la tabla, iremos a su ficha detallada:
-
-    Ficha Staff (2 Pestañas):
-
-    Tab Datos Personales: Toda la info de la Etapa 1, foto de perfil, opción de actualizar contrato y botón para editar/desactivar.
-
-    Tab Facturación: Un listado preparado para conectarse con la futura App "Contable". Mostraremos Mes, Monto Facturado, Estado (Pendiente/Pagado) y opción de descargar el PDF. (Podemos dejar la estructura armada con datos falsos hasta que creemos la app contable).
-
-    Ficha Cliente:
-
-    Datos de contacto, botón para resetear contraseña y una sub-tabla con las Empresas que tiene asignadas (con botones de acceso directo al Dashboard CRM de cada una).
 
 ETAPA 5: Sistema de Permisos y Roles (Ciberseguridad)
 

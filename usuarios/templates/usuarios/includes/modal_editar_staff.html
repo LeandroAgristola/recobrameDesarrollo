@@ -1,0 +1,135 @@
+<div class="modal fade" id="modalEditarStaff{{ perfil.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fa-solid fa-user-pen me-2"></i>Editar Staff</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'usuarios:editar_staff' perfil.id %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="editar_staff" value="1">
+                <input type="hidden" name="perfil_id" value="{{ perfil.id }}">
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Nombre*</label>
+                            <input type="text" name="nombre" class="form-control" value="{{ perfil.user.first_name }}"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Apellido*</label>
+                            <input type="text" name="apellido" class="form-control" value="{{ perfil.user.last_name }}"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Email (Usuario - No editable)</label>
+                            <input type="email" class="form-control text-muted bg-light" value="{{ perfil.user.email }}"
+                                readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Rol*</label>
+                            <!-- prettier-ignore -->
+                            <select name="rol" class="form-select">
+                                <option value="ADMIN" {% if 'ADMIN' in perfil.rol %}selected{% endif %}>Administrador
+                                </option>
+                                <option value="AGENTE" {% if 'AGENTE' in perfil.rol %}selected{% endif %}>Agente de
+                                    Recobro</option>
+                                <option value="CONTABLE" {% if 'CONTABLE' in perfil.rol %}selected{% endif %}>Contable
+                                </option>
+                                <option value="ABOGADO" {% if 'ABOGADO' in perfil.rol %}selected{% endif %}>Abogado
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Teléfono</label>
+                            <input type="text" name="telefono" class="form-control"
+                                value="{{ perfil.telefono|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">DNI/NIE</label>
+                            <input type="text" name="dni_nie" class="form-control"
+                                value="{{ perfil.dni_nie|default:'' }}">
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mt-4 mb-2 text-info"><i
+                            class="fa-solid fa-brands fa-whatsapp me-2"></i>Información Mercateli</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Despacho</label>
+                            <input type="text" name="mercateli_despacho" class="form-control"
+                                value="{{ perfil.mercateli_despacho|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">ID Mercateli</label>
+                            <input type="text" name="mercateli_id" class="form-control"
+                                value="{{ perfil.mercateli_id|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 border-top pt-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Foto de Perfil</label>
+                            <input type="file" name="foto_perfil" class="form-control" accept="image/*">
+                            {% if perfil.foto_perfil %}
+                            <small class="text-muted d-block mt-1">Actual: <a href="{{ perfil.foto_perfil.url }}"
+                                    target="_blank">Ver Archivo</a></small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Contrato / DNI (PDF)</label>
+                            <input type="file" name="contrato_colaboracion" class="form-control"
+                                accept=".pdf,.doc,.docx">
+                            {% if perfil.contrato_colaboracion %}
+                            <small class="text-muted d-block mt-1">Actual: <a
+                                    href="{{ perfil.contrato_colaboracion.url }}" target="_blank">Ver
+                                    Archivo</a></small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mt-4 mb-3 text-warning"><i
+                            class="fa-solid fa-headset me-2"></i>Configuración Netelip</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Teléfono (Nro)</label>
+                            <input type="text" name="netelip_number" class="form-control"
+                                value="{{ perfil.netelip_number|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Ext.</label>
+                            <input type="text" name="netelip_ext" class="form-control"
+                                value="{{ perfil.netelip_ext|default:'' }}">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-muted small">Servidor SIP</label>
+                            <input type="text" name="netelip_server" class="form-control"
+                                value="{{ perfil.netelip_server|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Usuario SIP</label>
+                            <input type="text" name="netelip_user" class="form-control"
+                                value="{{ perfil.netelip_user|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">Contraseña SIP</label>
+                            <input type="text" name="netelip_pass" class="form-control"
+                                value="{{ perfil.netelip_pass|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning fw-bold text-dark">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

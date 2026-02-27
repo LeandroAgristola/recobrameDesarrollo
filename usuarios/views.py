@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import Perfil
-from .forms import NuevoStaffForm, NuevoClienteForm
+from .forms import NuevoStaffForm, NuevoClienteForm, EditarStaffForm
 
 @login_required
 def lista_usuarios(request):
@@ -18,7 +18,7 @@ def lista_usuarios(request):
 
     if request.method == 'POST':
         if 'crear_staff' in request.POST:
-            form_staff = NuevoStaffForm(request.POST)
+            form_staff = NuevoStaffForm(request.POST, request.FILES)
             if form_staff.is_valid():
                 # 1. Crear el usuario nativo
                 email = form_staff.cleaned_data['email']
@@ -37,8 +37,22 @@ def lista_usuarios(request):
                 perfil.rol = form_staff.cleaned_data['rol']
                 perfil.telefono = form_staff.cleaned_data['telefono']
                 perfil.dni_nie = form_staff.cleaned_data['dni_nie']
+                perfil.netelip_number = form_staff.cleaned_data.get('netelip_number', '')
                 perfil.netelip_ext = form_staff.cleaned_data['netelip_ext']
+                perfil.netelip_user = form_staff.cleaned_data.get('netelip_user', '')
+                perfil.netelip_pass = form_staff.cleaned_data.get('netelip_pass', '')
+                perfil.netelip_server = form_staff.cleaned_data.get('netelip_server', '')
                 perfil.mercateli_id = form_staff.cleaned_data['mercateli_id']
+                perfil.mercateli_despacho = form_staff.cleaned_data.get('mercateli_despacho', '')
+                perfil.requiere_cambio_clave = True # Por defecto es True, pero forzamos
+                perfil.clave_temporal = password
+                perfil.fecha_alta = form_staff.cleaned_data.get('fecha_alta') or timezone.now().date()
+                
+                if form_staff.cleaned_data.get('foto_perfil'):
+                    perfil.foto_perfil = form_staff.cleaned_data['foto_perfil']
+                if form_staff.cleaned_data.get('contrato_colaboracion'):
+                    perfil.contrato_colaboracion = form_staff.cleaned_data['contrato_colaboracion']
+                    
                 perfil.save()
 
                 messages.success(request, f"✅ Staff creado. Contraseña temporal: {password} (Cópiala)")
@@ -60,13 +74,15 @@ def lista_usuarios(request):
                 perfil = user.perfil
                 perfil.rol = 'CLIENTE'
                 perfil.telefono = form_cliente.cleaned_data['telefono']
+                perfil.requiere_cambio_clave = True
+                perfil.clave_temporal = password
                 perfil.save()
                 perfil.empresas_asignadas.set(form_cliente.cleaned_data['empresas'])
 
                 messages.success(request, f"✅ Cliente creado. Contraseña temporal: {password} (Cópiala)")
                 return redirect('usuarios:lista_usuarios')
 
-    # --- 2. LÓGICA DE LISTADOS Y BUSCADOR ---
+        # La edición de staff ahora se maneja en su propia vista editar_staff()    # --- 2. LÓGICA DE LISTADOS Y BUSCADOR ---
     q = request.GET.get('q', '')
     perfiles_qs = Perfil.objects.select_related('user').all()
 
@@ -118,10 +134,95 @@ def restaurar_usuario(request, perfil_id):
     perfil = get_object_or_404(Perfil, id=perfil_id)
     perfil.activo = True
     perfil.fecha_baja = None
+    perfil.fecha_alta = timezone.now().date()
     perfil.save()
     
     perfil.user.is_active = True
     perfil.user.save()
 
     messages.success(request, f"Usuario {perfil.user.first_name} restaurado con éxito.")
+    return redirect(f"/usuarios/?tab=papelera")
+
+@login_required
+def detalle_staff(request, perfil_id):
+    perfil = get_object_or_404(Perfil, id=perfil_id)
+    # Seguridad básica por ahora
+    if perfil.rol == 'CLIENTE':
+        return redirect('usuarios:lista_usuarios')
+    
+    context = {
+        'perfil': perfil
+    }
+    return render(request, 'usuarios/detalle_staff.html', context)
+
+@login_required
+@require_POST
+def generar_nueva_clave_staff(request, perfil_id):
+    perfil = get_object_or_404(Perfil, id=perfil_id)
+    
+    # Solo administradores pueden regenerar claves de staff o el mismo usuario
+    if request.user.perfil.rol != 'ADMIN' and request.user.perfil.id != perfil.id:
+        messages.error(request, "No tienes permisos para regenerar esta clave.")
+        return redirect('usuarios:detalle_staff', perfil_id=perfil.id)
+
+    nueva_clave = get_random_string(10)
+    user = perfil.user
+    user.set_password(nueva_clave)
+    user.save()
+
+    perfil.clave_temporal = nueva_clave
+    perfil.requiere_cambio_clave = True
+    perfil.save()
+
+    messages.success(request, f"Se ha generado una nueva clave para {user.first_name}.")
+    return redirect('usuarios:detalle_staff', perfil_id=perfil.id)
+
+@login_required
+@require_POST
+def editar_staff(request, perfil_id):
+    perfil = get_object_or_404(Perfil, id=perfil_id)
+    form_editar = EditarStaffForm(request.POST, request.FILES)
+    if form_editar.is_valid():
+        user = perfil.user
+        user.first_name = form_editar.cleaned_data['nombre']
+        user.last_name = form_editar.cleaned_data['apellido']
+        user.save()
+
+        perfil.rol = form_editar.cleaned_data['rol']
+        perfil.telefono = form_editar.cleaned_data['telefono']
+        perfil.dni_nie = form_editar.cleaned_data['dni_nie']
+        perfil.netelip_number = form_editar.cleaned_data.get('netelip_number', '')
+        perfil.netelip_ext = form_editar.cleaned_data['netelip_ext']
+        perfil.netelip_user = form_editar.cleaned_data.get('netelip_user', '')
+        perfil.netelip_pass = form_editar.cleaned_data.get('netelip_pass', '')
+        perfil.netelip_server = form_editar.cleaned_data.get('netelip_server', '')
+        perfil.mercateli_id = form_editar.cleaned_data.get('mercateli_id', '')
+        perfil.mercateli_despacho = form_editar.cleaned_data.get('mercateli_despacho', '')
+        
+        if form_editar.cleaned_data.get('foto_perfil'):
+            perfil.foto_perfil = form_editar.cleaned_data['foto_perfil']
+        if form_editar.cleaned_data.get('contrato_colaboracion'):
+            perfil.contrato_colaboracion = form_editar.cleaned_data['contrato_colaboracion']
+            
+        perfil.save()
+
+        messages.success(request, f"✅ Staff {user.first_name} actualizado correctamente.")
+    else:
+        messages.error(request, "Error al actualizar staff.")
+    
+    return redirect(request.META.get('HTTP_REFERER', 'usuarios:lista_usuarios'))
+
+@login_required
+@require_POST
+def eliminar_usuario_papelera(request, perfil_id):
+    perfil = get_object_or_404(Perfil, id=perfil_id)
+    if perfil.activo:
+        messages.error(request, "No se puede eliminar un usuario activo.")
+        return redirect('usuarios:lista_usuarios')
+    
+    user = perfil.user
+    first_name = user.first_name
+    user.delete() # Esto también borra el perfil debido a on_delete=models.CASCADE
+    
+    messages.success(request, f"Usuario {first_name} eliminado permanentemente.")
     return redirect(f"/usuarios/?tab=papelera")

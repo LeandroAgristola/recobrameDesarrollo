@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum
+from django.utils import timezone
 
 from empresas.models import Empresa
 from crm.models import Expediente, RegistroPago
@@ -25,14 +26,21 @@ class Perfil(models.Model):
     foto_perfil = models.ImageField(upload_to='perfiles/', blank=True, null=True)
     
     # --- CAMPOS DE ESTADO Y FECHAS ---
-    fecha_alta = models.DateField(auto_now_add=True, null=True, blank=True)
+    fecha_alta = models.DateField(default=timezone.now, null=True, blank=True)
     fecha_baja = models.DateField(null=True, blank=True)
     activo = models.BooleanField(default=True)
+    requiere_cambio_clave = models.BooleanField(default=True, help_text="Exige al usuario cambiar su clave autogenerada al iniciar sesión por primera vez.")
+    clave_temporal = models.CharField(max_length=50, blank=True, null=True, help_text="Almacena la clave generada automáticamente para mostrarla en el detalle.")
     
     # --- DATOS EXCLUSIVOS STAFF ---
     dni_nie = models.CharField(max_length=20, blank=True, null=True)
+    netelip_number = models.CharField(max_length=20, blank=True, null=True, help_text="Número telefónico de Netelip")
     netelip_ext = models.CharField(max_length=20, blank=True, null=True)
+    netelip_user = models.CharField(max_length=100, blank=True, null=True, help_text="Usuario de Netelip (Softphone)")
+    netelip_pass = models.CharField(max_length=100, blank=True, null=True, help_text="Contraseña de Netelip")
+    netelip_server = models.CharField(max_length=100, blank=True, null=True, help_text="Servidor SIP de Netelip")
     mercateli_id = models.CharField(max_length=50, blank=True, null=True)
+    mercateli_despacho = models.CharField(max_length=100, blank=True, null=True, help_text="Nombre del despacho en Mercateli")
     contrato_colaboracion = models.FileField(upload_to='contratos_staff/', blank=True, null=True)
 
     # --- DATOS EXCLUSIVOS CLIENTES ---
@@ -64,7 +72,15 @@ class Perfil(models.Model):
 
     @property
     def casos_finalizados(self):
-        return Expediente.objects.filter(agente=self.user, w5=True).count()
+        # Count cases that are marked as paid (estado='PAGADO')
+        return Expediente.objects.filter(
+            agente=self.user,
+            estado='PAGADO'
+        ).count()
+
+    @property
+    def recobros_cantidad(self):
+        return RegistroPago.objects.filter(expediente__agente=self.user).count()
 
     @property
     def cobro_promedio(self):
