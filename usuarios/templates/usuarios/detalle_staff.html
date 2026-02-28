@@ -9,20 +9,31 @@
             <h2 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-user-tie me-2 text-primary"></i>Ficha de Staff</h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 mt-2">
+                    {% if request.user.perfil.rol == 'ADMIN' %}
                     <li class="breadcrumb-item"><a href="{% url 'usuarios:lista_usuarios' %}"
-                            class="text-decoration-none">Usuarios</a></li>
+                            class="text-decoration-none">Gestión de Usuarios</a></li>
+                    {% else %}
+                    <li class="breadcrumb-item"><a href="{% url 'crm:lista_crm' %}"
+                            class="text-decoration-none">Inicio</a></li>
+                    {% endif %}
                     <li class="breadcrumb-item active" aria-current="page">{{ perfil.user.get_full_name }}</li>
                 </ol>
             </nav>
         </div>
         <div>
+            {% if request.user.perfil.rol == 'ADMIN' %}
             <a href="{% url 'usuarios:lista_usuarios' %}" class="btn btn-outline-secondary shadow-sm me-2">
                 <i class="fa-solid fa-arrow-left me-2"></i>Volver al Listado
             </a>
-            <button type="button" class="btn btn-warning shadow-sm fw-bold" data-bs-toggle="modal"
+            <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal"
                 data-bs-target="#modalEditarStaff{{ perfil.id }}">
                 <i class="fa-solid fa-pen me-2"></i>Editar Staff
             </button>
+            {% else %}
+            <a href="{% url 'crm:lista_crm' %}" class="btn btn-outline-secondary shadow-sm me-2">
+                <i class="fa-solid fa-arrow-left me-2"></i>Volver al Inicio
+            </a>
+            {% endif %}
         </div>
     </div>
 
@@ -91,22 +102,25 @@
 
                         <div class="mt-4">
                             <label
-                                class="form-label text-muted fw-bold small w-100 d-flex justify-content-between align-items-center">
-                                <span><i class="fa-solid fa-key me-1"></i>Clave (Temporal)</span>
-                                <button type="button" data-bs-toggle="modal"
-                                    data-bs-target="#modalGenerarClave{{ perfil.id }}"
-                                    class="btn btn-sm btn-link text-primary p-0 text-decoration-none fw-bold"><i
+                                class="form-label fw-bold text-dark d-flex justify-content-between align-items-center w-100">
+                                <span class="text-secondary"><i class="fa-solid fa-key me-2 text-warning"></i>Credencial
+                                    de Acceso</span>
+                                {% if request.user.perfil.rol in 'ADMIN DIRECTIVO' %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                    data-bs-toggle="modal" data-bs-target="#modalGenerarClave{{ perfil.id }}"
+                                    style="font-size: 0.75rem;"><i
                                         class="fa-solid fa-rotate me-1"></i>Editar/Generar</button>
+                                {% endif %}
                             </label>
                             {% if perfil.clave_temporal %}
                             <div class="input-group input-group-sm mb-1">
-                                <input type="password" class="form-control font-monospace border-warning"
+                                <input type="password" class="form-control font-monospace border-secondary"
                                     id="clave_temporal" value="{{ perfil.clave_temporal }}" readonly>
-                                <button class="btn btn-outline-warning" type="button" id="btnToggleClave"
+                                <button class="btn btn-outline-secondary" type="button" id="btnToggleClave"
                                     onclick="togglePassword('clave_temporal', 'icon_clave')">
                                     <i class="fa-solid fa-eye" id="icon_clave"></i>
                                 </button>
-                                <button class="btn btn-warning" type="button"
+                                <button class="btn btn-secondary" type="button"
                                     onclick="copiarAlPortapapeles('clave_temporal')" title="Copiar Clave">
                                     <i class="fa-solid fa-copy"></i>
                                 </button>
@@ -133,6 +147,7 @@
                                 <i class="fa-solid fa-address-card me-2"></i>Información del Sistema
                             </button>
                         </li>
+                        {% if 'ADMIN' in perfil.rol or 'DIRECTIVO' in perfil.rol %}
                         <li class="nav-item" role="presentation">
                             <button class="nav-link px-4 py-3 fw-bold text-muted" id="facturacion-tab"
                                 data-bs-toggle="tab" data-bs-target="#facturacion" type="button" role="tab"
@@ -140,6 +155,21 @@
                                 <i class="fa-solid fa-file-invoice-dollar me-2"></i>Honorarios Acumulados
                             </button>
                         </li>
+                        {% elif 'AGENTE' in perfil.rol %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link px-4 py-3 fw-bold text-muted" id="recobros-tab" data-bs-toggle="tab"
+                                data-bs-target="#recobros" type="button" role="tab" aria-selected="false">
+                                <i class="fa-solid fa-file-invoice-dollar me-2"></i>Recobros
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link px-4 py-3 fw-bold text-muted" id="facturacion-tab"
+                                data-bs-toggle="tab" data-bs-target="#facturacion" type="button" role="tab"
+                                aria-selected="false">
+                                <i class="fa-solid fa-receipt me-2"></i>Facturas
+                            </button>
+                        </li>
+                        {% endif %}
                         {% if 'AGENTE' in perfil.rol %}
                         <li class="nav-item" role="presentation">
                             <button class="nav-link px-4 py-3 fw-bold text-muted" id="metricas-tab" data-bs-toggle="tab"
@@ -214,48 +244,97 @@
                             </div>
                         </div>
 
-                        <!-- Pestaña 2: Facturación (Dummy de la Fase 7) -->
-                        <div class="tab-pane fade" id="facturacion" role="tabpanel" aria-labelledby="facturacion-tab">
-                            <div class="alert alert-info border-0 shadow-sm mb-4">
-                                <i class="fa-solid fa-circle-info me-2"></i>En esta sección se registrarán las
-                                facturas
-                                que el agente nos envíe mensualmente por sus servicios prestados (Desarrollo Futuro
-                                -
-                                Fase 7).
+                        <!-- Pestaña 2: Mis Recobros (Solo Agentes) -->
+                        <div class="tab-pane fade" id="recobros" role="tabpanel" aria-labelledby="recobros-tab">
+                            <h5 class="text-secondary fw-bold mb-4 border-bottom pb-2">Historial de Recobros</h5>
+
+                            <div
+                                class="alert alert-success bg-opacity-10 border border-success border-opacity-25 shadow-sm mb-4">
+                                <i class="fa-solid fa-sack-dollar text-success me-2"></i><strong>Mis Recobros
+                                    Registrados:</strong>
+                                Aquí puedes ver un historial de todos los pagos que has registrado en los expedientes
+                                que tienes asignados.
                             </div>
 
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle">
                                     <thead class="bg-light">
                                         <tr class="text-muted small text-uppercase">
-                                            <th>Mes de Servicio</th>
-                                            <th>Concepto</th>
-                                            <th>Documento</th>
-                                            <th>Total Facturado</th>
+                                            <th>Fecha</th>
+                                            <th>CRM (Empresa)</th>
+                                            <th>Expediente</th>
+                                            <th>Deudor</th>
+                                            <th>Método</th>
+                                            <th class="text-end text-success">Monto Recuperado</th>
+                                            <th class="text-center">Comprobante</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for pago in recobros_agente %}
+                                        <tr>
+                                            <td class="small">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                                            <td class="small fw-bold text-muted">{{ pago.expediente.empresa.nombre }}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}"
+                                                    class="fw-bold text-decoration-none">
+                                                    {{ pago.expediente.numero_expediente }}
+                                                </a>
+                                            </td>
+                                            <td class="fw-bold">{{ pago.expediente.deudor_nombre }}</td>
+                                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">{{
+                                                    pago.get_metodo_pago_display|default:pago.metodo_pago }}</span></td>
+                                            <td class="text-end text-success fw-bold">+{{ pago.monto }}€</td>
+                                            <td class="text-center">
+                                                {% if pago.comprobante %}
+                                                <a href="{{ pago.comprobante.url }}" target="_blank"
+                                                    class="btn btn-sm btn-outline-info border-0"><i
+                                                        class="fa-solid fa-file-invoice"></i></a>
+                                                {% else %}
+                                                <span class="text-muted small">-</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
+                                                <div class="text-success opacity-50 mb-3"><i
+                                                        class="fa-solid fa-clipboard-check"
+                                                        style="font-size: 3rem;"></i></div>
+                                                <h6 class="fw-bold text-muted mb-0">Aún no tienes recobros registrados.
+                                                </h6>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña de Facturación (Mock) -->
+                        <div class="tab-pane fade" id="facturacion" role="tabpanel" aria-labelledby="facturacion-tab">
+                            <h5 class="text-secondary fw-bold mb-4 border-bottom pb-2">Facturación de Honorarios</h5>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="bg-light">
+                                        <tr class="text-muted small text-uppercase">
+                                            <th>Mes / Año</th>
+                                            <th>Factura Nº</th>
+                                            <th>Fecha Emisión</th>
+                                            <th class="text-end">Monto Total</th>
                                             <th class="text-center">Estado</th>
+                                            <th class="text-center">PDF</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><i class="fa-regular fa-calendar me-2 text-primary"></i>Febrero 2026
-                                            </td>
-                                            <td>Honorarios y Comisiones Mensuales</td>
-                                            <td><a href="#" class="btn btn-sm btn-outline-secondary"><i
-                                                        class="fa-solid fa-file-pdf me-1"></i>Factura_002.pdf</a>
-                                            </td>
-                                            <td class="fw-bold text-success"> 850.00 €</td>
-                                            <td class="text-center"><span
-                                                    class="badge bg-warning text-dark">Pendiente</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><i class="fa-regular fa-calendar me-2 text-primary"></i>Enero 2026
-                                            </td>
-                                            <td>Honorarios y Comisiones Mensuales</td>
-                                            <td><a href="#" class="btn btn-sm btn-outline-secondary"><i
-                                                        class="fa-solid fa-file-pdf me-1"></i>Factura_001.pdf</a>
-                                            </td>
-                                            <td class="fw-bold text-success"> 720.00 € </td>
-                                            <td class="text-center"><span class="badge bg-success">Pagada</span>
+                                            <td colspan="6" class="text-center py-5">
+                                                <div class="text-secondary opacity-50 mb-3"><i
+                                                        class="fa-solid fa-file-invoice" style="font-size: 3rem;"></i>
+                                                </div>
+                                                <h6 class="fw-bold text-muted mb-0">No hay facturas registradas en el
+                                                    sistema.</h6>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -272,7 +351,7 @@
 
                             <!-- Tarjetas KPI Principales -->
                             <div class="row g-3 mb-4">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="card bg-success bg-opacity-10 border-success border-opacity-25 h-100">
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -286,7 +365,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="card bg-warning bg-opacity-10 border-warning border-opacity-25 h-100">
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -300,7 +379,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="card bg-primary bg-opacity-10 border-primary border-opacity-25 h-100">
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -316,7 +395,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="card bg-info bg-opacity-10 border-info border-opacity-25 h-100">
                                         <div class="card-body p-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -348,7 +427,7 @@
                                             <span class="text-muted fw-bold small">
                                                 <i class="fa-solid fa-flag-checkered me-2 text-success"></i>
                                                 Casos Finalizados (Pagados)</span>
-                                            <span class="badge bg-success rounded-pill px-3"> 
+                                            <span class="badge bg-success rounded-pill px-3">
                                                 {{ perfil.casos_finalizados}}</span>
 
                                         </li>
@@ -385,40 +464,6 @@
     </div>
 </div>
 
-<script>
-    function togglePassword(inputId, iconId) {
-        var pwdField = document.getElementById(inputId);
-        var icon = document.getElementById(iconId);
-        if (pwdField.type === "password") {
-            pwdField.type = "text";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
-        } else {
-            pwdField.type = "password";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
-        }
-    }
-
-    function copiarAlPortapapeles(inputId) {
-        var copyText = document.getElementById(inputId);
-        if (!copyText.value) return;
-
-        // El input es readonly pero se puede seleccionar
-        copyText.select();
-        copyText.setSelectionRange(0, 99999); // Para dispositivos móviles
-
-        navigator.clipboard.writeText(copyText.value).then(function () {
-            // Feedback visual básico
-            var originalColor = copyText.style.backgroundColor;
-            copyText.style.backgroundColor = '#d1e7dd';
-            setTimeout(function () {
-                copyText.style.backgroundColor = originalColor;
-            }, 500);
-        });
-    }
-</script>
-
 <!-- Modales -->
 {% include 'usuarios/includes/modal_editar_staff.html' with perfil=perfil %}
 
@@ -450,5 +495,9 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script src="{% static 'js/usuarios/password.js' %}"></script>
+{% endblock %}
 
 {% endblock %}

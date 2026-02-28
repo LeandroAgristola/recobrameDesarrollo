@@ -150,8 +150,15 @@ def detalle_staff(request, perfil_id):
     if perfil.rol == 'CLIENTE':
         return redirect('usuarios:lista_usuarios')
     
+    # Importar RegistroPago aquí para evitar dependencias circulares
+    from crm.models import RegistroPago
+    recobros_agente = RegistroPago.objects.filter(
+        expediente__agente=perfil.user
+    ).select_related('expediente__empresa').order_by('-fecha_pago')
+    
     context = {
-        'perfil': perfil
+        'perfil': perfil,
+        'recobros_agente': recobros_agente
     }
     return render(request, 'usuarios/detalle_staff.html', context)
 

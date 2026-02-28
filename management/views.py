@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
@@ -25,8 +25,7 @@ class CustomLoginView(LoginView):
             
         else:
             # Es AGENTE, ABOGADO o CONTABLE. 
-            # TODO: Cambiar por la url de su dashboard personal cuando lo construyamos
-            return reverse_lazy('management:home')
+            return reverse_lazy('crm:lista_crm')
 
 # 2. Vista de Logout Personalizada
 class CustomLogoutView(LogoutView):
@@ -38,6 +37,12 @@ def dashboard_view(request):
     """
     Vista principal del dashboard. Solo accesible si estás logueado.
     """
+    try:
+        if request.user.perfil.rol != 'ADMIN':
+            return redirect('crm:lista_crm')
+    except:
+        pass
+        
     context = {
         'titulo': 'Resumen General',
         # Aquí pasaremos los datos reales más adelante (Empresas, Deudas, etc.)

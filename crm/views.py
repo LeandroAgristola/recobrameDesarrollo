@@ -85,8 +85,16 @@ def calcular_deuda_actualizada(expediente):
 
 @login_required
 def lista_crm(request):
+    perfil = request.user.perfil
     # 1. Base de empresas (Añadimos order_by para que la paginación sea consistente)
-    empresas_list = Empresa.objects.filter(is_active=True).order_by('nombre')
+    if perfil.rol == 'ADMIN':
+        empresas_list = Empresa.objects.filter(is_active=True).order_by('nombre')
+    else:
+        empresas_list = Empresa.objects.filter(
+            is_active=True,
+            expedientes__agente=request.user,
+            expedientes__activo=True
+        ).distinct().order_by('nombre')
     
     # Si hay búsqueda desde el formulario, filtramos antes de paginar
     busqueda = request.GET.get('busqueda', '')
@@ -169,9 +177,19 @@ def buscar_antecedentes_deudor(request):
 @login_required
 def dashboard_crm(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id, is_active=True)
+    perfil = request.user.perfil
+    
+    # Validar acceso para Agentes
+    if perfil.rol != 'ADMIN':
+        if not Expediente.objects.filter(empresa=empresa, agente=request.user, activo=True).exists():
+            messages.error(request, "No tienes acceso a este CRM.")
+            return redirect('crm:lista_crm')
     
     # --- 1. LÓGICA DE EXPEDIENTES ---
-    expedientes_qs = Expediente.objects.filter(empresa=empresa).order_by('numero_expediente')
+    if perfil.rol == 'ADMIN':
+        expedientes_qs = Expediente.objects.filter(empresa=empresa).order_by('numero_expediente')
+    else:
+        expedientes_qs = Expediente.objects.filter(empresa=empresa, agente=request.user).order_by('numero_expediente')
     
     # Actualización automática de deuda (Solo activos ACTIVO)
     for exp in expedientes_qs.filter(activo=True, estado='ACTIVO'):
@@ -353,9 +371,16 @@ def dashboard_crm(request, empresa_id):
 
     # --- 4. FILTROS RECOBROS ---
     # PRIMERO: Creamos la consulta base de recobros
-    recobros_qs = RegistroPago.objects.filter(
-        expediente__empresa=empresa
-    ).select_related('expediente').order_by('-fecha_pago')
+    if perfil.rol == 'ADMIN':
+        recobros_qs = RegistroPago.objects.filter(
+            expediente__empresa=empresa
+        ).select_related('expediente').order_by('-fecha_pago')
+    else:
+        # Agentes solo ven pagos de sus expedientes (o los que ellos subieron)
+        recobros_qs = RegistroPago.objects.filter(
+            expediente__empresa=empresa,
+            expediente__agente=request.user
+        ).select_related('expediente').order_by('-fecha_pago')
 
     r_q = request.GET.get('r_q', '')
     r_desde = request.GET.get('r_desde')
@@ -922,6 +947,7 @@ def registrar_pago(request, expediente_id):
         try:
             pago = form.save(commit=False)
             pago.expediente = expediente
+            pago.registrado_por = request.user
             
             # --- CORRECCIÓN CRÍTICA APLICADA AQUÍ ---
             # Llamamos al motor de comisiones dinámico en lugar del 10% estático
@@ -1132,6 +1158,10 @@ def confirmar_cesion(request, exp_id):
 def importar_excel(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     
+    if request.user.perfil.rol not in ['ADMIN', 'DIRECTIVO']:
+        messages.error(request, "No tienes permisos para realizar esta acción.")
+        return redirect('crm:dashboard_crm', empresa_id=empresa.id)
+        
     if request.method == 'POST':
         archivo = request.FILES.get('archivo_excel')
         estado_carga = request.POST.get('estado_carga', 'ACTIVO')
@@ -1288,13 +1318,20 @@ def procesar_conciliacion(request):
                     pago.expediente = exp
                     pago.monto = monto_a_pagar
                     pago.comision = calcular_comision_exacta(exp, monto_a_pagar)
+                    pago.fecha_pago = timezone.now().date()
                     
-                    if hasattr(pago, 'fecha_pago'): pago.fecha_pago = timezone.now().date()
-                    if hasattr(pago, 'comentarios'): pago.comentarios = "Liquidación por conciliación automática de reporte."
-                        
-                    if hasattr(pago, 'usuario'): pago.usuario = request.user
-                    elif hasattr(pago, 'registrado_por'): pago.registrado_por = request.user
-                    elif hasattr(pago, 'agente'): pago.agente = request.user
+                    MAPEO_METODO_PAGO = {
+                        'SEQURA_HOTMART': 'SEQURA_HOTMART',
+                        'SEQURA_MANUAL': 'SEQURA_MANUAL',
+                        'SEQURA_COPECART': 'SEQURA_COPECART',
+                        'SEQURA_PASS': 'SEQURA_PASS',
+                        'AUTO_STRIPE': 'STRIPE',
+                    }
+                    pago.metodo_pago = MAPEO_METODO_PAGO.get(exp.tipo_producto, 'TRANSFERENCIA')
+                    
+                    # El pago por conciliación automática no lo "registra" el admin a su nombre (es masivo del sistema).
+                    pago.registrado_por = None 
+                    pago.comentarios = "Liquidación por conciliación automática de reporte."
                     
                     pago.save()
 
@@ -1313,8 +1350,8 @@ def procesar_conciliacion(request):
                     if exp.monto_actual <= Decimal('1.00'):
                         exp.estado = 'PAGADO'
                     
-                    if not exp.agente:
-                        exp.agente = request.user
+                    # Eliminamos la línea que forzaba exp.agente = request.user si estaba vacío. 
+                    # El expediente debe mantener el agente original, o seguir vacío si nadie lo gestionaba.
                         
                     exp.save()
                     pagos_cont += 1

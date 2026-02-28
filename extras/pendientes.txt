@@ -2,6 +2,10 @@
 CRM
     Pendientes:
 
+        al cargar pagos desde un excel el tipo de pago dice todo "transferencia" cuando deberia decir el tipo de pago que tiene el registro en el CRM.
+        La cargar un excel los pagos se deben asignar a los casos q tienen asignados los agentes segun los registros, por mas que los cargue un agente x o un admin.
+        En la vista REG_Recorbros, en el listado de los recobros tiene q detallar que agente lo ingreso ya sea a mano o por excel
+
         Agregar opcion de refinanciar (ver en detalle)
         Validacion de duplicados (si es q esta refinancioado)
 
@@ -13,12 +17,13 @@ CRM
 
     Errores:
 
+
 Empresas: 
 
 
 Usuarios:
 
-    falta campo para foto de perfil y contrato de colaboracion (archivo)
+
 
 
 ETAPA 5: Sistema de Permisos y Roles (Ciberseguridad)

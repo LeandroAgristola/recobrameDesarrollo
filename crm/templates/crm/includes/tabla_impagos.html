@@ -1,45 +1,46 @@
 {% load static %}
 
 <div class="crm-table-container border shadow-sm">
-    
-<div class="container-fluid py-4">
+
+    <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center w-100">
-            
+
             <div class="col-md-5 col-lg-5">
                 <div class="d-flex w-100 align-items-center">
-                    
+
                     <div class="d-flex flex-grow-1">
                         <div class="search-box w-100 position-relative">
                             <i class="fa-solid fa-search search-icon"></i>
-                            <input type="text" id="globalSearch" value="{{ q }}" 
-                                class="form-control ps-5" placeholder="Nombre, Tel o ID..."
+                            <input type="text" id="globalSearch" value="{{ q }}" class="form-control ps-5"
+                                placeholder="Nombre, Tel o ID..."
                                 style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
                                 onkeypress="if(event.key === 'Enter') aplicarFiltrosJS()">
                         </div>
                         <button class="btn btn-secondary" type="button" onclick="aplicarFiltrosJS()"
-                                style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
+                            style="border-top-left-radius: 0; border-bottom-left-radius: 0; min-width: 80px;">
                             {% if hay_filtros_impagos %}
-                                <i class="fa-solid fa-check"></i> {% else %}
-                                Buscar
+                            <i class="fa-solid fa-check"></i> {% else %}
+                            Buscar
                             {% endif %}
                         </button>
                     </div>
 
                     <div class="d-flex ms-2 gap-1">
                         {% if hay_filtros_impagos %}
-                            <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-danger shadow-sm" title="Limpiar y Cerrar Filtros">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </a>
+                        <a href="{% url 'crm:dashboard_crm' empresa.id %}" class="btn btn-danger shadow-sm"
+                            title="Limpiar y Cerrar Filtros">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
                         {% else %}
-                            <button type="button" id="btnToggleFiltros" class="btn btn-outline-primary shadow-sm" 
-                                    onclick="toggleFiltros()" title="Mostrar filtros por columna">
-                                <i class="fas fa-filter"></i>
-                            </button>
-                            
-                            <button type="button" id="btnAplicarCheck" class="btn btn-outline-success shadow-sm" 
-                                    onclick="aplicarFiltrosJS()" style="display: none;">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
+                        <button type="button" id="btnToggleFiltros" class="btn btn-outline-primary shadow-sm"
+                            onclick="toggleFiltros()" title="Mostrar filtros por columna">
+                            <i class="fas fa-filter"></i>
+                        </button>
+
+                        <button type="button" id="btnAplicarCheck" class="btn btn-outline-success shadow-sm"
+                            onclick="aplicarFiltrosJS()" style="display: none;">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
                         {% endif %}
                     </div>
 
@@ -47,29 +48,32 @@
             </div>
 
             <div class="d-flex gap-2">
-                <button class="btn btn-success shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalNuevoRegistro">
+                <button class="btn btn-success shadow-sm px-3" data-bs-toggle="modal"
+                    data-bs-target="#modalNuevoRegistro">
                     <i class="fa-solid fa-plus me-1"></i> Nuevo Registro
                 </button>
-                
-                <button class="btn btn-primary  shadow-sm btn-importar-contexto px-3" 
-                        data-estado="ACTIVO" 
-                        data-nombre="IMPAGOS" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#modalImportarExcel">
+
+                {% if request.user.perfil.rol == 'ADMIN' %}
+                <button class="btn btn-primary shadow-sm btn-importar-contexto px-3" data-estado="ACTIVO"
+                    data-nombre="IMPAGOS" data-bs-toggle="modal" data-bs-target="#modalImportarExcel">
                     <i class="fa-solid fa-file-import me-1"></i> Importar Impagos
                 </button>
+                {% endif %}
             </div>
 
         </div>
-  </div>   
+    </div>
 
- <div id="bulk-action-bar-impagos" class="d-none bg-primary bg-opacity-10 p-2 border border-primary rounded mb-3 d-flex align-items-center justify-content-between shadow-sm transition-all">
-        <span class="small fw-bold text-primary px-2"><span id="selected-count-impagos">0</span> expedientes seleccionados</span>
+    <div id="bulk-action-bar-impagos"
+        class="d-none bg-primary bg-opacity-10 p-2 border border-primary rounded mb-3 d-flex align-items-center justify-content-between shadow-sm transition-all">
+        <span class="small fw-bold text-primary px-2"><span id="selected-count-impagos">0</span> expedientes
+            seleccionados</span>
         <div class="d-flex gap-2">
-            <select name="agente_id" class="form-select form-select-sm border-primary" form="form-masivo-impagos" required>
+            <select name="agente_id" class="form-select form-select-sm border-primary" form="form-masivo-impagos"
+                required>
                 <option value="">Asignar a...</option>
                 {% for agente in agentes_disponibles %}
-                    <option value="{{ agente.id }}">{{ agente.username }}</option>
+                <option value="{{ agente.id }}">{{ agente.username }}</option>
                 {% endfor %}
             </select>
             <button type="submit" form="form-masivo-impagos" class="btn btn-sm btn-primary fw-bold">
@@ -81,179 +85,188 @@
     <form id="form-masivo-impagos" action="{% url 'crm:asignar_agente_masivo' empresa.id %}" method="POST">
         {% csrf_token %}
         <table class="table table-hover align-middle mb-0 table-crm" id="tablaExpedientes">
-                
-        <thead class="bg-light sticky-top" style="z-index: 100;">
-            <tr class="text-center small text-uppercase text-muted">
-                <th style="width: 40px;" class="text-center align-middle">
-                    <input class="form-check-input border-secondary select-all-impagos" type="checkbox" title="Seleccionar todos">
-                </th>
-                
-                {% include 'crm/includes/encabezados_filtros.html' with pref="imp" %}
-            </tr>
-        </thead>
 
-        <tbody>
-            {% now "Y-m-d" as hoy %}
+            <thead class="bg-light sticky-top" style="z-index: 100;">
+                <tr class="text-center small text-uppercase text-muted">
+                    {% if request.user.perfil.rol == 'ADMIN' %}
+                    <th style="width: 40px;" class="text-center align-middle">
+                        <input class="form-check-input border-secondary select-all-impagos" type="checkbox"
+                            title="Seleccionar todos">
+                    </th>
+                    {% endif %}
 
-            {% for exp in impagos %}
-            <tr id="fila-exp-{{ exp.id }}" 
-                class="text-center {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}{% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}row-promesa-hoy{% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}row-promesa-vencida{% endif %}{% endif %} {% if exp.puede_ser_cedido %}row-cedido{% endif %}">
-                
-                <td class="text-center align-middle">
-                    <input class="form-check-input border-secondary row-checkbox-impagos" type="checkbox" name="expedientes_ids" value="{{ exp.id }}">
-                </td>
+                    {% include 'crm/includes/encabezados_filtros.html' with pref="imp" %}
+                </tr>
+            </thead>
 
-                <td class="col-agente">
-                    <select class="form-select form-select-sm fw-bold small text-muted"
-                            onchange="cambiarAgente(this, {{ exp.id }})"
-                            style="cursor: pointer; border: 1px solid #dee2e6;"
-                            {% if not user.is_staff %}disabled{% endif %}>
-                        <option value="" {% if not exp.agente %}selected{% endif %}>- Sin Asignar -</option>
-                        {% for agente in agentes_disponibles %}
+            <tbody>
+                {% now "Y-m-d" as hoy %}
+
+                {% for exp in impagos %}
+                <tr id="fila-exp-{{ exp.id }}"
+                    class="text-center {% if exp.causa_impago == 'PAGARA' and exp.fecha_pago_promesa %}{% if exp.fecha_pago_promesa|date:'Y-m-d' == hoy %}row-promesa-hoy{% elif exp.fecha_pago_promesa|date:'Y-m-d' < hoy %}row-promesa-vencida{% endif %}{% endif %} {% if exp.puede_ser_cedido %}row-cedido{% endif %}">
+
+                    {% if request.user.perfil.rol == 'ADMIN' %}
+                    <td class="text-center align-middle">
+                        <input class="form-check-input border-secondary row-checkbox-impagos" type="checkbox"
+                            name="expedientes_ids" value="{{ exp.id }}">
+                    </td>
+
+                    <td class="col-agente">
+                        <select class="form-select form-select-sm fw-bold small text-muted"
+                            onchange="cambiarAgente(this, '{{ exp.id }}')"
+                            style="cursor: pointer; border: 1px solid #dee2e6;">
+                            <option value="" {% if not exp.agente %}selected{% endif %}>- Sin Asignar -</option>
+                            {% for agente in agentes_disponibles %}
                             <option value="{{ agente.id }}" {% if exp.agente and exp.agente.id == agente.id %}selected{% endif %}>
                                 {{ agente.username }}
                             </option>
-                        {% endfor %}
-                    </select>
-                </td>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    {% endif %}
 
-                
-                <td class="col-id small fw-bold text-primary">
+
+                    <td class="col-id small fw-bold text-primary">
                         <a href="{% url 'crm:detalle_expediente' exp.id %}" class="fw-bold text-decoration-none">
                             {{ exp.numero_expediente }}
                         </a>
-                </td>
-                <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
-                <td class="col-tel small">{{ exp.deudor_telefono }}</td>
-                <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span></td>
-                <td class="col-monto text-center small">{{ exp.monto_original }} €</td>
-                <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
-                <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
-                <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
-                
-                <td class="col-dias text-center">
-                    {% if exp.tiempo_en_impago > 0 %}
-                        <span class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                    </td>
+                    <td class="col-nombre fw-bold">{{ exp.deudor_nombre }}</td>
+                    <td class="col-tel small">{{ exp.deudor_telefono }}</td>
+                    <td class="col-tipo"><span class="badge bg-light text-dark border">{{ exp.tipo_producto }}</span>
+                    </td>
+                    <td class="col-monto text-center small">{{ exp.monto_original }} €</td>
+                    <td class="col-cuota text-center small">{{ exp.cuotas_totales }}</td>
+                    <td class="col-fecha text-center small">{{ exp.fecha_compra|date:"d/m/y"|default:"-" }}</td>
+                    <td class="col-fecha text-center small">{{ exp.fecha_impago|date:"d/m/y" }}</td>
+
+                    <td class="col-dias text-center">
+                        {% if exp.tiempo_en_impago > 0 %}
+                        <span
+                            class="badge rounded-pill {% if exp.tiempo_en_impago > 60 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
                             {{ exp.tiempo_en_impago }}
                         </span>
-                    {% else %}
+                        {% else %}
                         <span class="text-muted small">-</span>
-                    {% endif %}
-                </td>
+                        {% endif %}
+                    </td>
 
-                <td class="col-comentario" style="min-width: 200px;"> 
-                    
-                    <div class="d-flex w-100 gap-1 align-items-center">
-                        
-                        <select class="form-select form-select-sm small text-muted text-truncate flex-grow-1" 
-                                onchange="actualizarComentario(this, {{ exp.id }})"
+                    <td class="col-comentario" style="min-width: 200px;">
+
+                        <div class="d-flex w-100 gap-1 align-items-center">
+
+                            <select class="form-select form-select-sm small text-muted text-truncate flex-grow-1"
+                                onchange="actualizarComentario(this, '{{ exp.id }}')"
                                 style="border: 1px solid #dee2e6;">
-                            <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -</option>
-                            {% for val, text in exp.OPCIONES_COMENTARIO %}
-                            <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
-                            {% endfor %}
-                        </select>
+                                <option value="" {% if not exp.comentario_estandar %}selected{% endif %}>- Sin Obs. -
+                                </option>
+                                {% for val, text in exp.OPCIONES_COMENTARIO %}
+                                <option value="{{ val }}" {% if exp.comentario_estandar == val %}selected{% endif %}>{{ text }}</option>
+                                {% endfor %}
+                            </select>
 
-                        <button type="button" 
-                                class="btn btn-sm {% if exp.comentarios %}btn-warning text-dark border-warning{% else %}btn-outline-secondary border-0{% endif %}" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalNota-{{ exp.id }}"
+                            <button type="button"
+                                class="btn btn-sm {% if exp.comentarios %}btn-warning text-dark border-warning{% else %}btn-outline-secondary border-0{% endif %}"
+                                data-bs-toggle="modal" data-bs-target="#modalNota-{{ exp.id }}"
                                 style="width: 32px; height: 31px; display: flex; align-items: center; justify-content: center;"
                                 title="{% if exp.comentarios %}Ver Nota{% else %}Agregar Nota{% endif %}">
-                            <i class="fa-regular fa-comment-dots"></i>
-                        </button>
-                    </div>
-                </td>
+                                <i class="fa-regular fa-comment-dots"></i>
+                            </button>
+                        </div>
+                    </td>
 
-                <td class="col-estado">
-                    <span id="estado-texto-{{ exp.id }}" class="badge bg-white text-dark border shadow-sm">
-                        {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
-                    </span>
-                </td>
-                
-                <td class="col-monto text-center fw-bold text-danger">{{ exp.monto_actual }} €</td>
-                <td class="col-monto text-center fw-bold text-success">{{ exp.monto_recuperado|default:"0.00" }} €</td>
-                
-                {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
+                    <td class="col-estado">
+                        <span id="estado-texto-{{ exp.id }}" class="badge bg-white text-dark border shadow-sm">
+                            {{ exp.get_causa_impago_display|default:"PENDIENTE" }}
+                        </span>
+                    </td>
 
-                <td class="col-fecha text-center small text-muted">
-                    <span id="fecha-ult-{{ exp.id }}">
-                        {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
-                    </span>
-                </td>
+                    <td class="col-monto text-center fw-bold text-danger">{{ exp.monto_actual }} €</td>
+                    <td class="col-monto text-center fw-bold text-success">{{ exp.monto_recuperado|default:"0.00" }} €
+                    </td>
 
-                <td class="col-fecha text-center small text-success fw-bold">
-                    <span id="fecha-pago-{{ exp.id }}">
-                        {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
+                    {% include 'crm/includes/tics_seguimiento.html' with exp=exp %}
+
+                    <td class="col-fecha text-center small text-muted">
+                        <span id="fecha-ult-{{ exp.id }}">
+                            {{ exp.ultimo_mensaje_fecha|date:"d/m/Y"|default:"-" }}
+                        </span>
+                    </td>
+
+                    <td class="col-fecha text-center small text-success fw-bold">
+                        <span id="fecha-pago-{{ exp.id }}">
+                            {% if exp.causa_impago == 'PAGARA' or exp.estado == 'PAGARA' %}
                             {{ exp.fecha_pago_promesa|date:"d/m/Y"|default:"-" }}
-                        {% else %}-{% endif %}
-                    </span>
-                </td>
+                            {% else %}-{% endif %}
+                        </span>
+                    </td>
 
-                <td class="col-acciones bg-white">
-                    <div class="d-flex gap-1 justify-content-center">
-                        
-                        {% if exp.puede_ser_cedido %}
-                        <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm shadow-sm" 
-                                title="Confirmar Cesión" data-bs-toggle="modal" 
+                    <td class="col-acciones bg-white">
+                        <div class="d-flex gap-1 justify-content-center">
+
+                            {% if exp.puede_ser_cedido and request.user.perfil.rol == 'ADMIN' %}
+                            <button type="button" class="btn btn-sm btn-outline-warning btn-action-crm shadow-sm"
+                                title="Confirmar Cesión" data-bs-toggle="modal"
                                 data-bs-target="#modalCesion-{{ exp.id }}">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </button>
-                        {% endif %}
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </button>
+                            {% endif %}
 
-                        <button type="button" class="btn btn-sm btn-outline-success btn-action-crm" 
-                                title="Registrar Pago" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalPago-{{ exp.id }}">
-                            <i class="fa-solid fa-sack-dollar"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info btn-action-crm" 
-                                title="Documentación" data-bs-toggle="modal" 
-                                data-bs-target="#modalDocs{{ exp.id }}">
-                            <i class="fa-solid fa-folder-open"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm" 
-                                data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}" 
+                            <button type="button" class="btn btn-sm btn-outline-success btn-action-crm"
+                                title="Registrar Pago" data-bs-toggle="modal" data-bs-target="#modalPago-{{ exp.id }}">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info btn-action-crm"
+                                title="Documentación" data-bs-toggle="modal" data-bs-target="#modalDocs{{ exp.id }}">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </button>
+                            {% if request.user.perfil.rol == 'ADMIN' %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-action-crm"
+                                data-bs-toggle="modal" data-bs-target="#modalEditar-{{ exp.id }}"
                                 title="Editar Cliente">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <a href="{% url 'crm:detalle_expediente' exp.id %}" class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
-                            <i class="fa-solid fa-eye"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm" 
-                                title="Mover a Papelera" data-bs-toggle="modal" 
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            {% endif %}
+                            <a href="{% url 'crm:detalle_expediente' exp.id %}"
+                                class="btn btn-sm btn-outline-primary btn-action-crm" title="Ver Detalle">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            {% if request.user.perfil.rol == 'ADMIN' %}
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-action-crm"
+                                title="Mover a Papelera" data-bs-toggle="modal"
                                 data-bs-target="#modalPapelera{{ exp.id }}">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
 
 
-            {% include 'crm/includes/modal_nota_interna.html' with exp=exp %}
-            {% include 'crm/includes/modal_documentacion.html' with exp=exp %}
-            {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
-            {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
-            {% include 'crm/includes/modal_desactivar.html' with exp=exp %}
-            {% if exp.puede_ser_cedido %}
+                {% include 'crm/includes/modal_nota_interna.html' with exp=exp %}
+                {% include 'crm/includes/modal_documentacion.html' with exp=exp %}
+                {% include 'crm/includes/modal_editar_registro.html' with exp=exp %}
+                {% include 'crm/includes/modal_registrar_pago.html' with exp=exp %}
+                {% include 'crm/includes/modal_desactivar.html' with exp=exp %}
+                {% if exp.puede_ser_cedido %}
                 {% include 'crm/includes/modal_confirmar_cesion.html' with exp=exp %}
-            {% endif %}
+                {% endif %}
 
 
-            {% empty %}
-            <tr>
-                <td colspan="100%" class="text-center py-5">
-                    <div class="text-success opacity-50 mb-3">
-                        <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
-                    </div>
-                    <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
-                    <small class="text-muted">Ingresa nuevos registros para comenzar la gestión de expedientes.</small>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</form> </div>
-
-
-
+                {% empty %}
+                <tr>
+                    <td colspan="100%" class="text-center py-5">
+                        <div class="text-success opacity-50 mb-3">
+                            <i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i>
+                        </div>
+                        <h6 class="fw-bold text-muted mb-0">No hay expedientes pagados.</h6>
+                        <small class="text-muted">Ingresa nuevos registros para comenzar la gestión de
+                            expedientes.</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+</div>

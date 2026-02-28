@@ -308,6 +308,7 @@ class RegistroPago(models.Model):
     metodo_pago = models.CharField(max_length=100, choices=METODOS_PAGO_CHOICES, default='TRANSFERENCIA')
     comprobante = models.FileField(upload_to='pagos/comprobantes/', null=True, blank=True)
     comision = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    registrado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagos_registrados')
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
     class Meta:

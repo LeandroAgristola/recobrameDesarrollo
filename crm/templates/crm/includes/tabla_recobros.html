@@ -1,6 +1,6 @@
 <div class="card border-0 shadow-sm">
     <div class="card-body p-3">
-        
+
         <form method="get" class="row g-2 mb-4 align-items-end">
             <input type="hidden" name="tab" value="recobros">
 
@@ -8,7 +8,8 @@
                 <label class="small fw-bold mb-1">Buscar Recobro</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="fa-solid fa-search text-muted"></i></span>
-                    <input type="text" name="r_q" value="{{ filtros_recobros.r_q }}" class="form-control" placeholder="Cliente, ID...">
+                    <input type="text" name="r_q" value="{{ filtros_recobros.r_q }}" class="form-control"
+                        placeholder="Cliente, ID...">
                 </div>
             </div>
 
@@ -27,7 +28,8 @@
                     <i class="fa-solid fa-filter me-1"></i> Filtrar
                 </button>
                 {% if filtros_recobros.r_q or filtros_recobros.r_desde or filtros_recobros.r_hasta %}
-                <a href="{% url 'crm:dashboard_crm' empresa.id %}?tab=recobros" class="btn btn-danger shadow-sm" title="Limpiar">
+                <a href="{% url 'crm:dashboard_crm' empresa.id %}?tab=recobros" class="btn btn-danger shadow-sm"
+                    title="Limpiar">
                     <i class="fa-solid fa-trash-can"></i>
                 </a>
                 {% endif %}
@@ -38,13 +40,15 @@
         <div class="mb-3">
             <ul class="nav nav-pills" id="pills-recobros-tab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active btn-sm px-4 border" data-bs-toggle="pill" data-bs-target="#pills-recobros-impagos" type="button">
+                    <button class="nav-link active btn-sm px-4 border" data-bs-toggle="pill"
+                        data-bs-target="#pills-recobros-impagos" type="button">
                         <i class="fa-solid fa-file-circle-exclamation me-2"></i>Recobros de Impagos
                         <span class="badge bg-white text-dark ms-2 border">{{ recobros_impagos.count }}</span>
                     </button>
                 </li>
                 <li class="nav-item ms-2" role="presentation">
-                    <button class="nav-link btn-sm px-4 border" data-bs-toggle="pill" data-bs-target="#pills-recobros-cedidos" type="button">
+                    <button class="nav-link btn-sm px-4 border" data-bs-toggle="pill"
+                        data-bs-target="#pills-recobros-cedidos" type="button">
                         <i class="fa-solid fa-circle-exclamation me-2"></i>Recobros de Cedidos
                         <span class="badge bg-white text-dark ms-2 border">{{ recobros_cedidos.count }}</span>
                     </button>
@@ -63,10 +67,13 @@
                                 <th>Expediente</th>
                                 <th>Deudor</th>
                                 <th>Método</th>
+                                <th>Ingresado Por</th>
                                 <th class="text-end">Descuento</th>
                                 <th class="text-end text-success">Monto Real</th>
                                 <th class="text-center">Comp.</th>
+                                {% if request.user.perfil.rol == 'ADMIN' %}
                                 <th class="text-center">Acción</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -74,47 +81,69 @@
                             <tr>
                                 <td class="small">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
                                 <td>
-                                    <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="fw-bold text-decoration-none">
+                                    <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}"
+                                        class="fw-bold text-decoration-none">
                                         {{ pago.expediente.numero_expediente }}
                                     </a>
                                 </td>
                                 <td class="fw-bold">{{ pago.expediente.deudor_nombre }}</td>
-                                <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">{{ pago.get_metodo_pago_display|default:pago.metodo_pago }}</span></td>
-                                <td class="text-end text-warning small fw-bold">{% if pago.descuento > 0 %}-{{ pago.descuento }}€{% else %}-{% endif %}</td>
+                                <td>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border">
+                                        {{ pago.get_metodo_pago_display|default:pago.metodo_pago }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">
+                                    {{ pago.registrado_por.first_name|default:"Sistema (Imp.)" }}
+                                </td>
+                                <td class="text-end text-warning small fw-bold">
+                                    {% if pago.descuento > 0 %}-{{ pago.descuento }}€{% else %}-{% endif %}
+                                </td>
                                 <td class="text-end text-success fw-bold">+{{ pago.monto }}€</td>
                                 <td class="text-center">
                                     {% if pago.comprobante %}
-                                        <a href="{{ pago.comprobante.url }}" target="_blank" class="btn btn-sm btn-outline-info border-0"><i class="fa-solid fa-file-invoice"></i></a>
+                                    <a href="{{ pago.comprobante.url }}" target="_blank"
+                                        class="btn btn-sm btn-outline-info border-0"><i
+                                            class="fa-solid fa-file-invoice"></i></a>
                                     {% else %}
-                                        <span class="text-muted small">-</span>
+                                    <span class="text-muted small">-</span>
                                     {% endif %}
                                 </td>
+                                {% if request.user.perfil.rol == 'ADMIN' %}
                                 <td class="text-center">
                                     <div class="d-flex gap-1 justify-content-center">
-                                        <button class="btn btn-sm btn-outline-primary border-0" data-bs-toggle="modal" data-bs-target="#modalEditarPago{{ pago.id }}" title="Editar Pago"><i class="fa-solid fa-pen"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalEliminarPago{{ pago.id }}" title="Eliminar Pago"><i class="fa-solid fa-trash"></i></button>
+                                        <button class="btn btn-sm btn-outline-primary border-0" data-bs-toggle="modal"
+                                            data-bs-target="#modalEditarPago{{ pago.id }}" title="Editar Pago"><i
+                                                class="fa-solid fa-pen"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal"
+                                            data-bs-target="#modalEliminarPago{{ pago.id }}" title="Eliminar Pago"><i
+                                                class="fa-solid fa-trash"></i></button>
                                     </div>
                                 </td>
+                                {% endif %}
                             </tr>
-                            
+
                             {% include 'crm/includes/modal_editar_pago.html' with pago=pago %}
 
-                            <div class="modal fade" id="modalEliminarPago{{ pago.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade" id="modalEliminarPago{{ pago.id }}" tabindex="-1"
+                                aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered modal-sm">
                                     <div class="modal-content border-0 shadow">
                                         <div class="modal-header bg-danger bg-opacity-10 border-bottom-0">
-                                            <h6 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Pago</h6>
+                                            <h6 class="modal-title fw-bold text-danger"><i
+                                                    class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Pago</h6>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body text-center mt-2 pb-4">
                                             <p class="mb-1">¿Estás seguro de eliminar este pago?</p>
-                                            <small class="text-muted d-block">La deuda del expediente volverá a aumentar.</small>
+                                            <small class="text-muted d-block">La deuda del expediente volverá a
+                                                aumentar.</small>
                                             <h5 class="mt-3 fw-bold text-danger">{{ pago.monto }}€</h5>
                                         </div>
                                         <div class="modal-footer py-1 justify-content-center">
                                             <form action="{% url 'crm:eliminar_pago' pago.id %}" method="POST">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-danger fw-bold">Sí, Eliminar y Restaurar</button>
+                                                <button type="submit" class="btn btn-sm btn-danger fw-bold">Sí, Eliminar
+                                                    y Restaurar</button>
                                             </form>
                                         </div>
                                     </div>
@@ -123,7 +152,8 @@
                             {% empty %}
                             <tr>
                                 <td colspan="8" class="text-center py-5">
-                                    <div class="text-success opacity-50 mb-3"><i class="fa-solid fa-clipboard-check" style="font-size: 3rem;"></i></div>
+                                    <div class="text-success opacity-50 mb-3"><i class="fa-solid fa-clipboard-check"
+                                            style="font-size: 3rem;"></i></div>
                                     <h6 class="fw-bold text-muted mb-0">No hay pagos registrados.</h6>
                                 </td>
                             </tr>
@@ -143,47 +173,72 @@
                                 <th>Expediente</th>
                                 <th>Deudor</th>
                                 <th>Método</th>
+                                <th>Ingresado Por</th>
                                 <th class="text-end">Descuento</th>
                                 <th class="text-end text-success">Monto Real</th>
                                 <th class="text-center">Comp.</th>
+                                {% if request.user.perfil.rol == 'ADMIN' %}
                                 <th class="text-center">Acción</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
                             {% for pago in recobros_cedidos %}
-                            <tr class="table-warning" style="--bs-table-bg-type: solid; --bs-table-bg: rgba(255, 193, 7, 0.05);">
+                            <tr class="table-warning"
+                                style="--bs-table-bg-type: solid; --bs-table-bg: rgba(255, 193, 7, 0.05);">
                                 <td class="small">{{ pago.fecha_pago|date:"d/m/Y" }}</td>
                                 <td>
-                                    <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}" class="fw-bold text-warning text-decoration-none">
+                                    <a href="{% url 'crm:detalle_expediente' pago.expediente.id %}"
+                                        class="fw-bold text-warning text-decoration-none">
                                         {{ pago.expediente.numero_expediente }}
                                     </a>
                                 </td>
                                 <td class="fw-bold">{{ pago.expediente.deudor_nombre }}</td>
-                                <td><span class="badge bg-white text-dark border">{{ pago.get_metodo_pago_display|default:pago.metodo_pago }}</span></td>
-                                <td class="text-end text-warning small fw-bold">{% if pago.descuento > 0 %}-{{ pago.descuento }}€{% else %}-{% endif %}</td>
+                                <td>
+                                    <span class="badge bg-white text-dark border">
+                                        {{ pago.get_metodo_pago_display|default:pago.metodo_pago }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">
+                                    {{ pago.registrado_por.first_name|default:"Sistema (Imp.)" }}
+                                </td>
+                                <td class="text-end text-warning small fw-bold">
+                                    {% if pago.descuento > 0 %}-{{ pago.descuento }}€{% else %}-{% endif %}
+                                </td>
                                 <td class="text-end text-success fw-bold">+{{ pago.monto }}€</td>
                                 <td class="text-center">
                                     {% if pago.comprobante %}
-                                        <a href="{{ pago.comprobante.url }}" target="_blank" class="btn btn-sm btn-outline-info border-0"><i class="fa-solid fa-file-invoice"></i></a>
+                                    <a href="{{ pago.comprobante.url }}" target="_blank"
+                                        class="btn btn-sm btn-outline-info border-0"><i
+                                            class="fa-solid fa-file-invoice"></i></a>
                                     {% else %}
-                                        <span class="text-muted small">-</span>
+                                    <span class="text-muted small">-</span>
                                     {% endif %}
                                 </td>
+                                {% if request.user.perfil.rol == 'ADMIN' %}
                                 <td class="text-center">
                                     <div class="d-flex gap-1 justify-content-center">
-                                        <button class="btn btn-sm btn-outline-primary border-0" data-bs-toggle="modal" data-bs-target="#modalEditarPago{{ pago.id }}" title="Editar Pago"><i class="fa-solid fa-pen"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalEliminarPagoCedido{{ pago.id }}" title="Eliminar Pago"><i class="fa-solid fa-trash"></i></button>
+                                        <button class="btn btn-sm btn-outline-primary border-0" data-bs-toggle="modal"
+                                            data-bs-target="#modalEditarPago{{ pago.id }}" title="Editar Pago"><i
+                                                class="fa-solid fa-pen"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal"
+                                            data-bs-target="#modalEliminarPagoCedido{{ pago.id }}"
+                                            title="Eliminar Pago"><i class="fa-solid fa-trash"></i></button>
                                     </div>
                                 </td>
+                                {% endif %}
                             </tr>
-                            
+
                             {% include 'crm/includes/modal_editar_pago.html' with pago=pago %}
 
-                            <div class="modal fade" id="modalEliminarPagoCedido{{ pago.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade" id="modalEliminarPagoCedido{{ pago.id }}" tabindex="-1"
+                                aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered modal-sm">
                                     <div class="modal-content border-0 shadow">
                                         <div class="modal-header bg-danger bg-opacity-10 border-bottom-0">
-                                            <h6 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Pago (Cedido)</h6>
+                                            <h6 class="modal-title fw-bold text-danger"><i
+                                                    class="fa-solid fa-triangle-exclamation me-2"></i>Eliminar Pago
+                                                (Cedido)</h6>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body text-center mt-2 pb-4">
@@ -193,7 +248,8 @@
                                         <div class="modal-footer py-1 justify-content-center">
                                             <form action="{% url 'crm:eliminar_pago' pago.id %}" method="POST">
                                                 {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-danger fw-bold">Sí, Eliminar</button>
+                                                <button type="submit" class="btn btn-sm btn-danger fw-bold">Sí,
+                                                    Eliminar</button>
                                             </form>
                                         </div>
                                     </div>
@@ -202,7 +258,8 @@
                             {% empty %}
                             <tr>
                                 <td colspan="8" class="text-center py-5">
-                                    <div class="text-warning opacity-50 mb-3"><i class="fa-solid fa-file-signature" style="font-size: 3rem;"></i></div>
+                                    <div class="text-warning opacity-50 mb-3"><i class="fa-solid fa-file-signature"
+                                            style="font-size: 3rem;"></i></div>
                                     <h6 class="fw-bold text-muted mb-0">No hay pagos registrados en cedidos.</h6>
                                 </td>
                             </tr>
